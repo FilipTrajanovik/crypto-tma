@@ -62,6 +62,8 @@ export default function InvestPage() {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const handleSubmit = async (e: React.FormEvent) => {

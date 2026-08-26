@@ -75,6 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     isActive,
     isAdmin: makeAdmin,
     isSuperAdmin: makeSuperAdmin,
+    assignedAdminId,
     releasePaid,
     supportContact,
     btcAddress,
@@ -88,6 +89,20 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // Only the password-based owner login can grant or revoke super-admin status.
   const superAdminChange = identity.isOwner ? makeSuperAdmin : undefined;
 
+  // Only a super-admin can directly (re)assign or unassign a user's claiming admin.
+  let assignedAdminChange: number | null | undefined = undefined;
+  if (identity.isSuperAdmin && assignedAdminId !== undefined) {
+    if (assignedAdminId === null) {
+      assignedAdminChange = null;
+    } else {
+      const adminCheck = await sql`SELECT id FROM users WHERE id = ${assignedAdminId} AND (is_admin = true OR is_super_admin = true)`;
+      if (adminCheck.length === 0) {
+        return NextResponse.json({ error: "Not a valid admin" }, { status: 400 });
+      }
+      assignedAdminChange = Number(assignedAdminId);
+    }
+  }
+
   const notifications: string[] = [];
 
   if (
@@ -100,7 +115,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releasePaid !== undefined ||
     supportContact !== undefined ||
     btcAddress !== undefined ||
-    ethAddress !== undefined
+    ethAddress !== undefined ||
+    assignedAdminChange !== undefined
   ) {
     await sql`
       UPDATE users SET
@@ -113,7 +129,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         release_paid = COALESCE(${releasePaid ?? null}, release_paid),
         support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END,
         btc_address = CASE WHEN ${btcAddress !== undefined} THEN ${btcAddress ?? null} ELSE btc_address END,
-        eth_address = CASE WHEN ${ethAddress !== undefined} THEN ${ethAddress ?? null} ELSE eth_address END
+        eth_address = CASE WHEN ${ethAddress !== undefined} THEN ${ethAddress ?? null} ELSE eth_address END,
+        assigned_admin_id = CASE WHEN ${assignedAdminChange !== undefined} THEN ${assignedAdminChange ?? null} ELSE assigned_admin_id END
       WHERE id = ${userId}
     `;
 

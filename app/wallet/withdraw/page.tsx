@@ -59,6 +59,8 @@ export default function WithdrawPage() {
 
   useEffect(() => {
     loadAll();
+    const interval = setInterval(loadAll, 30_000);
+    return () => clearInterval(interval);
   }, [loadAll]);
 
   const handleSubmit = async (e: React.FormEvent) => {

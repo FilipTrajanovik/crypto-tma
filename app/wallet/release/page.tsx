@@ -23,13 +23,20 @@ export default function ReleasePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/wallet/release")
-      .then((res) => res.json())
-      .then((data) => {
-        setConditions(data.conditions || []);
-        if (data.supportContact) setSupportContact(data.supportContact);
-      })
-      .finally(() => setLoading(false));
+    const load = (silent?: boolean) => {
+      fetch("/api/wallet/release")
+        .then((res) => res.json())
+        .then((data) => {
+          setConditions(data.conditions || []);
+          if (data.supportContact) setSupportContact(data.supportContact);
+        })
+        .finally(() => {
+          if (!silent) setLoading(false);
+        });
+    };
+    load();
+    const interval = setInterval(() => load(true), 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleContactSupport = () => {

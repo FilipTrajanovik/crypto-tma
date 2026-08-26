@@ -51,8 +51,8 @@ export default function HistoryPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     const params = new URLSearchParams({ type, status, page: String(page) });
     const res = await fetch(`/api/wallet/history?${params}`);
     if (res.ok) {
@@ -60,11 +60,16 @@ export default function HistoryPage() {
       setTransactions(data.transactions);
       setTotal(data.total);
     }
-    setLoading(false);
+    if (!opts?.silent) setLoading(false);
   }, [type, status, page]);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  useEffect(() => {
+    const interval = setInterval(() => load({ silent: true }), 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const pageSize = 20;

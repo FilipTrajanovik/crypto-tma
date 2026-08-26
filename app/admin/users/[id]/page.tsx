@@ -26,6 +26,7 @@ type UserDetail = {
     is_admin: boolean;
     is_super_admin: boolean;
     release_paid: boolean;
+    assigned_admin_id: number | null;
     support_contact: string | null;
     btc_address: string | null;
     eth_address: string | null;
@@ -45,6 +46,8 @@ type UserDoc = {
   note: string | null;
   created_at: string;
 };
+
+type AdminOption = { id: number; first_name: string | null; last_name: string | null; username: string | null };
 
 function formatDocSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -74,6 +77,8 @@ export default function AdminUserDetailPage() {
   const [saving, setSaving] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [docs, setDocs] = useState<UserDoc[]>([]);
+  const [admins, setAdmins] = useState<AdminOption[]>([]);
+  const [reassigning, setReassigning] = useState(false);
   const [docFile, setDocFile] = useState<File | null>(null);
   const [docNote, setDocNote] = useState("");
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -101,6 +106,10 @@ export default function AdminUserDetailPage() {
       const identity = await whoamiRes.json();
       setIsSuperAdmin(identity.isSuperAdmin);
       setIsOwner(identity.isOwner);
+      if (identity.isSuperAdmin) {
+        const adminsRes = await fetch("/api/admin/admins");
+        if (adminsRes.ok) setAdmins((await adminsRes.json()).admins);
+      }
     }
     if (pricesRes.ok) {
       const p = await pricesRes.json();
@@ -206,6 +215,20 @@ export default function AdminUserDetailPage() {
       body: JSON.stringify({ isSuperAdmin: !data.user.is_super_admin }),
     });
     load();
+  };
+
+  const handleReassign = async (adminId: string) => {
+    setReassigning(true);
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedAdminId: adminId ? Number(adminId) : null }),
+      });
+      load();
+    } finally {
+      setReassigning(false);
+    }
   };
 
   const toggleReleasePaid = async () => {
@@ -334,7 +357,22 @@ export default function AdminUserDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            {isSuperAdmin && (
+              <select
+                value={user.assigned_admin_id ?? ""}
+                onChange={(e) => handleReassign(e.target.value)}
+                disabled={reassigning}
+                className="bg-navy border border-[#1a3a6e] rounded-md px-2 py-1.5 text-white text-xs focus-visible:border-gold disabled:opacity-60"
+              >
+                <option value="">Unassigned</option>
+                {admins.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {[a.first_name, a.last_name].filter(Boolean).join(" ") || a.username || `Admin #${a.id}`}
+                  </option>
+                ))}
+              </select>
+            )}
             <Badge
               onClick={toggleActive}
               variant="outline"

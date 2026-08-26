@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/app/components/BottomNav";
@@ -39,20 +39,28 @@ export default function ProfilePage() {
   const [email, setEmail] = useState("");
   const [homeAddress, setHomeAddress] = useState("");
 
+  const editingRef = useRef(editing);
+  editingRef.current = editing;
+
   const load = () =>
     fetch("/api/wallet/balance")
       .then((res) => res.json())
       .then((json: ProfileData) => {
         setData(json);
-        setFirstName(json.user.firstName || "");
-        setLastName(json.user.lastName || "");
-        setPhone(json.user.phone || "");
-        setEmail(json.user.email || "");
-        setHomeAddress(json.user.homeAddress || "");
+        // Don't clobber in-progress edits while the user has the form open.
+        if (!editingRef.current) {
+          setFirstName(json.user.firstName || "");
+          setLastName(json.user.lastName || "");
+          setPhone(json.user.phone || "");
+          setEmail(json.user.email || "");
+          setHomeAddress(json.user.homeAddress || "");
+        }
       });
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {

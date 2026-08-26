@@ -40,6 +40,8 @@ export default function WalletDocumentsPage() {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   return (

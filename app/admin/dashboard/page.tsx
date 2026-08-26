@@ -45,6 +45,13 @@ type SearchUser = {
   claimStatus: "unclaimed" | "mine" | "claimed_by_other";
 };
 
+type AdminOption = {
+  id: number;
+  first_name: string | null;
+  last_name: string | null;
+  username: string | null;
+};
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
@@ -58,6 +65,8 @@ export default function AdminDashboardPage() {
   const [searching, setSearching] = useState(false);
   const [claimingId, setClaimingId] = useState<number | null>(null);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
+  const [admins, setAdmins] = useState<AdminOption[]>([]);
+  const [reassigningId, setReassigningId] = useState<number | null>(null);
 
   const loadFullUsers = useCallback(async (q: string) => {
     const params = q ? `?search=${encodeURIComponent(q)}` : "";
@@ -83,8 +92,9 @@ export default function AdminDashboardPage() {
       setIsSuperAdmin(identity.isSuperAdmin);
 
       if (identity.isSuperAdmin) {
-        const [statsRes] = await Promise.all([fetch("/api/admin/stats"), loadFullUsers("")]);
+        const [statsRes, adminsRes] = await Promise.all([fetch("/api/admin/stats"), fetch("/api/admin/admins"), loadFullUsers("")]);
         if (statsRes.ok) setStats(await statsRes.json());
+        if (adminsRes.ok) setAdmins((await adminsRes.json()).admins);
       } else {
         await loadFullUsers("");
       }
@@ -131,6 +141,20 @@ export default function AdminDashboardPage() {
       }
     } finally {
       setClaimingId(null);
+    }
+  };
+
+  const handleReassign = async (userId: number, adminId: string) => {
+    setReassigningId(userId);
+    try {
+      await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedAdminId: adminId ? Number(adminId) : null }),
+      });
+      loadFullUsers(search);
+    } finally {
+      setReassigningId(null);
     }
   };
 
@@ -284,10 +308,20 @@ export default function AdminDashboardPage() {
                       </Badge>
                     </TableCell>
                     {isSuperAdmin && (
-                      <TableCell className="text-muted-foreground text-xs">
-                        {u.assigned_admin_id
-                          ? [u.assigned_admin_first_name, u.assigned_admin_last_name].filter(Boolean).join(" ") || "Admin"
-                          : "Unclaimed"}
+                      <TableCell className="text-xs">
+                        <select
+                          value={u.assigned_admin_id ?? ""}
+                          onChange={(e) => handleReassign(u.id, e.target.value)}
+                          disabled={reassigningId === u.id}
+                          className="bg-navy border border-[#1a3a6e] rounded-md px-2 py-1 text-white text-xs focus-visible:border-gold disabled:opacity-60"
+                        >
+                          <option value="">Unassigned</option>
+                          {admins.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {[a.first_name, a.last_name].filter(Boolean).join(" ") || a.username || `Admin #${a.id}`}
+                            </option>
+                          ))}
+                        </select>
                       </TableCell>
                     )}
                     <TableCell>

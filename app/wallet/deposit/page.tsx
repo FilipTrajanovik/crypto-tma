@@ -73,13 +73,20 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/wallet/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.btcAddress) setBtcAddress(data.btcAddress);
-        if (data.ethAddress) setEthAddress(data.ethAddress);
-      })
-      .finally(() => setLoading(false));
+    const load = (silent?: boolean) => {
+      fetch("/api/wallet/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.btcAddress) setBtcAddress(data.btcAddress);
+          if (data.ethAddress) setEthAddress(data.ethAddress);
+        })
+        .finally(() => {
+          if (!silent) setLoading(false);
+        });
+    };
+    load();
+    const interval = setInterval(() => load(true), 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
