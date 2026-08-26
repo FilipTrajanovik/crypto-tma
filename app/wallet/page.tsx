@@ -9,13 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Landmark, Send, TrendingUp, Unlock, ListOrdered, ArrowUp, ArrowDown } from "lucide-react";
+import { Landmark, Send, TrendingUp, Unlock, ListOrdered, ArrowUp, ArrowDown, FileText, MessageCircle } from "lucide-react";
 
 type BalanceData = {
   user: { firstName: string | null; lastName: string | null; username: string | null; avatarUrl: string | null; phone: string | null };
   balance: { btc: number; eth: number; usdCash: number; btcValue: number; ethValue: number; totalValue: number };
   prices: { btc: number; eth: number; btcChange24h: number; ethChange24h: number };
+  supportContact: string | null;
 };
+
+const FALLBACK_SUPPORT = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
 
 function formatUsd(value: number) {
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
@@ -31,6 +34,7 @@ const actions = [
   { href: "/wallet/invest", label: "Invest", icon: TrendingUp, variant: "gold" as const },
   { href: "/wallet/release", label: "Release Funds", icon: Unlock, variant: "red" as const },
   { href: "/wallet/history", label: "History", icon: ListOrdered, variant: "outline" as const },
+  { href: "/wallet/documents", label: "Documents", icon: FileText, variant: "outline" as const },
 ];
 
 export default function WalletPage() {
@@ -89,6 +93,17 @@ export default function WalletPage() {
 
   const { user, balance, prices } = data;
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Wallet";
+
+  const handleContactSupport = () => {
+    const contact = data.supportContact || FALLBACK_SUPPORT;
+    const target = contact.startsWith("http") ? contact : `https://t.me/${contact.replace(/^@/, "")}`;
+    const tg = (window as unknown as { Telegram?: { WebApp?: { openTelegramLink?: (url: string) => void } } }).Telegram;
+    if (tg?.WebApp?.openTelegramLink) {
+      tg.WebApp.openTelegramLink(target);
+    } else {
+      window.open(target, "_blank");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-navy relative pb-24">
@@ -165,8 +180,6 @@ export default function WalletPage() {
             key={href}
             href={href}
             className={`flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 ${
-              href === "/wallet/history" ? "col-span-2 max-w-[calc(50%-6px)] mx-auto" : ""
-            } ${
               variant === "gold"
                 ? "bg-gold text-navy hover:brightness-95"
                 : variant === "red"
@@ -178,6 +191,16 @@ export default function WalletPage() {
             {label}
           </Link>
         ))}
+      </section>
+
+      <section className="relative px-5 mb-6">
+        <button
+          onClick={handleContactSupport}
+          className="w-full flex items-center justify-center gap-2 h-14 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 bg-card-navy border border-gold/40 text-gold hover:bg-gold/10"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Contact Support
+        </button>
       </section>
 
       <BottomNav />

@@ -16,11 +16,14 @@ export type DbUser = {
   avatar_url: string | null;
   is_active: boolean;
   is_admin: boolean;
+  is_super_admin: boolean;
   release_paid: boolean;
   assigned_admin_id: number | null;
   support_contact: string | null;
   btc_address: string | null;
   eth_address: string | null;
+  email: string | null;
+  home_address: string | null;
   created_at: string;
 };
 
@@ -92,4 +95,16 @@ export type DbReleaseCondition = {
   fee_amount: string;
   fee_currency: string;
   is_active: boolean;
+};
+
+export type DbUserDocument = {
+  id: number;
+  user_id: number;
+  uploaded_by_admin_id: number | null;
+  file_name: string;
+  mime_type: string;
+  file_size: number;
+  data: string;
+  note: string | null;
+  created_at: string;
 };

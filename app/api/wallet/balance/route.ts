@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { getPrices } from "@/lib/prices";
+import { getSupportContactForUser } from "@/lib/support";
 
 export async function GET() {
   const session = await getSession();
@@ -9,10 +10,11 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [userRows, balanceRows, prices] = await Promise.all([
-    sql`SELECT id, first_name, last_name, username, avatar_url, phone, is_admin, release_paid FROM users WHERE id = ${session.userId}`,
+  const [userRows, balanceRows, prices, supportContact] = await Promise.all([
+    sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid FROM users WHERE id = ${session.userId}`,
     sql`SELECT btc_amount, eth_amount, usd_cash, updated_at FROM balances WHERE user_id = ${session.userId}`,
     getPrices(),
+    getSupportContactForUser(session.userId),
   ]);
 
   if (userRows.length === 0) {
@@ -36,6 +38,8 @@ export async function GET() {
       username: user.username,
       avatarUrl: user.avatar_url,
       phone: user.phone,
+      email: user.email,
+      homeAddress: user.home_address,
       isAdmin: user.is_admin === true,
       releasePaid: user.release_paid === true,
     },
@@ -49,5 +53,6 @@ export async function GET() {
       updatedAt: balance.updated_at,
     },
     prices,
+    supportContact,
   });
 }

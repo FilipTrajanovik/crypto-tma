@@ -11,13 +11,21 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url TEXT,
   is_active BOOLEAN DEFAULT true,
   is_admin BOOLEAN DEFAULT false,
+  is_super_admin BOOLEAN DEFAULT false,
   release_paid BOOLEAN DEFAULT false,
   assigned_admin_id INTEGER REFERENCES users(id),
   support_contact TEXT,
   btc_address TEXT,
   eth_address TEXT,
+  email TEXT,
+  home_address TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Idempotent for databases created before these columns existed.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_super_admin BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS home_address TEXT;
 
 CREATE TABLE IF NOT EXISTS balances (
   id SERIAL PRIMARY KEY,
@@ -81,6 +89,18 @@ CREATE TABLE IF NOT EXISTS release_conditions (
   is_active BOOLEAN DEFAULT true
 );
 
+CREATE TABLE IF NOT EXISTS user_documents (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) NOT NULL,
+  uploaded_by_admin_id INTEGER REFERENCES users(id),
+  file_name TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  file_size INTEGER NOT NULL,
+  data TEXT NOT NULL, -- base64-encoded file contents
+  note TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   id SERIAL PRIMARY KEY,
   support_contact TEXT,
@@ -95,6 +115,7 @@ CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
 CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_user_id ON withdrawal_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_users_assigned_admin_id ON users(assigned_admin_id);
+CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON user_documents(user_id);
 
 -- Seed a couple of default investment plans and a release condition (optional)
 INSERT INTO investment_plans (name, description, min_amount, roi_percent, duration_days, currency, is_active)

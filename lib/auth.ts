@@ -123,30 +123,34 @@ export function verifyAdminToken(token: string): boolean {
 
 export type AdminIdentity = {
   isAdmin: boolean;
-  /** True for the password-based login (the platform owner) — sees every user. */
+  /** True for the password login OR a Telegram admin flagged is_super_admin — sees every user, no claiming required. */
   isSuperAdmin: boolean;
-  /** The admin's own user id, when authenticated via Telegram (null for the super-admin). */
+  /** True only for the password-based login (the platform owner) — the only identity allowed to grant super-admin status to others. */
+  isOwner: boolean;
+  /** The admin's own user id, when authenticated via Telegram (null for the password login). */
   userId: number | null;
 };
 
 /**
- * Resolves who is making an admin request: either the password-based
- * super-admin (full visibility over all users) or a Telegram-authenticated
- * user flagged is_admin (restricted to users they've claimed).
+ * Resolves who is making an admin request: the password-based owner login
+ * (full visibility, can grant roles), a Telegram-authenticated user flagged
+ * is_super_admin (full visibility, same as the owner but can't grant roles),
+ * or a regular Telegram admin flagged is_admin (restricted to claimed users).
  */
 export async function getAdminIdentity(): Promise<AdminIdentity> {
   const store = await cookies();
   const token = store.get(ADMIN_COOKIE)?.value;
   if (token && verifyAdminToken(token)) {
-    return { isAdmin: true, isSuperAdmin: true, userId: null };
+    return { isAdmin: true, isSuperAdmin: true, isOwner: true, userId: null };
   }
 
   const session = await getSession();
-  if (!session) return { isAdmin: false, isSuperAdmin: false, userId: null };
+  if (!session) return { isAdmin: false, isSuperAdmin: false, isOwner: false, userId: null };
 
-  const rows = await sql`SELECT is_admin FROM users WHERE id = ${session.userId}`;
-  const isAdmin = rows[0]?.is_admin === true;
-  return { isAdmin, isSuperAdmin: false, userId: isAdmin ? session.userId : null };
+  const rows = await sql`SELECT is_admin, is_super_admin FROM users WHERE id = ${session.userId}`;
+  const isSuperAdmin = rows[0]?.is_super_admin === true;
+  const isAdmin = isSuperAdmin || rows[0]?.is_admin === true;
+  return { isAdmin, isSuperAdmin, isOwner: false, userId: isAdmin ? session.userId : null };
 }
 
 export async function getAdminSession(): Promise<boolean> {

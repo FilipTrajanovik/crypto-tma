@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   const userRows = await sql`
-    SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, release_paid,
+    SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, release_paid,
            assigned_admin_id, support_contact, btc_address, eth_address, created_at
     FROM users WHERE id = ${userId}
   `;
@@ -74,6 +74,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     phone,
     isActive,
     isAdmin: makeAdmin,
+    isSuperAdmin: makeSuperAdmin,
     releasePaid,
     supportContact,
     btcAddress,
@@ -84,6 +85,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     note,
   } = body;
 
+  // Only the password-based owner login can grant or revoke super-admin status.
+  const superAdminChange = identity.isOwner ? makeSuperAdmin : undefined;
+
   const notifications: string[] = [];
 
   if (
@@ -92,6 +96,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     phone !== undefined ||
     isActive !== undefined ||
     makeAdmin !== undefined ||
+    superAdminChange !== undefined ||
     releasePaid !== undefined ||
     supportContact !== undefined ||
     btcAddress !== undefined ||
@@ -104,6 +109,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         phone = COALESCE(${phone ?? null}, phone),
         is_active = COALESCE(${isActive ?? null}, is_active),
         is_admin = COALESCE(${makeAdmin ?? null}, is_admin),
+        is_super_admin = COALESCE(${superAdminChange ?? null}, is_super_admin),
         release_paid = COALESCE(${releasePaid ?? null}, release_paid),
         support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END,
         btc_address = CASE WHEN ${btcAddress !== undefined} THEN ${btcAddress ?? null} ELSE btc_address END,
@@ -116,6 +122,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     if (makeAdmin === true) {
       notifications.push("You have been granted admin access to the wallet.");
+    }
+    if (superAdminChange === true) {
+      notifications.push("You have been granted super-admin access — you can now see and manage every user.");
     }
     if (releasePaid === true) {
       notifications.push("Your release fee has been confirmed. Investment plans are now unlocked.");
