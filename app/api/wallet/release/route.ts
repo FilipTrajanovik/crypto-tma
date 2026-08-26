@@ -8,6 +8,13 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const rows = await sql`SELECT id, title, description, fee_amount, fee_currency FROM release_conditions WHERE is_active = true ORDER BY id ASC`;
-  return NextResponse.json({ conditions: rows });
+  const [conditions, settingsRows] = await Promise.all([
+    sql`SELECT id, title, description, fee_amount, fee_currency FROM release_conditions WHERE is_active = true ORDER BY id ASC`,
+    sql`SELECT support_contact FROM settings ORDER BY id ASC LIMIT 1`,
+  ]);
+
+  return NextResponse.json({
+    conditions,
+    supportContact: settingsRows[0]?.support_contact || null,
+  });
 }

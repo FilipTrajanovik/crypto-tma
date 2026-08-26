@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/app/components/BottomNav";
+import { DepositIcon, WithdrawIcon, InvestIcon, ReleaseIcon, HistoryIconLg } from "@/app/components/icons";
 
 type BalanceData = {
   user: { firstName: string | null; lastName: string | null; username: string | null; avatarUrl: string | null; phone: string | null };
@@ -20,11 +21,11 @@ function formatCrypto(value: number, decimals = 6) {
 }
 
 const actions = [
-  { href: "/wallet/deposit", label: "Deposit", icon: "↓" },
-  { href: "/wallet/withdraw", label: "Withdraw", icon: "↑" },
-  { href: "/wallet/invest", label: "Invest", icon: "📈" },
-  { href: "/wallet/release", label: "Release", icon: "🔓" },
-  { href: "/wallet/history", label: "History", icon: "🕓" },
+  { href: "/wallet/deposit", label: "Deposit", Icon: DepositIcon },
+  { href: "/wallet/withdraw", label: "Withdraw", Icon: WithdrawIcon },
+  { href: "/wallet/invest", label: "Invest", Icon: InvestIcon },
+  { href: "/wallet/release", label: "Release", Icon: ReleaseIcon },
+  { href: "/wallet/history", label: "History", Icon: HistoryIconLg },
 ];
 
 export default function WalletPage() {
@@ -133,14 +134,16 @@ export default function WalletPage() {
       </section>
 
       <section className="px-5 grid grid-cols-5 gap-2 mb-6">
-        {actions.map((action) => (
+        {actions.map(({ href, label, Icon }) => (
           <Link
-            key={action.href}
-            href={action.href}
-            className="flex flex-col items-center gap-2 bg-card hover:bg-white/5 transition-colors rounded-2xl py-4 border border-white/5"
+            key={href}
+            href={href}
+            className="flex flex-col items-center gap-2 bg-card hover:bg-white/5 active:scale-95 transition-all rounded-2xl py-4 border border-white/5"
           >
-            <span className="text-xl">{action.icon}</span>
-            <span className="text-[11px] text-muted text-center leading-tight">{action.label}</span>
+            <span className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+              <Icon className="w-4 h-4" />
+            </span>
+            <span className="text-[11px] text-muted text-center leading-tight">{label}</span>
           </Link>
         ))}
       </section>

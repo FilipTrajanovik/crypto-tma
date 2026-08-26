@@ -32,6 +32,7 @@ export default function InvestPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [releasePaid, setReleasePaid] = useState(true);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/wallet/invest");
@@ -39,6 +40,7 @@ export default function InvestPage() {
       const data = await res.json();
       setPlans(data.plans);
       setInvestments(data.investments);
+      setReleasePaid(data.releasePaid);
     }
     setLoading(false);
   }, []);
@@ -89,6 +91,23 @@ export default function InvestPage() {
         <h1 className="text-xl font-semibold">Invest</h1>
       </div>
 
+      {!releasePaid ? (
+        <div className="bg-card rounded-2xl p-6 border border-white/5 text-center mb-6">
+          <div className="text-4xl mb-3">🔒</div>
+          <p className="font-semibold mb-2">Investment plans are locked</p>
+          <p className="text-sm text-muted mb-5 leading-relaxed">
+            Investment plans unlock once your release fee has been paid and confirmed. Head to Release Funds to see
+            what&apos;s required.
+          </p>
+          <Link
+            href="/wallet/release"
+            className="inline-block bg-accent hover:bg-accent-dark transition-colors text-navy font-semibold px-6 py-2.5 rounded-xl text-sm"
+          >
+            Go to Release Funds
+          </Link>
+        </div>
+      ) : (
+      <>
       <h2 className="text-sm font-semibold text-muted mb-3">Available Plans</h2>
       <div className="space-y-3 mb-6">
         {plans.length === 0 && <p className="text-muted text-sm">No active investment plans right now.</p>}
@@ -142,6 +161,8 @@ export default function InvestPage() {
             {submitting ? "Submitting..." : "Confirm Investment"}
           </button>
         </form>
+      )}
+      </>
       )}
 
       <h2 className="text-sm font-semibold text-muted mb-3">Your Investments</h2>

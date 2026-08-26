@@ -14,6 +14,8 @@ type UserDetail = {
     username: string | null;
     phone: string | null;
     is_active: boolean;
+    is_admin: boolean;
+    release_paid: boolean;
     created_at: string;
   };
   balance: { btc_amount: string; eth_amount: string; usd_cash: string };
@@ -107,6 +109,26 @@ export default function AdminUserDetailPage() {
     load();
   };
 
+  const toggleAdmin = async () => {
+    if (!data) return;
+    await fetch(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isAdmin: !data.user.is_admin }),
+    });
+    load();
+  };
+
+  const toggleReleasePaid = async () => {
+    if (!data) return;
+    await fetch(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ releasePaid: !data.user.release_paid }),
+    });
+    load();
+  };
+
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -124,19 +146,33 @@ export default function AdminUserDetailPage() {
       <main className="max-w-4xl mx-auto px-5 py-6">
         <Link href="/admin/dashboard" className="text-muted text-sm mb-4 inline-block">← Back to dashboard</Link>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
             <h1 className="text-xl font-semibold">{displayName}</h1>
             <p className="text-sm text-muted">
               {user.username ? `@${user.username}` : "no username"} · Telegram ID {user.telegram_id} · {user.phone || "no phone"}
             </p>
           </div>
-          <button
-            onClick={toggleActive}
-            className={`text-xs px-3 py-1.5 rounded-full ${user.is_active ? "bg-accent/15 text-accent" : "bg-danger/15 text-danger"}`}
-          >
-            {user.is_active ? "Active" : "Inactive"} — toggle
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={toggleActive}
+              className={`text-xs px-3 py-1.5 rounded-full ${user.is_active ? "bg-accent/15 text-accent" : "bg-danger/15 text-danger"}`}
+            >
+              {user.is_active ? "Active" : "Inactive"} — toggle
+            </button>
+            <button
+              onClick={toggleAdmin}
+              className={`text-xs px-3 py-1.5 rounded-full ${user.is_admin ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
+            >
+              {user.is_admin ? "Admin" : "Not admin"} — toggle
+            </button>
+            <button
+              onClick={toggleReleasePaid}
+              className={`text-xs px-3 py-1.5 rounded-full ${user.release_paid ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
+            >
+              {user.release_paid ? "Release paid" : "Release unpaid"} — toggle
+            </button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">

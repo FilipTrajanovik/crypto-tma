@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   phone TEXT,
   avatar_url TEXT,
   is_active BOOLEAN DEFAULT true,
+  is_admin BOOLEAN DEFAULT false,
+  release_paid BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -75,6 +77,12 @@ CREATE TABLE IF NOT EXISTS release_conditions (
   is_active BOOLEAN DEFAULT true
 );
 
+CREATE TABLE IF NOT EXISTS settings (
+  id SERIAL PRIMARY KEY,
+  support_contact TEXT,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_balances_user_id ON balances(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
@@ -93,3 +101,7 @@ WHERE NOT EXISTS (SELECT 1 FROM investment_plans WHERE name = 'Growth Plan');
 INSERT INTO release_conditions (title, description, fee_amount, fee_currency, is_active)
 SELECT 'Standard Release', 'Funds can be released after a network processing fee is paid to cover blockchain gas costs.', 50, 'USD', true
 WHERE NOT EXISTS (SELECT 1 FROM release_conditions);
+
+INSERT INTO settings (support_contact)
+SELECT ''
+WHERE NOT EXISTS (SELECT 1 FROM settings);

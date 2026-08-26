@@ -2,10 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import BottomNav from "@/app/components/BottomNav";
 
 type ProfileData = {
-  user: { firstName: string | null; lastName: string | null; username: string | null; avatarUrl: string | null; phone: string | null };
+  user: {
+    firstName: string | null;
+    lastName: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+    phone: string | null;
+    isAdmin: boolean;
+  };
 };
 
 export default function ProfilePage() {
@@ -59,6 +67,19 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+      )}
+
+      {data?.user.isAdmin && (
+        <Link
+          href="/admin/dashboard"
+          className="w-full flex items-center justify-between bg-card hover:bg-white/5 border border-accent/30 transition-colors rounded-xl px-5 py-4 mb-4"
+        >
+          <div>
+            <p className="font-semibold text-accent">Admin Panel</p>
+            <p className="text-xs text-muted">Manage users, withdrawals, plans & release conditions</p>
+          </div>
+          <span className="text-accent text-lg">→</span>
+        </Link>
       )}
 
       <button

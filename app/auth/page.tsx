@@ -114,13 +114,22 @@ export default function AuthPage() {
   }
 
   if (status === "no-telegram") {
+    const botUsername = process.env.NEXT_PUBLIC_BOT_USERNAME;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
         <div className="text-5xl mb-2">📱</div>
         <h1 className="text-xl font-semibold">Open in Telegram</h1>
         <p className="text-muted text-sm max-w-xs">
-          This wallet only works inside the Telegram app. Please open it from your Telegram bot&apos;s menu button.
+          This wallet only works inside the Telegram app. Tap below to open it in Telegram.
         </p>
+        {botUsername && (
+          <a
+            href={`https://t.me/${botUsername}`}
+            className="mt-2 bg-accent hover:bg-accent-dark transition-colors text-navy font-semibold px-6 py-3 rounded-xl w-full max-w-xs"
+          >
+            Open in Telegram
+          </a>
+        )}
       </div>
     );
   }

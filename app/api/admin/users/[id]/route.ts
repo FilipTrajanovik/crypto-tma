@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const isAdmin = await getAdminSession();
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   const [userRows, balanceRows, transactionRows, investmentRows, withdrawalRows] = await Promise.all([
-    sql`SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, created_at FROM users WHERE id = ${userId}`,
+    sql`SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, release_paid, created_at FROM users WHERE id = ${userId}`,
     sql`SELECT btc_amount, eth_amount, usd_cash, updated_at FROM balances WHERE user_id = ${userId}`,
     sql`SELECT id, type, amount, currency, status, note, created_at FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`,
     sql`
@@ -50,17 +51,38 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const body = await req.json();
-  const { firstName, lastName, phone, isActive, btcAmount, ethAmount, usdCash, note } = body;
+  const { firstName, lastName, phone, isActive, isAdmin: makeAdmin, releasePaid, btcAmount, ethAmount, usdCash, note } = body;
 
-  if (firstName !== undefined || lastName !== undefined || phone !== undefined || isActive !== undefined) {
+  const notifications: string[] = [];
+
+  if (
+    firstName !== undefined ||
+    lastName !== undefined ||
+    phone !== undefined ||
+    isActive !== undefined ||
+    makeAdmin !== undefined ||
+    releasePaid !== undefined
+  ) {
     await sql`
       UPDATE users SET
         first_name = COALESCE(${firstName ?? null}, first_name),
         last_name = COALESCE(${lastName ?? null}, last_name),
         phone = COALESCE(${phone ?? null}, phone),
-        is_active = COALESCE(${isActive ?? null}, is_active)
+        is_active = COALESCE(${isActive ?? null}, is_active),
+        is_admin = COALESCE(${makeAdmin ?? null}, is_admin),
+        release_paid = COALESCE(${releasePaid ?? null}, release_paid)
       WHERE id = ${userId}
     `;
+
+    if (isActive !== undefined) {
+      notifications.push(isActive ? "Your account has been reactivated." : "Your account has been deactivated.");
+    }
+    if (makeAdmin === true) {
+      notifications.push("You have been granted admin access to the wallet.");
+    }
+    if (releasePaid === true) {
+      notifications.push("Your release fee has been confirmed. Investment plans are now unlocked.");
+    }
   }
 
   if (btcAmount !== undefined || ethAmount !== undefined || usdCash !== undefined) {
@@ -80,11 +102,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       INSERT INTO transactions (user_id, type, amount, currency, status, note)
       VALUES (${userId}, 'adjustment', 0, 'USD', 'completed', ${note || "Balance adjusted by admin"})
     `;
+
+    notifications.push(
+      `Your balance was updated: ${newBtc} BTC, ${newEth} ETH, $${newUsd} cash.${note ? ` Note: ${note}` : ""}`
+    );
   } else if (note) {
     await sql`
       INSERT INTO transactions (user_id, type, amount, currency, status, note)
       VALUES (${userId}, 'adjustment', 0, 'USD', 'completed', ${note})
     `;
+    notifications.push(`A note was added to your account: ${note}`);
+  }
+
+  if (notifications.length > 0) {
+    const userRows = await sql`SELECT telegram_id FROM users WHERE id = ${userId}`;
+    const telegramId = userRows[0]?.telegram_id;
+    if (telegramId) {
+      await sendTelegramMessage(telegramId, notifications.join("\n\n"));
+    }
   }
 
   return NextResponse.json({ success: true });

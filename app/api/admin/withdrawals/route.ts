@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function GET(req: NextRequest) {
   const isAdmin = await getAdminSession();
@@ -46,7 +47,12 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const rows = await sql`SELECT id, user_id, amount, currency, status FROM withdrawal_requests WHERE id = ${id}`;
+  const rows = await sql`
+    SELECT w.id, w.user_id, w.amount, w.currency, w.status, u.telegram_id
+    FROM withdrawal_requests w
+    JOIN users u ON u.id = w.user_id
+    WHERE w.id = ${id}
+  `;
   const withdrawal = rows[0];
   if (!withdrawal) {
     return NextResponse.json({ error: "Withdrawal not found" }, { status: 404 });
@@ -72,6 +78,14 @@ export async function PATCH(req: NextRequest) {
       INSERT INTO transactions (user_id, type, amount, currency, status, note)
       VALUES (${withdrawal.user_id}, 'withdrawal', ${withdrawal.amount}, ${withdrawal.currency}, 'rejected', ${adminNote || "Withdrawal rejected"})
     `;
+  }
+
+  if (withdrawal.telegram_id) {
+    const message =
+      status === "approved"
+        ? `Your withdrawal of ${withdrawal.amount} ${withdrawal.currency} has been approved.${adminNote ? ` Note: ${adminNote}` : ""}`
+        : `Your withdrawal of ${withdrawal.amount} ${withdrawal.currency} has been rejected.${adminNote ? ` Note: ${adminNote}` : ""}`;
+    await sendTelegramMessage(withdrawal.telegram_id, message);
   }
 
   return NextResponse.json({ success: true });

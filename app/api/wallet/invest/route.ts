@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [plans, investments] = await Promise.all([
+  const [plans, investments, userRows] = await Promise.all([
     sql`SELECT id, name, description, min_amount, roi_percent, duration_days, currency FROM investment_plans WHERE is_active = true ORDER BY min_amount ASC`,
     sql`
       SELECT i.id, i.amount, i.currency, i.status, i.started_at, i.matures_at, p.name AS plan_name, p.roi_percent
@@ -17,9 +17,12 @@ export async function GET() {
       WHERE i.user_id = ${session.userId}
       ORDER BY i.started_at DESC
     `,
+    sql`SELECT release_paid FROM users WHERE id = ${session.userId}`,
   ]);
 
-  return NextResponse.json({ plans, investments });
+  const releasePaid = userRows[0]?.release_paid === true;
+
+  return NextResponse.json({ plans: releasePaid ? plans : [], investments, releasePaid });
 }
 
 export async function POST(req: NextRequest) {

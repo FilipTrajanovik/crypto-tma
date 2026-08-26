@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { sql } from "@/lib/db";
 
 const SESSION_COOKIE = "session";
 const ADMIN_COOKIE = "admin_session";
@@ -123,8 +124,15 @@ export function verifyAdminToken(token: string): boolean {
 export async function getAdminSession(): Promise<boolean> {
   const store = await cookies();
   const token = store.get(ADMIN_COOKIE)?.value;
-  if (!token) return false;
-  return verifyAdminToken(token);
+  if (token && verifyAdminToken(token)) return true;
+
+  // Fall back to a Telegram-authenticated user flagged as admin, so admins
+  // can manage the platform from inside the Mini App without the password.
+  const session = await getSession();
+  if (!session) return false;
+
+  const rows = await sql`SELECT is_admin FROM users WHERE id = ${session.userId}`;
+  return rows[0]?.is_admin === true;
 }
 
 export async function setAdminSessionCookie(token: string) {

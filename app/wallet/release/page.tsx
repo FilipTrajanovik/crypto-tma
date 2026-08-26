@@ -11,26 +11,30 @@ type Condition = {
   fee_currency: string;
 };
 
-const SUPPORT_USERNAME = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
+const FALLBACK_SUPPORT = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
 
 export default function ReleasePage() {
   const [conditions, setConditions] = useState<Condition[]>([]);
+  const [supportContact, setSupportContact] = useState(FALLBACK_SUPPORT);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/wallet/release")
       .then((res) => res.json())
-      .then((data) => setConditions(data.conditions || []))
+      .then((data) => {
+        setConditions(data.conditions || []);
+        if (data.supportContact) setSupportContact(data.supportContact);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const handleContactSupport = () => {
-    const url = `https://t.me/${SUPPORT_USERNAME}`;
+    const target = supportContact.startsWith("http") ? supportContact : `https://t.me/${supportContact.replace(/^@/, "")}`;
     const tg = (window as unknown as { Telegram?: { WebApp?: { openTelegramLink?: (url: string) => void } } }).Telegram;
     if (tg?.WebApp?.openTelegramLink) {
-      tg.WebApp.openTelegramLink(url);
+      tg.WebApp.openTelegramLink(target);
     } else {
-      window.open(url, "_blank");
+      window.open(target, "_blank");
     }
   };
 
