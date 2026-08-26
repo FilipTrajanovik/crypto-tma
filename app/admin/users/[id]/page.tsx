@@ -30,6 +30,10 @@ type UserDetail = {
     support_contact: string | null;
     btc_address: string | null;
     eth_address: string | null;
+    release_fee_title: string | null;
+    release_fee_note: string | null;
+    release_fee_amount: string | null;
+    release_fee_currency: string | null;
     created_at: string;
   };
   balance: { btc_amount: string; eth_amount: string; usd_cash: string };
@@ -71,6 +75,10 @@ export default function AdminUserDetailPage() {
   const [supportContact, setSupportContact] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
   const [ethAddress, setEthAddress] = useState("");
+  const [releaseFeeTitle, setReleaseFeeTitle] = useState("");
+  const [releaseFeeNote, setReleaseFeeNote] = useState("");
+  const [releaseFeeAmount, setReleaseFeeAmount] = useState("");
+  const [releaseFeeCurrency, setReleaseFeeCurrency] = useState("USD");
   const [messageText, setMessageText] = useState("");
   const [usdQuickSet, setUsdQuickSet] = useState("");
   const [prices, setPrices] = useState<{ btc: number; eth: number } | null>(null);
@@ -128,6 +136,10 @@ export default function AdminUserDetailPage() {
       setSupportContact(json.user.support_contact || "");
       setBtcAddress(json.user.btc_address || "");
       setEthAddress(json.user.eth_address || "");
+      setReleaseFeeTitle(json.user.release_fee_title || "");
+      setReleaseFeeNote(json.user.release_fee_note || "");
+      setReleaseFeeAmount(json.user.release_fee_amount ?? "");
+      setReleaseFeeCurrency(json.user.release_fee_currency || "USD");
     }
   }, [id, router]);
 
@@ -250,6 +262,45 @@ export default function AdminUserDetailPage() {
         body: JSON.stringify({ supportContact, btcAddress, ethAddress }),
       });
       toast.add({ title: "Saved", type: "success" });
+      load();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveReleaseFee = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          releaseFeeTitle: releaseFeeTitle || null,
+          releaseFeeNote: releaseFeeNote || null,
+          releaseFeeAmount: releaseFeeAmount === "" ? null : Number(releaseFeeAmount),
+          releaseFeeCurrency: releaseFeeCurrency || null,
+        }),
+      });
+      toast.add({ title: "Release fee saved", type: "success" });
+      load();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearReleaseFee = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ releaseFeeTitle: null, releaseFeeNote: null, releaseFeeAmount: null, releaseFeeCurrency: null }),
+      });
+      setReleaseFeeTitle("");
+      setReleaseFeeNote("");
+      setReleaseFeeAmount("");
+      setReleaseFeeCurrency("USD");
+      toast.add({ title: "Release fee cleared", type: "success" });
       load();
     } finally {
       setSaving(false);
@@ -571,6 +622,71 @@ export default function AdminUserDetailPage() {
           >
             Save
           </Button>
+        </Card>
+
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Release Fee</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Configured per user — shown on this user&apos;s Release Funds page. Leave the amount blank to show
+            &quot;no release fee configured&quot; instead.
+          </p>
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Title</Label>
+              <Input
+                value={releaseFeeTitle}
+                onChange={(e) => setReleaseFeeTitle(e.target.value)}
+                placeholder="e.g. Standard Release"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Note (optional)</Label>
+              <Input
+                value={releaseFeeNote}
+                onChange={(e) => setReleaseFeeNote(e.target.value)}
+                placeholder="Shown under the title"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Fee Amount</Label>
+              <Input
+                type="number"
+                step="any"
+                value={releaseFeeAmount}
+                onChange={(e) => setReleaseFeeAmount(e.target.value)}
+                placeholder="e.g. 50"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Fee Currency</Label>
+              <Input
+                value={releaseFeeCurrency}
+                onChange={(e) => setReleaseFeeCurrency(e.target.value)}
+                placeholder="USD"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSaveReleaseFee}
+              disabled={saving}
+              className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+            >
+              Save
+            </Button>
+            <Button
+              onClick={handleClearReleaseFee}
+              disabled={saving}
+              variant="outline"
+              className="border-patriot-red text-patriot-red hover:bg-patriot-red/10 font-bold uppercase tracking-wide disabled:opacity-60"
+            >
+              Clear
+            </Button>
+          </div>
         </Card>
 
         <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">

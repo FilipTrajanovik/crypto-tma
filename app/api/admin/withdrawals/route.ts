@@ -1,40 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminIdentity } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function GET(req: NextRequest) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
+  const statusFilter = status && status !== "all" ? status : null;
 
-  const rows = status && status !== "all"
-    ? await sql`
-        SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
-               u.first_name, u.last_name, u.username, u.telegram_id
-        FROM withdrawal_requests w
-        JOIN users u ON u.id = w.user_id
-        WHERE w.status = ${status}
-        ORDER BY w.created_at DESC
-      `
-    : await sql`
-        SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
-               u.first_name, u.last_name, u.username, u.telegram_id
-        FROM withdrawal_requests w
-        JOIN users u ON u.id = w.user_id
-        ORDER BY w.created_at DESC
-      `;
+  const rows = identity.isSuperAdmin
+    ? statusFilter
+      ? await sql`
+          SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
+                 u.first_name, u.last_name, u.username, u.telegram_id
+          FROM withdrawal_requests w
+          JOIN users u ON u.id = w.user_id
+          WHERE w.status = ${statusFilter}
+          ORDER BY w.created_at DESC
+        `
+      : await sql`
+          SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
+                 u.first_name, u.last_name, u.username, u.telegram_id
+          FROM withdrawal_requests w
+          JOIN users u ON u.id = w.user_id
+          ORDER BY w.created_at DESC
+        `
+    : statusFilter
+      ? await sql`
+          SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
+                 u.first_name, u.last_name, u.username, u.telegram_id
+          FROM withdrawal_requests w
+          JOIN users u ON u.id = w.user_id
+          WHERE w.status = ${statusFilter} AND u.assigned_admin_id = ${identity.userId}
+          ORDER BY w.created_at DESC
+        `
+      : await sql`
+          SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
+                 u.first_name, u.last_name, u.username, u.telegram_id
+          FROM withdrawal_requests w
+          JOIN users u ON u.id = w.user_id
+          WHERE u.assigned_admin_id = ${identity.userId}
+          ORDER BY w.created_at DESC
+        `;
 
   return NextResponse.json({ withdrawals: rows });
 }
 
 export async function PATCH(req: NextRequest) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
@@ -48,7 +67,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const rows = await sql`
-    SELECT w.id, w.user_id, w.amount, w.currency, w.status, u.telegram_id
+    SELECT w.id, w.user_id, w.amount, w.currency, w.status, u.telegram_id, u.assigned_admin_id
     FROM withdrawal_requests w
     JOIN users u ON u.id = w.user_id
     WHERE w.id = ${id}
@@ -56,6 +75,9 @@ export async function PATCH(req: NextRequest) {
   const withdrawal = rows[0];
   if (!withdrawal) {
     return NextResponse.json({ error: "Withdrawal not found" }, { status: 404 });
+  }
+  if (!identity.isSuperAdmin && withdrawal.assigned_admin_id !== identity.userId) {
+    return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
   if (withdrawal.status !== "pending") {
     return NextResponse.json({ error: "Withdrawal already processed" }, { status: 400 });

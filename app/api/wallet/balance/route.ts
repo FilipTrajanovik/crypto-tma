@@ -29,7 +29,9 @@ export async function GET() {
   const usdCash = Number(balance.usd_cash);
   const btcValue = btc * prices.btc;
   const ethValue = eth * prices.eth;
-  const totalValue = btcValue + ethValue + usdCash;
+  // "Total Portfolio Value" is the USD cash balance only, not a blended
+  // conversion of BTC/ETH holdings into USD.
+  const totalValue = usdCash;
 
   return NextResponse.json({
     user: {

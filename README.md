@@ -34,8 +34,9 @@ on first open.
 
    Or paste the contents of `lib/schema.sql` into the Neon SQL editor and run it. This creates all
    tables (`users`, `balances`, `transactions`, `investment_plans`, `investments`,
-   `withdrawal_requests`, `release_conditions`) and seeds two default investment plans plus one
-   release condition.
+   `withdrawal_requests`, `user_documents`) and seeds two default investment plans. The release fee
+   shown to each user (title, note, amount, currency) is configured per user by an admin — there's
+   no platform-wide release fee.
 
 ## 3. Configure environment variables
 
@@ -112,7 +113,7 @@ Now opening your bot in Telegram and tapping the menu button (or the "Open Walle
   /wallet/deposit/page.tsx        BTC/ETH deposit addresses + QR codes
   /wallet/withdraw/page.tsx       withdrawal request form + history
   /wallet/invest/page.tsx         investment plans + user investments
-  /wallet/release/page.tsx        release conditions + contact support
+  /wallet/release/page.tsx        per-user release fee + contact support
   /wallet/history/page.tsx        paginated, filterable transaction history
   /wallet/profile/page.tsx        user profile + logout
   /admin/page.tsx                 admin login

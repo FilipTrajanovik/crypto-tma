@@ -4,21 +4,22 @@ import { useEffect, useState } from "react";
 import PageHeader from "@/app/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lock, MessageCircle } from "lucide-react";
+import { Lock, MessageCircle, CheckCircle2 } from "lucide-react";
 
-type Condition = {
-  id: number;
+type Fee = {
   title: string;
-  description: string | null;
-  fee_amount: string;
-  fee_currency: string;
+  note: string | null;
+  amount: string;
+  currency: string;
 };
 
 const FALLBACK_SUPPORT = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
 
 export default function ReleasePage() {
-  const [conditions, setConditions] = useState<Condition[]>([]);
+  const [fee, setFee] = useState<Fee | null>(null);
+  const [releasePaid, setReleasePaid] = useState(false);
   const [supportContact, setSupportContact] = useState(FALLBACK_SUPPORT);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +28,8 @@ export default function ReleasePage() {
       fetch("/api/wallet/release")
         .then((res) => res.json())
         .then((data) => {
-          setConditions(data.conditions || []);
+          setFee(data.fee);
+          setReleasePaid(data.releasePaid === true);
           if (data.supportContact) setSupportContact(data.supportContact);
         })
         .finally(() => {
@@ -57,8 +59,8 @@ export default function ReleasePage() {
         <div className="flex gap-3">
           <Lock className="w-5 h-5 text-patriot-red shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Your invested and locked funds can be released once the conditions below are met. Review the
-            requirements, then contact your account manager to begin the release process.
+            Your invested and locked funds can be released once your account manager confirms the fee below has
+            been paid.
           </p>
         </div>
       </Card>
@@ -67,19 +69,28 @@ export default function ReleasePage() {
         <div className="space-y-3 mb-6">
           <Skeleton className="h-32 w-full rounded-2xl bg-card-navy" />
         </div>
-      ) : conditions.length === 0 ? (
-        <p className="text-muted-foreground text-sm text-center py-6">No release conditions configured right now</p>
+      ) : !fee ? (
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6 text-center">
+          <p className="text-muted-foreground text-sm">
+            No release fee has been set up for your account yet. Contact your account manager below.
+          </p>
+        </Card>
       ) : (
         <div className="space-y-3 mb-6">
-          {conditions.map((c) => (
-            <Card key={c.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
-              <p className="font-bold text-white uppercase mb-1">{c.title}</p>
-              {c.description && <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{c.description}</p>}
-              <p className="text-2xl font-bold text-patriot-red">
-                {Number(c.fee_amount).toLocaleString()} <span className="text-base">{c.fee_currency}</span>
-              </p>
-            </Card>
-          ))}
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+            <div className="flex justify-between items-start mb-1">
+              <p className="font-bold text-white uppercase">{fee.title}</p>
+              {releasePaid && (
+                <Badge variant="outline" className="bg-green-500/15 text-green-400 border-green-500/30 whitespace-nowrap">
+                  <CheckCircle2 className="w-3 h-3 mr-1" /> Paid
+                </Badge>
+              )}
+            </div>
+            {fee.note && <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{fee.note}</p>}
+            <p className="text-2xl font-bold text-patriot-red">
+              {Number(fee.amount).toLocaleString()} <span className="text-base">{fee.currency}</span>
+            </p>
+          </Card>
         </div>
       )}
 

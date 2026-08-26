@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminIdentity } from "@/lib/auth";
 
 export async function GET() {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
@@ -13,9 +13,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (!identity.isSuperAdmin) {
+    return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 
   const body = await req.json();
@@ -35,9 +38,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (!identity.isSuperAdmin) {
+    return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 
   const body = await req.json();
@@ -64,9 +70,12 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (!identity.isSuperAdmin) {
+    return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

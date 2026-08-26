@@ -48,12 +48,17 @@ export default function AdminPlansPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/plans");
-    if (res.status === 401) {
+    const [whoamiRes, res] = await Promise.all([fetch("/api/admin/whoami"), fetch("/api/admin/plans")]);
+    if (whoamiRes.status === 401 || res.status === 401) {
       router.replace("/admin");
       return;
+    }
+    if (whoamiRes.ok) {
+      const identity = await whoamiRes.json();
+      setIsSuperAdmin(identity.isSuperAdmin);
     }
     if (res.ok) {
       const data = await res.json();
@@ -131,10 +136,15 @@ export default function AdminPlansPage() {
       <main className="max-w-4xl mx-auto px-5 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold uppercase tracking-widest text-gold">Investment Plans</h1>
-          <Button onClick={openNew} className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95">
-            <Plus className="w-4 h-4 mr-1" /> Add New Plan
-          </Button>
+          {isSuperAdmin && (
+            <Button onClick={openNew} className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95">
+              <Plus className="w-4 h-4 mr-1" /> Add New Plan
+            </Button>
+          )}
         </div>
+        {!isSuperAdmin && (
+          <p className="text-sm text-muted-foreground mb-4">Plans are platform-wide and managed by the super-admin. View only.</p>
+        )}
 
         {loading ? (
           <Skeleton className="h-64 w-full rounded-2xl bg-card-navy" />
@@ -150,7 +160,7 @@ export default function AdminPlansPage() {
                     <TableHead className="text-muted-foreground">Min Amount</TableHead>
                     <TableHead className="text-muted-foreground">Currency</TableHead>
                     <TableHead className="text-muted-foreground">Active</TableHead>
-                    <TableHead className="text-muted-foreground">Actions</TableHead>
+                    {isSuperAdmin && <TableHead className="text-muted-foreground">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -170,18 +180,20 @@ export default function AdminPlansPage() {
                           {plan.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => openEdit(plan)} className="border-gold text-gold hover:bg-gold/10">
-                            Edit
-                          </Button>
-                          {plan.is_active && (
-                            <Button size="sm" variant="outline" onClick={() => handleDelete(plan.id)} className="border-patriot-red text-patriot-red hover:bg-patriot-red/10">
-                              Delete
+                      {isSuperAdmin && (
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => openEdit(plan)} className="border-gold text-gold hover:bg-gold/10">
+                              Edit
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                            {plan.is_active && (
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(plan.id)} className="border-patriot-red text-patriot-red hover:bg-patriot-red/10">
+                                Delete
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

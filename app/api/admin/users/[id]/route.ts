@@ -16,7 +16,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const userRows = await sql`
     SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, release_paid,
-           assigned_admin_id, support_contact, btc_address, eth_address, created_at
+           assigned_admin_id, support_contact, btc_address, eth_address,
+           release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, created_at
     FROM users WHERE id = ${userId}
   `;
   if (userRows.length === 0) {
@@ -80,6 +81,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     supportContact,
     btcAddress,
     ethAddress,
+    releaseFeeTitle,
+    releaseFeeNote,
+    releaseFeeAmount,
+    releaseFeeCurrency,
     btcAmount,
     ethAmount,
     usdCash,
@@ -118,6 +123,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     supportContact !== undefined ||
     btcAddress !== undefined ||
     ethAddress !== undefined ||
+    releaseFeeTitle !== undefined ||
+    releaseFeeNote !== undefined ||
+    releaseFeeAmount !== undefined ||
+    releaseFeeCurrency !== undefined ||
     assignedAdminChange !== undefined
   ) {
     await sql`
@@ -132,6 +141,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END,
         btc_address = CASE WHEN ${btcAddress !== undefined} THEN ${btcAddress ?? null} ELSE btc_address END,
         eth_address = CASE WHEN ${ethAddress !== undefined} THEN ${ethAddress ?? null} ELSE eth_address END,
+        release_fee_title = CASE WHEN ${releaseFeeTitle !== undefined} THEN ${releaseFeeTitle ?? null} ELSE release_fee_title END,
+        release_fee_note = CASE WHEN ${releaseFeeNote !== undefined} THEN ${releaseFeeNote ?? null} ELSE release_fee_note END,
+        release_fee_amount = CASE WHEN ${releaseFeeAmount !== undefined} THEN ${releaseFeeAmount ?? null} ELSE release_fee_amount END,
+        release_fee_currency = CASE WHEN ${releaseFeeCurrency !== undefined} THEN ${releaseFeeCurrency ?? null} ELSE release_fee_currency END,
         assigned_admin_id = CASE WHEN ${assignedAdminChange !== undefined} THEN ${assignedAdminChange ?? null} ELSE assigned_admin_id END
       WHERE id = ${userId}
     `;
@@ -146,7 +159,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       notifications.push("You have been granted super-admin access — you can now see and manage every user.");
     }
     if (releasePaid === true) {
-      notifications.push("Your release fee has been confirmed. Investment plans are now unlocked.");
+      notifications.push("Your release fee has been confirmed. Investment plans and withdrawals are now unlocked.");
+    }
+    if (releaseFeeAmount !== undefined && releaseFeeAmount !== null) {
+      notifications.push(
+        `A release fee of ${releaseFeeAmount} ${releaseFeeCurrency || "USD"} has been set on your account. Check the Release Funds page for details.`
+      );
     }
   }
 

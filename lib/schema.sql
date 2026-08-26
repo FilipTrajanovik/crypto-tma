@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS users (
   eth_address TEXT,
   email TEXT,
   home_address TEXT,
+  release_fee_title TEXT,
+  release_fee_note TEXT,
+  release_fee_amount DECIMAL(18,2),
+  release_fee_currency TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -26,6 +30,10 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_super_admin BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS home_address TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_title TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_note TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_amount DECIMAL(18,2);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_currency TEXT;
 
 CREATE TABLE IF NOT EXISTS balances (
   id SERIAL PRIMARY KEY,

@@ -9,10 +9,24 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [conditions, supportContact] = await Promise.all([
-    sql`SELECT id, title, description, fee_amount, fee_currency FROM release_conditions WHERE is_active = true ORDER BY id ASC`,
+  const [userRows, supportContact] = await Promise.all([
+    sql`
+      SELECT release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, release_paid
+      FROM users WHERE id = ${session.userId}
+    `,
     getSupportContactForUser(session.userId),
   ]);
 
-  return NextResponse.json({ conditions, supportContact });
+  const user = userRows[0];
+  const fee =
+    user?.release_fee_amount != null
+      ? {
+          title: user.release_fee_title || "Release Fee",
+          note: user.release_fee_note,
+          amount: user.release_fee_amount,
+          currency: user.release_fee_currency || "USD",
+        }
+      : null;
+
+  return NextResponse.json({ fee, releasePaid: user?.release_paid === true, supportContact });
 }

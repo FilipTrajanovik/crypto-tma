@@ -24,6 +24,10 @@ export type DbUser = {
   eth_address: string | null;
   email: string | null;
   home_address: string | null;
+  release_fee_title: string | null;
+  release_fee_note: string | null;
+  release_fee_amount: string | null;
+  release_fee_currency: string | null;
   created_at: string;
 };
 
