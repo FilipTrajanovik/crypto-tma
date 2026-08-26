@@ -79,12 +79,15 @@ export async function POST(req: NextRequest) {
   `;
 
   const requester = userRows[0];
+  const name = [requester.first_name, requester.last_name].filter(Boolean).join(" ") || requester.username || `User #${session.userId}`;
+  const message = `New withdrawal request: ${name} requested ${amount} ${currency}. Review it in the admin panel.`;
+
   if (requester?.admin_telegram_id) {
-    const name = [requester.first_name, requester.last_name].filter(Boolean).join(" ") || requester.username || `User #${session.userId}`;
-    await sendTelegramMessage(
-      requester.admin_telegram_id,
-      `New withdrawal request: ${name} requested ${amount} ${currency}. Review it in the admin panel.`
-    );
+    await sendTelegramMessage(requester.admin_telegram_id, message);
+  } else {
+    // No claiming admin yet — fall back to notifying every Telegram-flagged super-admin so the request doesn't sit unseen.
+    const superAdmins = await sql`SELECT telegram_id FROM users WHERE is_super_admin = true`;
+    await Promise.all(superAdmins.map((a) => sendTelegramMessage(a.telegram_id, message)));
   }
 
   return NextResponse.json({ withdrawal: rows[0] });
