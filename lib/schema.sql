@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   is_active BOOLEAN DEFAULT true,
   is_admin BOOLEAN DEFAULT false,
   release_paid BOOLEAN DEFAULT false,
+  assigned_admin_id INTEGER REFERENCES users(id),
+  support_contact TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -80,6 +82,8 @@ CREATE TABLE IF NOT EXISTS release_conditions (
 CREATE TABLE IF NOT EXISTS settings (
   id SERIAL PRIMARY KEY,
   support_contact TEXT,
+  btc_address TEXT,
+  eth_address TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -88,6 +92,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
 CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_user_id ON withdrawal_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_users_assigned_admin_id ON users(assigned_admin_id);
 
 -- Seed a couple of default investment plans and a release condition (optional)
 INSERT INTO investment_plans (name, description, min_amount, roi_percent, duration_days, currency, is_active)

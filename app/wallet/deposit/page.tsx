@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 
-const BTC_ADDRESS = process.env.NEXT_PUBLIC_BTC_ADDRESS || "bc1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-const ETH_ADDRESS = process.env.NEXT_PUBLIC_ETH_ADDRESS || "0xE1TH00000000000000000000000000000000";
+const FALLBACK_BTC = process.env.NEXT_PUBLIC_BTC_ADDRESS || "";
+const FALLBACK_ETH = process.env.NEXT_PUBLIC_ETH_ADDRESS || "";
 
 function AddressCard({ label, symbol, address }: { label: string; symbol: string; address: string }) {
   const [qr, setQr] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    if (!address) return;
     QRCode.toDataURL(address, { margin: 1, width: 220, color: { dark: "#0a0f1e", light: "#ffffff" } }).then(setQr);
   }, [address]);
 
@@ -24,6 +25,18 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
       setCopied(false);
     }
   };
+
+  if (!address) {
+    return (
+      <div className="bg-card rounded-2xl p-5 border border-white/5">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">{symbol}</span>
+          <p className="font-semibold">{label} Deposit Address</p>
+        </div>
+        <p className="text-sm text-muted">Not configured yet. Contact support for a deposit address.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card rounded-2xl p-5 border border-white/5">
@@ -54,6 +67,20 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
 }
 
 export default function DepositPage() {
+  const [btcAddress, setBtcAddress] = useState(FALLBACK_BTC);
+  const [ethAddress, setEthAddress] = useState(FALLBACK_ETH);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/wallet/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.btcAddress) setBtcAddress(data.btcAddress);
+        if (data.ethAddress) setEthAddress(data.ethAddress);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="min-h-screen px-5 pt-6 pb-10">
       <div className="flex items-center gap-3 mb-6">
@@ -61,10 +88,14 @@ export default function DepositPage() {
         <h1 className="text-xl font-semibold">Deposit</h1>
       </div>
 
-      <div className="space-y-4">
-        <AddressCard label="Bitcoin" symbol="₿" address={BTC_ADDRESS} />
-        <AddressCard label="Ethereum" symbol="Ξ" address={ETH_ADDRESS} />
-      </div>
+      {loading ? (
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+      ) : (
+        <div className="space-y-4">
+          <AddressCard label="Bitcoin" symbol="₿" address={btcAddress} />
+          <AddressCard label="Ethereum" symbol="Ξ" address={ethAddress} />
+        </div>
+      )}
 
       <div className="mt-6 bg-card border border-white/5 rounded-2xl p-4 text-sm text-muted leading-relaxed">
         After sending, notify your account manager. Deposits are confirmed manually and your balance will be

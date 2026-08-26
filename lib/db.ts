@@ -17,12 +17,16 @@ export type DbUser = {
   is_active: boolean;
   is_admin: boolean;
   release_paid: boolean;
+  assigned_admin_id: number | null;
+  support_contact: string | null;
   created_at: string;
 };
 
 export type DbSettings = {
   id: number;
   support_contact: string | null;
+  btc_address: string | null;
+  eth_address: string | null;
   updated_at: string;
 };
 

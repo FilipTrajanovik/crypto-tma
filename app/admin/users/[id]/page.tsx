@@ -16,6 +16,7 @@ type UserDetail = {
     is_active: boolean;
     is_admin: boolean;
     release_paid: boolean;
+    support_contact: string | null;
     created_at: string;
   };
   balance: { btc_amount: string; eth_amount: string; usd_cash: string };
@@ -30,17 +31,32 @@ export default function AdminUserDetailPage() {
   const id = params.id as string;
 
   const [data, setData] = useState<UserDetail | null>(null);
+  const [forbidden, setForbidden] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [btcAmount, setBtcAmount] = useState("");
   const [ethAmount, setEthAmount] = useState("");
   const [usdCash, setUsdCash] = useState("");
   const [note, setNote] = useState("");
+  const [supportContact, setSupportContact] = useState("");
+  const [messageText, setMessageText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageSent, setMessageSent] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/admin/users/${id}`);
-    if (res.status === 401) {
+    const [whoamiRes, res] = await Promise.all([fetch("/api/admin/whoami"), fetch(`/api/admin/users/${id}`)]);
+
+    if (whoamiRes.status === 401 || res.status === 401) {
       router.replace("/admin");
+      return;
+    }
+    if (whoamiRes.ok) {
+      const identity = await whoamiRes.json();
+      setIsSuperAdmin(identity.isSuperAdmin);
+    }
+    if (res.status === 403) {
+      setForbidden(true);
       return;
     }
     if (res.ok) {
@@ -49,6 +65,7 @@ export default function AdminUserDetailPage() {
       setBtcAmount(json.balance.btc_amount);
       setEthAmount(json.balance.eth_amount);
       setUsdCash(json.balance.usd_cash);
+      setSupportContact(json.user.support_contact || "");
     }
   }, [id, router]);
 
@@ -129,6 +146,57 @@ export default function AdminUserDetailPage() {
     load();
   };
 
+  const handleSaveSupportContact = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supportContact }),
+      });
+      load();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim()) return;
+    setSendingMessage(true);
+    setMessageSent(null);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: messageText }),
+      });
+      if (res.ok) {
+        setMessageSent("Message sent.");
+        setMessageText("");
+        load();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setMessageSent(data.error || "Failed to send message.");
+      }
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  if (forbidden) {
+    return (
+      <div className="min-h-screen">
+        <AdminNav />
+        <main className="max-w-4xl mx-auto px-5 py-6 text-center">
+          <p className="text-danger font-semibold mb-2">You haven&apos;t claimed this user</p>
+          <p className="text-sm text-muted mb-4">Search for them by exact name or phone on the dashboard to claim them first.</p>
+          <Link href="/admin/dashboard" className="text-accent text-sm">← Back to dashboard</Link>
+        </main>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -160,12 +228,14 @@ export default function AdminUserDetailPage() {
             >
               {user.is_active ? "Active" : "Inactive"} — toggle
             </button>
-            <button
-              onClick={toggleAdmin}
-              className={`text-xs px-3 py-1.5 rounded-full ${user.is_admin ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
-            >
-              {user.is_admin ? "Admin" : "Not admin"} — toggle
-            </button>
+            {isSuperAdmin && (
+              <button
+                onClick={toggleAdmin}
+                className={`text-xs px-3 py-1.5 rounded-full ${user.is_admin ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
+              >
+                {user.is_admin ? "Admin" : "Not admin"} — toggle
+              </button>
+            )}
             <button
               onClick={toggleReleasePaid}
               className={`text-xs px-3 py-1.5 rounded-full ${user.release_paid ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
@@ -262,6 +332,51 @@ export default function AdminUserDetailPage() {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-card rounded-2xl p-5 border border-white/5">
+            <h2 className="font-semibold mb-1">Support Contact Override</h2>
+            <p className="text-sm text-muted mb-3">
+              Telegram username shown as this user&apos;s Contact Support. Leave blank to use you (once claimed) or the
+              platform default.
+            </p>
+            <div className="flex gap-2">
+              <input
+                value={supportContact}
+                onChange={(e) => setSupportContact(e.target.value)}
+                placeholder="e.g. your_telegram_username"
+                className="flex-1 bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
+              />
+              <button
+                onClick={handleSaveSupportContact}
+                disabled={saving}
+                className="bg-white/10 hover:bg-white/15 disabled:opacity-60 transition-colors font-semibold px-4 py-2.5 rounded-xl text-sm whitespace-nowrap"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSendMessage} className="bg-card rounded-2xl p-5 border border-white/5">
+            <h2 className="font-semibold mb-1">Send Message via Bot</h2>
+            <p className="text-sm text-muted mb-3">Sends a direct Telegram message to this user right now.</p>
+            <textarea
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Write a message..."
+              rows={3}
+              className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent mb-3"
+            />
+            {messageSent && <p className="text-sm text-accent mb-3">{messageSent}</p>}
+            <button
+              type="submit"
+              disabled={sendingMessage || !messageText.trim()}
+              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold py-2.5 rounded-xl text-sm"
+            >
+              {sendingMessage ? "Sending..." : "Send Message"}
+            </button>
+          </form>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">

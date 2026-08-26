@@ -22,26 +22,16 @@ export default function AdminReleasePage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [supportContact, setSupportContact] = useState("");
-  const [savingSupport, setSavingSupport] = useState(false);
-  const [supportSaved, setSupportSaved] = useState(false);
 
   const load = useCallback(async () => {
-    const [releaseRes, settingsRes] = await Promise.all([
-      fetch("/api/admin/release"),
-      fetch("/api/admin/settings"),
-    ]);
-    if (releaseRes.status === 401 || settingsRes.status === 401) {
+    const res = await fetch("/api/admin/release");
+    if (res.status === 401) {
       router.replace("/admin");
       return;
     }
-    if (releaseRes.ok) {
-      const data = await releaseRes.json();
+    if (res.ok) {
+      const data = await res.json();
       setConditions(data.conditions);
-    }
-    if (settingsRes.ok) {
-      const data = await settingsRes.json();
-      setSupportContact(data.settings?.support_contact || "");
     }
     setLoading(false);
   }, [router]);
@@ -49,23 +39,6 @@ export default function AdminReleasePage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  const handleSaveSupport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingSupport(true);
-    setSupportSaved(false);
-    try {
-      await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supportContact }),
-      });
-      setSupportSaved(true);
-      setTimeout(() => setSupportSaved(false), 2000);
-    } finally {
-      setSavingSupport(false);
-    }
-  };
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -126,29 +99,6 @@ export default function AdminReleasePage() {
       <AdminNav />
       <main className="max-w-4xl mx-auto px-5 py-6">
         <h1 className="text-xl font-semibold mb-6">Release Conditions</h1>
-
-        <form onSubmit={handleSaveSupport} className="bg-card rounded-2xl p-5 border border-white/5 space-y-3 mb-8">
-          <h2 className="font-semibold">Support Contact</h2>
-          <p className="text-sm text-muted">
-            Telegram username (or full t.me link) opened by the &quot;Contact Support&quot; button on the Release
-            Funds page.
-          </p>
-          <div className="flex gap-2">
-            <input
-              value={supportContact}
-              onChange={(e) => setSupportContact(e.target.value)}
-              placeholder="e.g. cryptowallet_support"
-              className="flex-1 bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-            />
-            <button
-              type="submit"
-              disabled={savingSupport}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold px-5 py-2.5 rounded-xl text-sm whitespace-nowrap"
-            >
-              {savingSupport ? "Saving..." : supportSaved ? "Saved!" : "Save"}
-            </button>
-          </div>
-        </form>
 
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-5 border border-white/5 space-y-4 mb-8">
           <h2 className="font-semibold">{editingId ? "Edit Condition" : "New Condition"}</h2>

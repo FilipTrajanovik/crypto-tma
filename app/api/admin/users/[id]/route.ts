@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminIdentity } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
@@ -14,8 +14,21 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
   }
 
-  const [userRows, balanceRows, transactionRows, investmentRows, withdrawalRows] = await Promise.all([
-    sql`SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, release_paid, created_at FROM users WHERE id = ${userId}`,
+  const userRows = await sql`
+    SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, release_paid,
+           assigned_admin_id, support_contact, created_at
+    FROM users WHERE id = ${userId}
+  `;
+  if (userRows.length === 0) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const target = userRows[0];
+  if (!identity.isSuperAdmin && target.assigned_admin_id !== identity.userId) {
+    return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
+  }
+
+  const [balanceRows, transactionRows, investmentRows, withdrawalRows] = await Promise.all([
     sql`SELECT btc_amount, eth_amount, usd_cash, updated_at FROM balances WHERE user_id = ${userId}`,
     sql`SELECT id, type, amount, currency, status, note, created_at FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`,
     sql`
@@ -26,12 +39,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     sql`SELECT id, amount, currency, wallet_address, status, admin_note, created_at FROM withdrawal_requests WHERE user_id = ${userId} ORDER BY created_at DESC`,
   ]);
 
-  if (userRows.length === 0) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
   return NextResponse.json({
-    user: userRows[0],
+    user: target,
     balance: balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0" },
     transactions: transactionRows,
     investments: investmentRows,
@@ -40,8 +49,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const identity = await getAdminIdentity();
+  if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
@@ -50,8 +59,28 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
   }
 
+  const ownerCheck = await sql`SELECT assigned_admin_id FROM users WHERE id = ${userId}`;
+  if (ownerCheck.length === 0) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  if (!identity.isSuperAdmin && ownerCheck[0].assigned_admin_id !== identity.userId) {
+    return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
+  }
+
   const body = await req.json();
-  const { firstName, lastName, phone, isActive, isAdmin: makeAdmin, releasePaid, btcAmount, ethAmount, usdCash, note } = body;
+  const {
+    firstName,
+    lastName,
+    phone,
+    isActive,
+    isAdmin: makeAdmin,
+    releasePaid,
+    supportContact,
+    btcAmount,
+    ethAmount,
+    usdCash,
+    note,
+  } = body;
 
   const notifications: string[] = [];
 
@@ -61,7 +90,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     phone !== undefined ||
     isActive !== undefined ||
     makeAdmin !== undefined ||
-    releasePaid !== undefined
+    releasePaid !== undefined ||
+    supportContact !== undefined
   ) {
     await sql`
       UPDATE users SET
@@ -70,7 +100,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         phone = COALESCE(${phone ?? null}, phone),
         is_active = COALESCE(${isActive ?? null}, is_active),
         is_admin = COALESCE(${makeAdmin ?? null}, is_admin),
-        release_paid = COALESCE(${releasePaid ?? null}, release_paid)
+        release_paid = COALESCE(${releasePaid ?? null}, release_paid),
+        support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END
       WHERE id = ${userId}
     `;
 

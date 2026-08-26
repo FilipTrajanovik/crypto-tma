@@ -121,18 +121,37 @@ export function verifyAdminToken(token: string): boolean {
   }
 }
 
-export async function getAdminSession(): Promise<boolean> {
+export type AdminIdentity = {
+  isAdmin: boolean;
+  /** True for the password-based login (the platform owner) — sees every user. */
+  isSuperAdmin: boolean;
+  /** The admin's own user id, when authenticated via Telegram (null for the super-admin). */
+  userId: number | null;
+};
+
+/**
+ * Resolves who is making an admin request: either the password-based
+ * super-admin (full visibility over all users) or a Telegram-authenticated
+ * user flagged is_admin (restricted to users they've claimed).
+ */
+export async function getAdminIdentity(): Promise<AdminIdentity> {
   const store = await cookies();
   const token = store.get(ADMIN_COOKIE)?.value;
-  if (token && verifyAdminToken(token)) return true;
+  if (token && verifyAdminToken(token)) {
+    return { isAdmin: true, isSuperAdmin: true, userId: null };
+  }
 
-  // Fall back to a Telegram-authenticated user flagged as admin, so admins
-  // can manage the platform from inside the Mini App without the password.
   const session = await getSession();
-  if (!session) return false;
+  if (!session) return { isAdmin: false, isSuperAdmin: false, userId: null };
 
   const rows = await sql`SELECT is_admin FROM users WHERE id = ${session.userId}`;
-  return rows[0]?.is_admin === true;
+  const isAdmin = rows[0]?.is_admin === true;
+  return { isAdmin, isSuperAdmin: false, userId: isAdmin ? session.userId : null };
+}
+
+export async function getAdminSession(): Promise<boolean> {
+  const identity = await getAdminIdentity();
+  return identity.isAdmin;
 }
 
 export async function setAdminSessionCookie(token: string) {
