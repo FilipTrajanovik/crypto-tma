@@ -159,7 +159,7 @@ export default function AuthPage() {
       <div className="absolute inset-0 star-bg pointer-events-none" />
       <ShieldLogo size={64} />
       <div className="relative">
-        <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Meridian Wallet</h1>
+        <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Q F S Wallet</h1>
         <p className="text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
       </div>
       <Separator className="bg-gold/30 w-24 relative" />

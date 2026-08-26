@@ -112,7 +112,7 @@ export default function WalletPage() {
       <header className="relative px-5 pt-6 pb-4">
         <div className="flex items-center justify-between mb-1">
           <ShieldLogo size={32} />
-          <h1 className="text-xl font-bold uppercase tracking-widest text-white">Meridian Wallet</h1>
+          <h1 className="text-xl font-bold uppercase tracking-widest text-white">Q F S Wallet</h1>
           <div className="flex items-center gap-2">
             <Avatar className="w-9 h-9 border border-[#1a3a6e]">
               <AvatarImage src={user.avatarUrl || undefined} alt={displayName} />

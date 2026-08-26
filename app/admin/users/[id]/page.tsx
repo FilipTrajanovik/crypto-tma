@@ -150,13 +150,14 @@ export default function AdminUserDetailPage() {
     loadDocs();
   }, [load, loadDocs]);
 
-  const handleQuickSetUsd = () => {
-    const usd = Number(usdQuickSet);
+  const handleQuickSetUsd = (value: string) => {
+    setUsdQuickSet(value);
+    const usd = Number(value);
     if (!usd || !prices) return;
     setBtcAmount((usd / prices.btc).toFixed(8));
     setEthAmount((usd / prices.eth).toFixed(8));
     setGoldAmount((usd / prices.gold).toFixed(4));
-    toast.add({ title: `Converted $${usd} at live prices`, type: "success" });
+    setUsdCash(usd.toFixed(2));
   };
 
   const handleSaveBalance = async (e: React.FormEvent) => {
@@ -469,31 +470,22 @@ export default function AdminUserDetailPage() {
 
             <div className="bg-navy rounded-xl p-3 mb-4 border border-gold/30">
               <Label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-1.5">
-                <Wand2 className="w-3.5 h-3.5 text-gold" /> Quick Set by USD Value
+                <Wand2 className="w-3.5 h-3.5 text-gold" /> Set Balance by Total Amount
               </Label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  step="any"
-                  value={usdQuickSet}
-                  onChange={(e) => setUsdQuickSet(e.target.value)}
-                  placeholder="Enter USD amount"
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
-                />
-                <Button
-                  type="button"
-                  onClick={handleQuickSetUsd}
-                  disabled={!prices}
-                  className="bg-gold text-navy font-bold whitespace-nowrap hover:brightness-95"
-                >
-                  Convert
-                </Button>
-              </div>
-              {prices && (
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Live: 1 BTC = ${prices.btc.toLocaleString()} · 1 ETH = ${prices.eth.toLocaleString()} · 1 oz Gold = ${prices.gold.toLocaleString()}
-                </p>
-              )}
+              <Input
+                type="number"
+                step="any"
+                value={usdQuickSet}
+                onChange={(e) => handleQuickSetUsd(e.target.value)}
+                disabled={!prices}
+                placeholder="Enter total USD amount"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {prices
+                  ? `Enter one total amount here — it fills BTC, ETH, Gold, and USD Cash below at live prices (1 BTC = $${prices.btc.toLocaleString()} · 1 ETH = $${prices.eth.toLocaleString()} · 1 oz Gold = $${prices.gold.toLocaleString()}).`
+                  : "Loading live prices..."}
+              </p>
             </div>
 
             <form onSubmit={handleSaveBalance} className="space-y-4">
