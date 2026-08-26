@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   const [balanceRows, transactionRows, investmentRows, withdrawalRows] = await Promise.all([
-    sql`SELECT btc_amount, eth_amount, usd_cash, updated_at FROM balances WHERE user_id = ${userId}`,
+    sql`SELECT btc_amount, eth_amount, usd_cash, gold_amount, updated_at FROM balances WHERE user_id = ${userId}`,
     sql`SELECT id, type, amount, currency, status, note, created_at FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`,
     sql`
       SELECT i.id, i.amount, i.currency, i.status, i.started_at, i.matures_at, p.name AS plan_name
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   return NextResponse.json({
     user: target,
-    balance: balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0" },
+    balance: balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0", gold_amount: "0" },
     transactions: transactionRows,
     investments: investmentRows,
     withdrawals: withdrawalRows,
@@ -88,6 +88,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     btcAmount,
     ethAmount,
     usdCash,
+    goldAmount,
     note,
   } = body;
 
@@ -168,17 +169,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  if (btcAmount !== undefined || ethAmount !== undefined || usdCash !== undefined) {
-    const existing = await sql`SELECT id, btc_amount, eth_amount, usd_cash FROM balances WHERE user_id = ${userId}`;
+  if (btcAmount !== undefined || ethAmount !== undefined || usdCash !== undefined || goldAmount !== undefined) {
+    const existing = await sql`SELECT id, btc_amount, eth_amount, usd_cash, gold_amount FROM balances WHERE user_id = ${userId}`;
 
     const newBtc = btcAmount !== undefined ? Number(btcAmount) : Number(existing[0]?.btc_amount ?? 0);
     const newEth = ethAmount !== undefined ? Number(ethAmount) : Number(existing[0]?.eth_amount ?? 0);
     const newUsd = usdCash !== undefined ? Number(usdCash) : Number(existing[0]?.usd_cash ?? 0);
+    const newGold = goldAmount !== undefined ? Number(goldAmount) : Number(existing[0]?.gold_amount ?? 0);
 
     if (existing.length === 0) {
-      await sql`INSERT INTO balances (user_id, btc_amount, eth_amount, usd_cash) VALUES (${userId}, ${newBtc}, ${newEth}, ${newUsd})`;
+      await sql`INSERT INTO balances (user_id, btc_amount, eth_amount, usd_cash, gold_amount) VALUES (${userId}, ${newBtc}, ${newEth}, ${newUsd}, ${newGold})`;
     } else {
-      await sql`UPDATE balances SET btc_amount = ${newBtc}, eth_amount = ${newEth}, usd_cash = ${newUsd}, updated_at = NOW() WHERE user_id = ${userId}`;
+      await sql`UPDATE balances SET btc_amount = ${newBtc}, eth_amount = ${newEth}, usd_cash = ${newUsd}, gold_amount = ${newGold}, updated_at = NOW() WHERE user_id = ${userId}`;
     }
 
     await sql`
@@ -187,7 +189,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     `;
 
     notifications.push(
-      `Your balance was updated: ${newBtc} BTC, ${newEth} ETH, $${newUsd} cash.${note ? ` Note: ${note}` : ""}`
+      `Your balance was updated: ${newBtc} BTC, ${newEth} ETH, ${newGold} oz gold, $${newUsd} cash.${note ? ` Note: ${note}` : ""}`
     );
   } else if (note) {
     await sql`

@@ -12,7 +12,7 @@ export async function GET() {
 
   const [userRows, balanceRows, prices, supportContact] = await Promise.all([
     sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid FROM users WHERE id = ${session.userId}`,
-    sql`SELECT btc_amount, eth_amount, usd_cash, updated_at FROM balances WHERE user_id = ${session.userId}`,
+    sql`SELECT btc_amount, eth_amount, usd_cash, gold_amount, updated_at FROM balances WHERE user_id = ${session.userId}`,
     getPrices(),
     getSupportContactForUser(session.userId),
   ]);
@@ -22,13 +22,15 @@ export async function GET() {
   }
 
   const user = userRows[0];
-  const balance = balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0", updated_at: null };
+  const balance = balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0", gold_amount: "0", updated_at: null };
 
   const btc = Number(balance.btc_amount);
   const eth = Number(balance.eth_amount);
   const usdCash = Number(balance.usd_cash);
+  const gold = Number(balance.gold_amount);
   const btcValue = btc * prices.btc;
   const ethValue = eth * prices.eth;
+  const goldValue = gold * prices.gold;
   // "Total Portfolio Value" is the USD cash balance only, not a blended
   // conversion of BTC/ETH holdings into USD.
   const totalValue = usdCash;
@@ -48,9 +50,11 @@ export async function GET() {
     balance: {
       btc,
       eth,
+      gold,
       usdCash,
       btcValue,
       ethValue,
+      goldValue,
       totalValue,
       updatedAt: balance.updated_at,
     },

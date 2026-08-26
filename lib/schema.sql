@@ -41,8 +41,11 @@ CREATE TABLE IF NOT EXISTS balances (
   btc_amount DECIMAL(18,8) DEFAULT 0,
   eth_amount DECIMAL(18,8) DEFAULT 0,
   usd_cash DECIMAL(18,2) DEFAULT 0,
+  gold_amount DECIMAL(18,4) DEFAULT 0, -- troy ounces
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE balances ADD COLUMN IF NOT EXISTS gold_amount DECIMAL(18,4) DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS transactions (
   id SERIAL PRIMARY KEY,

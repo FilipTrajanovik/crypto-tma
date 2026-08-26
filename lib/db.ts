@@ -45,6 +45,7 @@ export type DbBalance = {
   btc_amount: string;
   eth_amount: string;
   usd_cash: string;
+  gold_amount: string;
   updated_at: string;
 };
 

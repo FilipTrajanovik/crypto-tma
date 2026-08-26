@@ -17,7 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Crypto Wallet",
+  title: "Meridian Wallet",
   description: "Your managed crypto wallet on Telegram",
 };
 

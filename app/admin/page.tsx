@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
           <ShieldLogo size={44} />
         </div>
         <h1 className="text-xl font-bold uppercase tracking-widest text-gold text-center mb-1">Admin Panel</h1>
-        <p className="text-sm text-muted-foreground text-center mb-6">Sign in to manage the QFS Wallet platform.</p>
+        <p className="text-sm text-muted-foreground text-center mb-6">Sign in to manage the Meridian Wallet platform.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

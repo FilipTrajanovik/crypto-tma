@@ -21,6 +21,17 @@ type Withdrawal = {
   created_at: string;
 };
 
+type Currency = "USD" | "BTC" | "ETH" | "GOLD";
+
+const CURRENCIES: { value: Currency; label: string; decimals: number }[] = [
+  { value: "USD", label: "USD Cash", decimals: 2 },
+  { value: "BTC", label: "Bitcoin", decimals: 8 },
+  { value: "ETH", label: "Ethereum", decimals: 6 },
+  { value: "GOLD", label: "Gold (oz)", decimals: 4 },
+];
+
+const PERCENT_STOPS = [25, 50, 75, 100];
+
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     pending: "bg-gold/15 text-gold border-gold/30",
@@ -36,10 +47,12 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function WithdrawPage() {
+  const [currency, setCurrency] = useState<Currency>("USD");
   const [amount, setAmount] = useState("");
+  const [percent, setPercent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [releasePaid, setReleasePaid] = useState(false);
-  const [usdCash, setUsdCash] = useState(0);
+  const [balances, setBalances] = useState<Record<Currency, number>>({ USD: 0, BTC: 0, ETH: 0, GOLD: 0 });
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +61,7 @@ export default function WithdrawPage() {
     if (balanceRes.ok) {
       const data = await balanceRes.json();
       setReleasePaid(data.user.releasePaid === true);
-      setUsdCash(data.balance.usdCash);
+      setBalances({ USD: data.balance.usdCash, BTC: data.balance.btc, ETH: data.balance.eth, GOLD: data.balance.gold });
     }
     if (withdrawRes.ok) {
       const data = await withdrawRes.json();
@@ -63,6 +76,24 @@ export default function WithdrawPage() {
     return () => clearInterval(interval);
   }, [loadAll]);
 
+  const meta = CURRENCIES.find((c) => c.value === currency)!;
+  const available = balances[currency];
+
+  const applyPercent = (p: number) => {
+    setPercent(p);
+    setAmount(available > 0 ? ((available * p) / 100).toFixed(meta.decimals) : "0");
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    applyPercent(Number(e.target.value));
+  };
+
+  const handleCurrencyChange = (c: Currency) => {
+    setCurrency(c);
+    setPercent(0);
+    setAmount("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -70,7 +101,7 @@ export default function WithdrawPage() {
       const res = await fetch("/api/wallet/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: Number(amount) }),
+        body: JSON.stringify({ amount: Number(amount), currency }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -78,6 +109,7 @@ export default function WithdrawPage() {
       } else {
         toast.add({ title: "Withdrawal request submitted", type: "success" });
         setAmount("");
+        setPercent(0);
         loadAll();
       }
     } catch {
@@ -104,7 +136,31 @@ export default function WithdrawPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Amount (USD)</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Currency</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {CURRENCIES.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    disabled={!releasePaid}
+                    onClick={() => handleCurrencyChange(c.value)}
+                    className={`h-9 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                      currency === c.value ? "bg-gold text-navy" : "bg-navy border border-[#1a3a6e] text-muted-foreground"
+                    }`}
+                  >
+                    {c.value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-xs text-muted-foreground block">Amount ({currency})</Label>
+                <span className="text-xs text-muted-foreground">
+                  Available: {available.toLocaleString(undefined, { maximumFractionDigits: meta.decimals })} {currency}
+                </span>
+              </div>
               <Input
                 type="number"
                 step="any"
@@ -112,11 +168,41 @@ export default function WithdrawPage() {
                 required
                 disabled={!releasePaid}
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  setPercent(available > 0 ? Math.min(100, Math.round((Number(e.target.value) / available) * 100)) : 0);
+                }}
                 placeholder="0.00"
                 className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
               />
-              <p className="text-xs text-muted-foreground mt-1.5">Available: ${usdCash.toFixed(2)}</p>
+            </div>
+
+            <div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={percent}
+                onChange={handleSliderChange}
+                disabled={!releasePaid || available <= 0}
+                className="w-full accent-gold disabled:opacity-50"
+              />
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {PERCENT_STOPS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    disabled={!releasePaid || available <= 0}
+                    onClick={() => applyPercent(p)}
+                    className={`h-8 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                      percent === p ? "bg-gold text-navy" : "bg-navy border border-[#1a3a6e] text-muted-foreground"
+                    }`}
+                  >
+                    {p}%
+                  </button>
+                ))}
+              </div>
             </div>
 
             <Button
@@ -153,7 +239,9 @@ export default function WithdrawPage() {
               {withdrawals.map((w) => (
                 <TableRow key={w.id} className="border-[#1a3a6e]">
                   <TableCell className="text-xs text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-white font-medium">${Number(w.amount).toFixed(2)}</TableCell>
+                  <TableCell className="text-white font-medium">
+                    {w.currency === "USD" ? `$${Number(w.amount).toFixed(2)}` : `${Number(w.amount)} ${w.currency}`}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={w.status} />
                   </TableCell>

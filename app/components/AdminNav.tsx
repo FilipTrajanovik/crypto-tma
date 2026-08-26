@@ -31,7 +31,7 @@ export default function AdminNav() {
             </Link>
             <div className="flex items-center gap-2">
               <ShieldLogo size={20} />
-              <span className="font-bold uppercase tracking-widest text-gold whitespace-nowrap text-sm">QFS Wallet</span>
+              <span className="font-bold uppercase tracking-widest text-gold whitespace-nowrap text-sm">Meridian Wallet</span>
             </div>
           </div>
           <div className="flex items-center gap-3">

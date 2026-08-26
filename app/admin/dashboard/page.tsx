@@ -19,6 +19,11 @@ type Stats = {
   pendingWithdrawals: number;
 };
 
+type MyStats = {
+  myUsers: number;
+  pendingWithdrawals: number;
+};
+
 type FullUser = {
   id: number;
   telegram_id: string;
@@ -56,6 +61,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [myStats, setMyStats] = useState<MyStats | null>(null);
   const [users, setUsers] = useState<FullUser[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -96,7 +102,8 @@ export default function AdminDashboardPage() {
         if (statsRes.ok) setStats(await statsRes.json());
         if (adminsRes.ok) setAdmins((await adminsRes.json()).admins);
       } else {
-        await loadFullUsers("");
+        const [statsRes] = await Promise.all([fetch("/api/admin/stats"), loadFullUsers("")]);
+        if (statsRes.ok) setMyStats(await statsRes.json());
       }
       setLoading(false);
     })();
@@ -191,6 +198,19 @@ export default function AdminDashboardPage() {
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Pending Withdrawals</p>
               <p className="text-2xl font-bold text-patriot-red">{stats?.pendingWithdrawals ?? 0}</p>
+            </Card>
+          </div>
+        )}
+
+        {!isSuperAdmin && (
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">My Users</p>
+              <p className="text-2xl font-bold text-gold">{myStats?.myUsers ?? 0}</p>
+            </Card>
+            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Pending Withdrawals</p>
+              <p className="text-2xl font-bold text-patriot-red">{myStats?.pendingWithdrawals ?? 0}</p>
             </Card>
           </div>
         )}

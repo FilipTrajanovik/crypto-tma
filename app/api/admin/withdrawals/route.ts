@@ -86,7 +86,14 @@ export async function PATCH(req: NextRequest) {
   await sql`UPDATE withdrawal_requests SET status = ${status}, admin_note = ${adminNote} WHERE id = ${id}`;
 
   if (status === "approved") {
-    const column = withdrawal.currency === "BTC" ? "btc_amount" : withdrawal.currency === "ETH" ? "eth_amount" : "usd_cash";
+    const column =
+      withdrawal.currency === "BTC"
+        ? "btc_amount"
+        : withdrawal.currency === "ETH"
+          ? "eth_amount"
+          : withdrawal.currency === "GOLD"
+            ? "gold_amount"
+            : "usd_cash";
     await sql.query(
       `UPDATE balances SET ${column} = ${column} - $1, updated_at = NOW() WHERE user_id = $2`,
       [Number(withdrawal.amount), withdrawal.user_id]

@@ -35,6 +35,7 @@ export default function AuthPage() {
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
   const [requestingPhone, setRequestingPhone] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const authenticate = useCallback(async () => {
     const tg = window.Telegram?.WebApp;
@@ -64,10 +65,11 @@ export default function AuthPage() {
       }
 
       const data = await res.json();
+      setIsAdmin(data.user.isAdmin === true);
       if (data.user.needsPhone) {
         setStatus("need-phone");
       } else {
-        router.replace("/wallet");
+        router.replace(data.user.isAdmin ? "/admin/dashboard" : "/wallet");
       }
     } catch {
       setError("Could not reach the server. Please try again.");
@@ -101,7 +103,7 @@ export default function AuthPage() {
             body: JSON.stringify({ phone }),
           });
         }
-        router.replace("/wallet");
+        router.replace(isAdmin ? "/admin/dashboard" : "/wallet");
       } finally {
         setRequestingPhone(false);
       }
@@ -157,7 +159,7 @@ export default function AuthPage() {
       <div className="absolute inset-0 star-bg pointer-events-none" />
       <ShieldLogo size={64} />
       <div className="relative">
-        <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">QFS Wallet</h1>
+        <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Meridian Wallet</h1>
         <p className="text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
       </div>
       <Separator className="bg-gold/30 w-24 relative" />

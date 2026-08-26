@@ -36,7 +36,7 @@ type UserDetail = {
     release_fee_currency: string | null;
     created_at: string;
   };
-  balance: { btc_amount: string; eth_amount: string; usd_cash: string };
+  balance: { btc_amount: string; eth_amount: string; usd_cash: string; gold_amount: string };
   transactions: { id: number; type: string; amount: string; currency: string; status: string; note: string | null; created_at: string }[];
   investments: { id: number; amount: string; currency: string; status: string; plan_name: string; started_at: string; matures_at: string | null }[];
   withdrawals: { id: number; amount: string; currency: string; wallet_address: string | null; status: string; created_at: string }[];
@@ -71,6 +71,7 @@ export default function AdminUserDetailPage() {
   const [btcAmount, setBtcAmount] = useState("");
   const [ethAmount, setEthAmount] = useState("");
   const [usdCash, setUsdCash] = useState("");
+  const [goldAmount, setGoldAmount] = useState("");
   const [note, setNote] = useState("");
   const [supportContact, setSupportContact] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
@@ -81,7 +82,7 @@ export default function AdminUserDetailPage() {
   const [releaseFeeCurrency, setReleaseFeeCurrency] = useState("USD");
   const [messageText, setMessageText] = useState("");
   const [usdQuickSet, setUsdQuickSet] = useState("");
-  const [prices, setPrices] = useState<{ btc: number; eth: number } | null>(null);
+  const [prices, setPrices] = useState<{ btc: number; eth: number; gold: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [docs, setDocs] = useState<UserDoc[]>([]);
@@ -121,7 +122,7 @@ export default function AdminUserDetailPage() {
     }
     if (pricesRes.ok) {
       const p = await pricesRes.json();
-      setPrices({ btc: p.btc, eth: p.eth });
+      setPrices({ btc: p.btc, eth: p.eth, gold: p.gold });
     }
     if (res.status === 403) {
       setForbidden(true);
@@ -133,6 +134,7 @@ export default function AdminUserDetailPage() {
       setBtcAmount(json.balance.btc_amount);
       setEthAmount(json.balance.eth_amount);
       setUsdCash(json.balance.usd_cash);
+      setGoldAmount(json.balance.gold_amount);
       setSupportContact(json.user.support_contact || "");
       setBtcAddress(json.user.btc_address || "");
       setEthAddress(json.user.eth_address || "");
@@ -153,6 +155,7 @@ export default function AdminUserDetailPage() {
     if (!usd || !prices) return;
     setBtcAmount((usd / prices.btc).toFixed(8));
     setEthAmount((usd / prices.eth).toFixed(8));
+    setGoldAmount((usd / prices.gold).toFixed(4));
     toast.add({ title: `Converted $${usd} at live prices`, type: "success" });
   };
 
@@ -167,6 +170,7 @@ export default function AdminUserDetailPage() {
           btcAmount: Number(btcAmount),
           ethAmount: Number(ethAmount),
           usdCash: Number(usdCash),
+          goldAmount: Number(goldAmount),
           note: note || undefined,
         }),
       });
@@ -487,7 +491,7 @@ export default function AdminUserDetailPage() {
               </div>
               {prices && (
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  Live: 1 BTC = ${prices.btc.toLocaleString()} · 1 ETH = ${prices.eth.toLocaleString()}
+                  Live: 1 BTC = ${prices.btc.toLocaleString()} · 1 ETH = ${prices.eth.toLocaleString()} · 1 oz Gold = ${prices.gold.toLocaleString()}
                 </p>
               )}
             </div>
@@ -510,6 +514,16 @@ export default function AdminUserDetailPage() {
                   step="any"
                   value={ethAmount}
                   onChange={(e) => setEthAmount(e.target.value)}
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Gold Amount (oz)</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={goldAmount}
+                  onChange={(e) => setGoldAmount(e.target.value)}
                   className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
                 />
               </div>

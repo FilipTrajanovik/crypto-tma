@@ -128,7 +128,9 @@ export default function AdminWithdrawalsPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">{w.username ? `@${w.username}` : w.telegram_id}</p>
                       </TableCell>
-                      <TableCell className="text-white font-medium">${Number(w.amount).toFixed(2)}</TableCell>
+                      <TableCell className="text-white font-medium">
+                        {w.currency === "USD" ? `$${Number(w.amount).toFixed(2)}` : `${Number(w.amount)} ${w.currency}`}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Badge

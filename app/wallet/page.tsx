@@ -13,8 +13,8 @@ import { Landmark, Send, TrendingUp, Unlock, ListOrdered, ArrowUp, ArrowDown, Fi
 
 type BalanceData = {
   user: { firstName: string | null; lastName: string | null; username: string | null; avatarUrl: string | null; phone: string | null };
-  balance: { btc: number; eth: number; usdCash: number; btcValue: number; ethValue: number; totalValue: number };
-  prices: { btc: number; eth: number; btcChange24h: number; ethChange24h: number };
+  balance: { btc: number; eth: number; gold: number; usdCash: number; btcValue: number; ethValue: number; goldValue: number; totalValue: number };
+  prices: { btc: number; eth: number; gold: number; btcChange24h: number; ethChange24h: number };
   supportContact: string | null;
 };
 
@@ -112,7 +112,7 @@ export default function WalletPage() {
       <header className="relative px-5 pt-6 pb-4">
         <div className="flex items-center justify-between mb-1">
           <ShieldLogo size={32} />
-          <h1 className="text-xl font-bold uppercase tracking-widest text-white">QFS Wallet</h1>
+          <h1 className="text-xl font-bold uppercase tracking-widest text-white">Meridian Wallet</h1>
           <div className="flex items-center gap-2">
             <Avatar className="w-9 h-9 border border-[#1a3a6e]">
               <AvatarImage src={user.avatarUrl || undefined} alt={displayName} />
@@ -164,6 +164,12 @@ export default function WalletPage() {
               <span className="text-muted-foreground">Ξ Ethereum</span>
               <span className="text-white">
                 {formatCrypto(balance.eth, 6)} <span className="text-muted-foreground">({formatUsd(balance.ethValue)})</span>
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">◆ Gold</span>
+              <span className="text-white">
+                {formatCrypto(balance.gold, 4)} oz <span className="text-muted-foreground">({formatUsd(balance.goldValue)})</span>
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
