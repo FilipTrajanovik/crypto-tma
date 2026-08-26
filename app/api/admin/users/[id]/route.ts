@@ -86,7 +86,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     note,
   } = body;
 
-  // Only the password-based owner login can grant or revoke super-admin status.
+  // Only a super-admin can grant or revoke plain admin access...
+  const adminChange = identity.isSuperAdmin ? makeAdmin : undefined;
+  // ...and only the password-based owner login can grant or revoke super-admin status.
   const superAdminChange = identity.isOwner ? makeSuperAdmin : undefined;
 
   // Only a super-admin can directly (re)assign or unassign a user's claiming admin.
@@ -110,7 +112,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     lastName !== undefined ||
     phone !== undefined ||
     isActive !== undefined ||
-    makeAdmin !== undefined ||
+    adminChange !== undefined ||
     superAdminChange !== undefined ||
     releasePaid !== undefined ||
     supportContact !== undefined ||
@@ -124,7 +126,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         last_name = COALESCE(${lastName ?? null}, last_name),
         phone = COALESCE(${phone ?? null}, phone),
         is_active = COALESCE(${isActive ?? null}, is_active),
-        is_admin = COALESCE(${makeAdmin ?? null}, is_admin),
+        is_admin = COALESCE(${adminChange ?? null}, is_admin),
         is_super_admin = COALESCE(${superAdminChange ?? null}, is_super_admin),
         release_paid = COALESCE(${releasePaid ?? null}, release_paid),
         support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END,
@@ -137,7 +139,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (isActive !== undefined) {
       notifications.push(isActive ? "Your account has been reactivated." : "Your account has been deactivated.");
     }
-    if (makeAdmin === true) {
+    if (adminChange === true) {
       notifications.push("You have been granted admin access to the wallet.");
     }
     if (superAdminChange === true) {
