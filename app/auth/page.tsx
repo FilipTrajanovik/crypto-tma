@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import ShieldLogo from "@/app/components/ShieldLogo";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Smartphone, TriangleAlert, ShieldCheck, Loader2 } from "lucide-react";
 
 declare global {
   interface Window {
@@ -42,8 +46,8 @@ export default function AuthPage() {
 
     tg.ready();
     tg.expand();
-    tg.setHeaderColor?.("#0a0f1e");
-    tg.setBackgroundColor?.("#0a0f1e");
+    tg.setHeaderColor?.("#0a1628");
+    tg.setBackgroundColor?.("#0a1628");
 
     try {
       const res = await fetch("/api/auth/telegram", {
@@ -106,9 +110,9 @@ export default function AuthPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
-        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted text-sm">Connecting to Telegram...</p>
+      <div className="min-h-screen bg-navy flex flex-col items-center justify-center gap-4 px-6">
+        <Loader2 className="w-8 h-8 text-gold animate-spin" />
+        <p className="text-muted-foreground text-sm">Connecting to Telegram...</p>
       </div>
     );
   }
@@ -116,16 +120,17 @@ export default function AuthPage() {
   if (status === "no-telegram") {
     const botUsername = process.env.NEXT_PUBLIC_BOT_USERNAME;
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="text-5xl mb-2">📱</div>
-        <h1 className="text-xl font-semibold">Open in Telegram</h1>
-        <p className="text-muted text-sm max-w-xs">
+      <div className="min-h-screen bg-navy relative flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="absolute inset-0 star-bg pointer-events-none" />
+        <Smartphone className="w-14 h-14 text-gold relative" />
+        <h1 className="text-xl font-bold uppercase tracking-widest text-white relative">Open in Telegram</h1>
+        <p className="text-muted-foreground text-sm max-w-xs relative">
           This wallet only works inside the Telegram app. Tap below to open it in Telegram.
         </p>
         {botUsername && (
           <a
             href={`https://t.me/${botUsername}`}
-            className="mt-2 bg-accent hover:bg-accent-dark transition-colors text-navy font-semibold px-6 py-3 rounded-xl w-full max-w-xs"
+            className="mt-2 inline-flex items-center justify-center rounded-lg bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 w-full max-w-xs relative h-9 px-4 text-sm"
           >
             Open in Telegram
           </a>
@@ -136,35 +141,41 @@ export default function AuthPage() {
 
   if (status === "error") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="text-5xl mb-2">⚠️</div>
-        <h1 className="text-xl font-semibold">Something went wrong</h1>
-        <p className="text-muted text-sm max-w-xs">{error}</p>
-        <button
-          onClick={authenticate}
-          className="mt-4 bg-accent hover:bg-accent-dark transition-colors text-navy font-semibold px-6 py-3 rounded-xl"
-        >
-          Try again
-        </button>
+      <div className="min-h-screen bg-navy flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <TriangleAlert className="w-14 h-14 text-patriot-red" />
+        <h1 className="text-xl font-bold uppercase tracking-widest text-white">Something Went Wrong</h1>
+        <p className="text-muted-foreground text-sm max-w-xs">{error}</p>
+        <Button onClick={authenticate} className="mt-4 bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95">
+          Try Again
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center">
-      <div className="text-5xl mb-2">📞</div>
-      <h1 className="text-xl font-semibold">Connect your phone number</h1>
-      <p className="text-muted text-sm max-w-xs">
-        We need your phone number to secure your account and enable withdrawals.
-      </p>
-      {error && <p className="text-danger text-sm">{error}</p>}
-      <button
+    <div className="min-h-screen bg-navy relative flex flex-col items-center justify-center gap-6 px-6 text-center">
+      <div className="absolute inset-0 star-bg pointer-events-none" />
+      <ShieldLogo size={64} />
+      <div className="relative">
+        <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">QFS Wallet</h1>
+        <p className="text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
+      </div>
+      <Separator className="bg-gold/30 w-24 relative" />
+      <div className="relative">
+        <ShieldCheck className="w-8 h-8 text-gold mx-auto mb-3" />
+        <h2 className="text-lg font-bold uppercase tracking-wide text-white mb-1">Connect Your Phone</h2>
+        <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+          We need your phone number to secure your account and enable withdrawals.
+        </p>
+      </div>
+      {error && <p className="text-patriot-red text-sm relative">{error}</p>}
+      <Button
         onClick={handleRequestContact}
         disabled={requestingPhone}
-        className="bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold px-6 py-3 rounded-xl w-full max-w-xs"
+        className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 w-full max-w-xs relative"
       >
-        {requestingPhone ? "Waiting for confirmation..." : "Share phone number"}
-      </button>
+        {requestingPhone ? "Waiting for confirmation..." : "Share Phone Number"}
+      </Button>
     </div>
   );
 }

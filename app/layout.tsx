@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/toast";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,7 +26,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0a0f1e",
+  themeColor: "#0a1628",
 };
 
 export default function RootLayout({
@@ -33,14 +35,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geistSans.variable, geistMono.variable)}>
       <head>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-navy text-gray-100 min-h-screen`}
-      >
-        {children}
+      <body className="antialiased bg-navy text-white min-h-screen">
+        <Toaster>{children}</Toaster>
       </body>
     </html>
   );

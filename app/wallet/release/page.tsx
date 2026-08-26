@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import PageHeader from "@/app/components/PageHeader";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Lock, MessageCircle } from "lucide-react";
 
 type Condition = {
   id: number;
@@ -39,44 +43,50 @@ export default function ReleasePage() {
   };
 
   return (
-    <div className="min-h-screen px-5 pt-6 pb-10">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/wallet" className="text-muted text-xl leading-none">←</Link>
-        <h1 className="text-xl font-semibold">Release Funds</h1>
-      </div>
+    <div className="min-h-screen bg-navy px-5 pt-6 pb-10 max-w-md mx-auto">
+      <PageHeader title="Release Funds" />
 
-      <p className="text-sm text-muted mb-6 leading-relaxed">
-        Your invested and locked funds can be released once the conditions below are met. Review the requirements,
-        then contact your account manager to begin the release process.
-      </p>
+      <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-patriot-red rounded-2xl p-5 mb-6">
+        <div className="flex gap-3">
+          <Lock className="w-5 h-5 text-patriot-red shrink-0 mt-0.5" />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Your invested and locked funds can be released once the conditions below are met. Review the
+            requirements, then contact your account manager to begin the release process.
+          </p>
+        </div>
+      </Card>
 
       {loading ? (
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="space-y-3 mb-6">
+          <Skeleton className="h-32 w-full rounded-2xl bg-card-navy" />
+        </div>
       ) : conditions.length === 0 ? (
-        <p className="text-muted text-sm text-center py-6">No release conditions configured right now.</p>
+        <p className="text-muted-foreground text-sm text-center py-6">No release conditions configured right now</p>
       ) : (
         <div className="space-y-3 mb-6">
           {conditions.map((c) => (
-            <div key={c.id} className="bg-card rounded-2xl p-5 border border-white/5">
-              <p className="font-semibold mb-1">{c.title}</p>
-              {c.description && <p className="text-sm text-muted mb-3 leading-relaxed">{c.description}</p>}
-              <div className="inline-flex items-center gap-2 bg-navy rounded-lg px-3 py-2 text-sm">
-                <span className="text-muted">Fee required:</span>
-                <span className="font-semibold text-accent">
-                  {Number(c.fee_amount).toLocaleString()} {c.fee_currency}
-                </span>
-              </div>
-            </div>
+            <Card key={c.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+              <p className="font-bold text-white uppercase mb-1">{c.title}</p>
+              {c.description && <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{c.description}</p>}
+              <p className="text-2xl font-bold text-patriot-red">
+                {Number(c.fee_amount).toLocaleString()} <span className="text-base">{c.fee_currency}</span>
+              </p>
+            </Card>
           ))}
         </div>
       )}
 
-      <button
+      <Button
         onClick={handleContactSupport}
-        className="w-full bg-accent hover:bg-accent-dark transition-colors text-navy font-semibold py-3 rounded-xl text-sm"
+        className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 mb-6"
       >
+        <MessageCircle className="w-4 h-4 mr-2" />
         Contact Support
-      </button>
+      </Button>
+
+      <p className="text-xs text-muted-foreground text-center leading-relaxed">
+        Complete the required steps to unlock your funds. Contact your account manager for assistance.
+      </p>
     </div>
   );
 }

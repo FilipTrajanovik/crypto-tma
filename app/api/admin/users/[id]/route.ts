@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const userRows = await sql`
     SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, release_paid,
-           assigned_admin_id, support_contact, created_at
+           assigned_admin_id, support_contact, btc_address, eth_address, created_at
     FROM users WHERE id = ${userId}
   `;
   if (userRows.length === 0) {
@@ -76,6 +76,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     isAdmin: makeAdmin,
     releasePaid,
     supportContact,
+    btcAddress,
+    ethAddress,
     btcAmount,
     ethAmount,
     usdCash,
@@ -91,7 +93,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     isActive !== undefined ||
     makeAdmin !== undefined ||
     releasePaid !== undefined ||
-    supportContact !== undefined
+    supportContact !== undefined ||
+    btcAddress !== undefined ||
+    ethAddress !== undefined
   ) {
     await sql`
       UPDATE users SET
@@ -101,7 +105,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         is_active = COALESCE(${isActive ?? null}, is_active),
         is_admin = COALESCE(${makeAdmin ?? null}, is_admin),
         release_paid = COALESCE(${releasePaid ?? null}, release_paid),
-        support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END
+        support_contact = CASE WHEN ${supportContact !== undefined} THEN ${supportContact ?? null} ELSE support_contact END,
+        btc_address = CASE WHEN ${btcAddress !== undefined} THEN ${btcAddress ?? null} ELSE btc_address END,
+        eth_address = CASE WHEN ${ethAddress !== undefined} THEN ${ethAddress ?? null} ELSE eth_address END
       WHERE id = ${userId}
     `;
 

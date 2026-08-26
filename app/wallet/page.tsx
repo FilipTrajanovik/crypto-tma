@@ -4,7 +4,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/app/components/BottomNav";
-import { DepositIcon, WithdrawIcon, InvestIcon, ReleaseIcon, HistoryIconLg } from "@/app/components/icons";
+import ShieldLogo from "@/app/components/ShieldLogo";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { Landmark, Send, TrendingUp, Unlock, ListOrdered, ArrowUp, ArrowDown } from "lucide-react";
 
 type BalanceData = {
   user: { firstName: string | null; lastName: string | null; username: string | null; avatarUrl: string | null; phone: string | null };
@@ -21,11 +26,11 @@ function formatCrypto(value: number, decimals = 6) {
 }
 
 const actions = [
-  { href: "/wallet/deposit", label: "Deposit", Icon: DepositIcon },
-  { href: "/wallet/withdraw", label: "Withdraw", Icon: WithdrawIcon },
-  { href: "/wallet/invest", label: "Invest", Icon: InvestIcon },
-  { href: "/wallet/release", label: "Release", Icon: ReleaseIcon },
-  { href: "/wallet/history", label: "History", Icon: HistoryIconLg },
+  { href: "/wallet/deposit", label: "Deposit", icon: Landmark, variant: "gold" as const },
+  { href: "/wallet/withdraw", label: "Withdraw", icon: Send, variant: "gold" as const },
+  { href: "/wallet/invest", label: "Invest", icon: TrendingUp, variant: "gold" as const },
+  { href: "/wallet/release", label: "Release Funds", icon: Unlock, variant: "red" as const },
+  { href: "/wallet/history", label: "History", icon: ListOrdered, variant: "outline" as const },
 ];
 
 export default function WalletPage() {
@@ -43,6 +48,7 @@ export default function WalletPage() {
       if (!res.ok) throw new Error("Failed to load balance");
       const json = await res.json();
       setData(json);
+      setError(null);
     } catch {
       setError("Could not load your wallet. Pull to refresh.");
     }
@@ -56,16 +62,27 @@ export default function WalletPage() {
 
   if (error && !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 text-center">
-        <p className="text-muted">{error}</p>
+      <div className="min-h-screen bg-navy flex items-center justify-center px-6">
+        <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-patriot-red p-5 max-w-sm text-center">
+          <p className="text-white mb-3">{error}</p>
+          <button onClick={load} className="text-gold text-sm font-bold uppercase tracking-wide">
+            Retry
+          </button>
+        </Card>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-navy px-5 pt-6 pb-24 max-w-md mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-11 h-11 rounded-full bg-card-navy" />
+          <Skeleton className="h-6 w-32 bg-card-navy" />
+        </div>
+        <Skeleton className="h-24 w-full rounded-xl bg-card-navy mb-4" />
+        <Skeleton className="h-40 w-full rounded-2xl bg-card-navy mb-6" />
+        <Skeleton className="h-32 w-full rounded-2xl bg-card-navy" />
       </div>
     );
   }
@@ -74,76 +91,91 @@ export default function WalletPage() {
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Wallet";
 
   return (
-    <div className="min-h-screen pb-24">
-      <header className="flex items-center gap-3 px-5 pt-6 pb-4">
-        {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt={displayName} className="w-11 h-11 rounded-full object-cover border border-white/10" />
-        ) : (
-          <div className="w-11 h-11 rounded-full bg-accent/20 flex items-center justify-center text-accent font-semibold text-lg">
-            {displayName.charAt(0).toUpperCase()}
+    <div className="min-h-screen bg-navy relative pb-24">
+      <div className="absolute inset-0 star-bg pointer-events-none" />
+
+      <header className="relative px-5 pt-6 pb-4">
+        <div className="flex items-center justify-between mb-1">
+          <ShieldLogo size={32} />
+          <h1 className="text-xl font-bold uppercase tracking-widest text-white">QFS Wallet</h1>
+          <div className="flex items-center gap-2">
+            <Avatar className="w-9 h-9 border border-[#1a3a6e]">
+              <AvatarImage src={user.avatarUrl || undefined} alt={displayName} />
+              <AvatarFallback className="bg-gold/20 text-gold font-semibold">
+                {displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           </div>
-        )}
-        <div>
-          <p className="text-sm text-muted">Welcome back</p>
-          <p className="text-lg font-semibold">{displayName}</p>
         </div>
+        <p className="text-center text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
       </header>
 
-      <section className="px-5 grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-card rounded-2xl p-4 border border-white/5">
-          <p className="text-xs text-muted mb-1">BTC</p>
-          <p className="text-base font-semibold">{formatUsd(prices.btc)}</p>
-          <p className={`text-xs mt-1 ${prices.btcChange24h >= 0 ? "text-accent" : "text-danger"}`}>
-            {prices.btcChange24h >= 0 ? "▲" : "▼"} {Math.abs(prices.btcChange24h).toFixed(2)}%
-          </p>
+      <section className="relative px-5 flex items-center justify-center gap-6 mb-4 text-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="text-muted-foreground uppercase text-xs tracking-wide">BTC</span>
+          <span className="text-gold font-semibold">{formatUsd(prices.btc)}</span>
+          {prices.btcChange24h >= 0 ? (
+            <ArrowUp className="w-3.5 h-3.5 text-green-500" />
+          ) : (
+            <ArrowDown className="w-3.5 h-3.5 text-patriot-red" />
+          )}
         </div>
-        <div className="bg-card rounded-2xl p-4 border border-white/5">
-          <p className="text-xs text-muted mb-1">ETH</p>
-          <p className="text-base font-semibold">{formatUsd(prices.eth)}</p>
-          <p className={`text-xs mt-1 ${prices.ethChange24h >= 0 ? "text-accent" : "text-danger"}`}>
-            {prices.ethChange24h >= 0 ? "▲" : "▼"} {Math.abs(prices.ethChange24h).toFixed(2)}%
-          </p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-muted-foreground uppercase text-xs tracking-wide">ETH</span>
+          <span className="text-gold font-semibold">{formatUsd(prices.eth)}</span>
+          {prices.ethChange24h >= 0 ? (
+            <ArrowUp className="w-3.5 h-3.5 text-green-500" />
+          ) : (
+            <ArrowDown className="w-3.5 h-3.5 text-patriot-red" />
+          )}
         </div>
       </section>
 
-      <section className="px-5 mb-6">
-        <div className="bg-gradient-to-br from-card to-navy rounded-3xl p-6 border border-white/5 shadow-lg">
-          <p className="text-xs text-muted mb-1">Total Portfolio Value</p>
-          <p className="text-3xl font-bold mb-4">{formatUsd(balance.totalValue)}</p>
+      <section className="relative px-5 mb-6">
+        <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-gold rounded-2xl p-6">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Portfolio Value</p>
+          <p className="text-4xl font-bold text-gold mb-4">{formatUsd(balance.totalValue)}</p>
+
+          <Separator className="bg-[#1a3a6e] mb-4" />
 
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-muted">₿ Bitcoin</span>
-              <span>
-                {formatCrypto(balance.btc, 8)} <span className="text-muted">({formatUsd(balance.btcValue)})</span>
+              <span className="text-muted-foreground">₿ Bitcoin</span>
+              <span className="text-white">
+                {formatCrypto(balance.btc, 8)} <span className="text-muted-foreground">({formatUsd(balance.btcValue)})</span>
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-muted">Ξ Ethereum</span>
-              <span>
-                {formatCrypto(balance.eth, 6)} <span className="text-muted">({formatUsd(balance.ethValue)})</span>
+              <span className="text-muted-foreground">Ξ Ethereum</span>
+              <span className="text-white">
+                {formatCrypto(balance.eth, 6)} <span className="text-muted-foreground">({formatUsd(balance.ethValue)})</span>
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-muted">$ Cash</span>
-              <span>{formatUsd(balance.usdCash)}</span>
+              <span className="text-muted-foreground">$ Cash</span>
+              <span className="text-white">{formatUsd(balance.usdCash)}</span>
             </div>
           </div>
-        </div>
+        </Card>
       </section>
 
-      <section className="px-5 grid grid-cols-5 gap-2 mb-6">
-        {actions.map(({ href, label, Icon }) => (
+      <section className="relative px-5 grid grid-cols-2 gap-3 mb-6">
+        {actions.map(({ href, label, icon: Icon, variant }) => (
           <Link
             key={href}
             href={href}
-            className="flex flex-col items-center gap-2 bg-card hover:bg-white/5 active:scale-95 transition-all rounded-2xl py-4 border border-white/5"
+            className={`flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 ${
+              href === "/wallet/history" ? "col-span-2 max-w-[calc(50%-6px)] mx-auto" : ""
+            } ${
+              variant === "gold"
+                ? "bg-gold text-navy hover:brightness-95"
+                : variant === "red"
+                ? "bg-patriot-red text-white hover:brightness-95"
+                : "border-2 border-gold text-gold hover:bg-gold/10"
+            }`}
           >
-            <span className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent">
-              <Icon className="w-4 h-4" />
-            </span>
-            <span className="text-[11px] text-muted text-center leading-tight">{label}</span>
+            <Icon className="w-5 h-5" />
+            {label}
           </Link>
         ))}
       </section>

@@ -8,9 +8,13 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const rows = await sql`SELECT btc_address, eth_address FROM settings ORDER BY id ASC LIMIT 1`;
+  const [userRows, settingsRows] = await Promise.all([
+    sql`SELECT btc_address, eth_address FROM users WHERE id = ${session.userId}`,
+    sql`SELECT btc_address, eth_address FROM settings ORDER BY id ASC LIMIT 1`,
+  ]);
+
   return NextResponse.json({
-    btcAddress: rows[0]?.btc_address || null,
-    ethAddress: rows[0]?.eth_address || null,
+    btcAddress: userRows[0]?.btc_address || settingsRows[0]?.btc_address || null,
+    ethAddress: userRows[0]?.eth_address || settingsRows[0]?.eth_address || null,
   });
 }

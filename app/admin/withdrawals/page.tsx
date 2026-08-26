@@ -3,15 +3,27 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AdminNav from "@/app/components/AdminNav";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "@/components/ui/toast";
 
 type Withdrawal = {
   id: number;
   user_id: number;
   amount: string;
   currency: string;
-  wallet_address: string;
   status: string;
-  admin_note: string | null;
   created_at: string;
   first_name: string | null;
   last_name: string | null;
@@ -26,8 +38,9 @@ export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [filter, setFilter] = useState("pending");
   const [loading, setLoading] = useState(true);
-  const [noteDrafts, setNoteDrafts] = useState<Record<number, string>>({});
-  const [processing, setProcessing] = useState<number | null>(null);
+  const [dialogState, setDialogState] = useState<{ id: number; action: "approved" | "rejected" } | null>(null);
+  const [note, setNote] = useState("");
+  const [processing, setProcessing] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,107 +60,144 @@ export default function AdminWithdrawalsPage() {
     load();
   }, [load]);
 
-  const handleDecision = async (id: number, status: "approved" | "rejected") => {
-    setProcessing(id);
+  const handleDecision = async () => {
+    if (!dialogState) return;
+    setProcessing(true);
     try {
-      await fetch("/api/admin/withdrawals", {
+      const res = await fetch("/api/admin/withdrawals", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status, adminNote: noteDrafts[id] || undefined }),
+        body: JSON.stringify({ id: dialogState.id, status: dialogState.action, adminNote: note || undefined }),
       });
-      load();
+      if (res.ok) {
+        toast.add({ title: `Withdrawal ${dialogState.action}`, type: "success" });
+        setDialogState(null);
+        setNote("");
+        load();
+      } else {
+        toast.add({ title: "Failed to process withdrawal", type: "error" });
+      }
     } finally {
-      setProcessing(null);
+      setProcessing(false);
     }
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-navy">
       <AdminNav />
       <main className="max-w-4xl mx-auto px-5 py-6">
-        <h1 className="text-xl font-semibold mb-4">Withdrawal Requests</h1>
+        <h1 className="text-xl font-bold uppercase tracking-widest text-gold mb-5">Withdrawal Requests</h1>
 
         <div className="flex gap-2 mb-5">
           {FILTERS.map((f) => (
-            <button
+            <Button
               key={f}
+              size="sm"
+              variant={filter === f ? "default" : "outline"}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-full text-xs capitalize transition-colors ${
-                filter === f ? "bg-accent text-navy font-medium" : "bg-card text-muted"
-              }`}
+              className={`capitalize ${filter === f ? "bg-gold text-navy hover:brightness-95" : "border-[#1a3a6e] text-muted-foreground"}`}
             >
               {f}
-            </button>
+            </Button>
           ))}
         </div>
 
         {loading ? (
-          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mt-10" />
+          <Skeleton className="h-64 w-full rounded-2xl bg-card-navy" />
         ) : withdrawals.length === 0 ? (
-          <p className="text-muted text-sm text-center py-10">No withdrawal requests.</p>
+          <p className="text-muted-foreground text-sm text-center py-10">No withdrawal requests.</p>
         ) : (
-          <div className="space-y-3">
-            {withdrawals.map((w) => (
-              <div key={w.id} className="bg-card rounded-2xl p-4 border border-white/5">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <p className="font-semibold">
-                      {[w.first_name, w.last_name].filter(Boolean).join(" ") || "Unnamed"}
-                      {w.username && <span className="text-muted font-normal"> @{w.username}</span>}
-                    </p>
-                    <p className="text-xs text-muted">Telegram ID {w.telegram_id}</p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full capitalize ${
-                      w.status === "pending"
-                        ? "bg-yellow-500/15 text-yellow-400"
-                        : w.status === "approved"
-                        ? "bg-accent/15 text-accent"
-                        : "bg-danger/15 text-danger"
-                    }`}
-                  >
-                    {w.status}
-                  </span>
-                </div>
-                <p className="text-sm mb-1">
-                  {w.amount} {w.currency}
-                </p>
-                <p className="text-xs text-muted break-all font-mono mb-3">{w.wallet_address}</p>
-                <p className="text-xs text-muted mb-3">{new Date(w.created_at).toLocaleString()}</p>
-
-                {w.admin_note && <p className="text-xs text-gray-400 mb-3">Note: {w.admin_note}</p>}
-
-                {w.status === "pending" && (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Admin note (optional)"
-                      value={noteDrafts[w.id] || ""}
-                      onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [w.id]: e.target.value }))}
-                      className="w-full bg-navy border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-accent"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        disabled={processing === w.id}
-                        onClick={() => handleDecision(w.id, "approved")}
-                        className="flex-1 bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold py-2 rounded-lg text-xs"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        disabled={processing === w.id}
-                        onClick={() => handleDecision(w.id, "rejected")}
-                        className="flex-1 bg-danger/15 hover:bg-danger/25 disabled:opacity-60 transition-colors text-danger font-semibold py-2 rounded-lg text-xs"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-[#1a3a6e] hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">User</TableHead>
+                    <TableHead className="text-muted-foreground">Amount</TableHead>
+                    <TableHead className="text-muted-foreground">Date</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-muted-foreground">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {withdrawals.map((w) => (
+                    <TableRow key={w.id} className="border-[#1a3a6e]">
+                      <TableCell>
+                        <p className="text-white text-sm">
+                          {[w.first_name, w.last_name].filter(Boolean).join(" ") || "Unnamed"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{w.username ? `@${w.username}` : w.telegram_id}</p>
+                      </TableCell>
+                      <TableCell className="text-white font-medium">${Number(w.amount).toFixed(2)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`capitalize ${
+                            w.status === "pending"
+                              ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"
+                              : w.status === "approved"
+                              ? "bg-green-500/15 text-green-400 border-green-500/30"
+                              : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"
+                          }`}
+                        >
+                          {w.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {w.status === "pending" && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => setDialogState({ id: w.id, action: "approved" })}
+                              className="bg-green-600 text-white hover:bg-green-700 font-bold uppercase text-xs"
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => setDialogState({ id: w.id, action: "rejected" })}
+                              className="bg-patriot-red text-white hover:brightness-95 font-bold uppercase text-xs"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
         )}
+
+        <Dialog open={!!dialogState} onOpenChange={(open) => !open && setDialogState(null)}>
+          <DialogContent className="bg-card-navy border-[#1a3a6e] text-white">
+            <DialogHeader>
+              <DialogTitle className={`uppercase tracking-wide ${dialogState?.action === "approved" ? "text-green-400" : "text-patriot-red"}`}>
+                {dialogState?.action === "approved" ? "Approve" : "Reject"} Withdrawal
+              </DialogTitle>
+            </DialogHeader>
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Admin note (optional)"
+              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+            />
+            <DialogFooter>
+              <Button
+                onClick={handleDecision}
+                disabled={processing}
+                className={`w-full font-bold uppercase tracking-wide ${
+                  dialogState?.action === "approved" ? "bg-green-600 hover:bg-green-700 text-white" : "bg-patriot-red text-white hover:brightness-95"
+                }`}
+              >
+                {processing ? "Processing..." : `Confirm ${dialogState?.action === "approved" ? "Approval" : "Rejection"}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

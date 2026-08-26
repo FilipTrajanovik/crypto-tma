@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
   release_paid BOOLEAN DEFAULT false,
   assigned_admin_id INTEGER REFERENCES users(id),
   support_contact TEXT,
+  btc_address TEXT,
+  eth_address TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -63,8 +65,8 @@ CREATE TABLE IF NOT EXISTS withdrawal_requests (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id),
   amount DECIMAL(18,8) NOT NULL,
-  currency TEXT NOT NULL,
-  wallet_address TEXT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  wallet_address TEXT,
   status TEXT NOT NULL DEFAULT 'pending',
   admin_note TEXT,
   created_at TIMESTAMP DEFAULT NOW()

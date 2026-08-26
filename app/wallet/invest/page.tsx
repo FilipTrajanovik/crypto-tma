@@ -2,6 +2,22 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import PageHeader from "@/app/components/PageHeader";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "@/components/ui/toast";
+import { Lock } from "lucide-react";
 
 type Plan = {
   id: number;
@@ -30,7 +46,6 @@ export default function InvestPage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [releasePaid, setReleasePaid] = useState(true);
 
@@ -52,7 +67,6 @@ export default function InvestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPlan) return;
-    setMessage(null);
     setSubmitting(true);
     try {
       const res = await fetch("/api/wallet/invest", {
@@ -62,128 +76,128 @@ export default function InvestPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage({ type: "error", text: data.error || "Investment failed" });
+        toast.add({ title: data.error || "Investment failed", type: "error" });
       } else {
-        setMessage({ type: "success", text: "Investment created successfully." });
+        toast.add({ title: "Investment created successfully", type: "success" });
         setAmount("");
         setSelectedPlan(null);
         load();
       }
     } catch {
-      setMessage({ type: "error", text: "Something went wrong. Try again." });
+      toast.add({ title: "Something went wrong. Try again.", type: "error" });
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen px-5 pt-6 pb-10">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/wallet" className="text-muted text-xl leading-none">←</Link>
-        <h1 className="text-xl font-semibold">Invest</h1>
-      </div>
+    <div className="min-h-screen bg-navy px-5 pt-6 pb-10 max-w-md mx-auto">
+      <PageHeader title="Investment Plans" subtitle="Grow your portfolio with our managed plans" />
 
-      {!releasePaid ? (
-        <div className="bg-card rounded-2xl p-6 border border-white/5 text-center mb-6">
-          <div className="text-4xl mb-3">🔒</div>
-          <p className="font-semibold mb-2">Investment plans are locked</p>
-          <p className="text-sm text-muted mb-5 leading-relaxed">
-            Investment plans unlock once your release fee has been paid and confirmed. Head to Release Funds to see
-            what&apos;s required.
-          </p>
-          <Link
-            href="/wallet/release"
-            className="inline-block bg-accent hover:bg-accent-dark transition-colors text-navy font-semibold px-6 py-2.5 rounded-xl text-sm"
-          >
-            Go to Release Funds
-          </Link>
+      {loading ? (
+        <div className="space-y-3 mb-6">
+          <Skeleton className="h-48 w-full rounded-2xl bg-card-navy" />
+          <Skeleton className="h-48 w-full rounded-2xl bg-card-navy" />
         </div>
-      ) : (
-      <>
-      <h2 className="text-sm font-semibold text-muted mb-3">Available Plans</h2>
-      <div className="space-y-3 mb-6">
-        {plans.length === 0 && <p className="text-muted text-sm">No active investment plans right now.</p>}
-        {plans.map((plan) => (
-          <button
-            key={plan.id}
-            onClick={() => setSelectedPlan(plan)}
-            className={`w-full text-left bg-card rounded-2xl p-4 border transition-colors ${
-              selectedPlan?.id === plan.id ? "border-accent" : "border-white/5"
-            }`}
-          >
-            <div className="flex justify-between items-start mb-1">
-              <p className="font-semibold">{plan.name}</p>
-              <span className="text-accent font-semibold text-sm">{plan.roi_percent}% ROI</span>
-            </div>
-            {plan.description && <p className="text-xs text-muted mb-2">{plan.description}</p>}
-            <div className="flex gap-4 text-xs text-muted">
-              <span>Min: {plan.min_amount} {plan.currency}</span>
-              <span>{plan.duration_days} days</span>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {selectedPlan && (
-        <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-5 border border-white/5 space-y-4 mb-6">
-          <p className="text-sm">
-            Investing in <span className="font-semibold">{selectedPlan.name}</span>
+      ) : !releasePaid ? (
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-6 text-center mb-6">
+          <Lock className="w-8 h-8 text-gold mx-auto mb-3" />
+          <p className="font-bold text-white mb-2 uppercase tracking-wide">Plans Locked</p>
+          <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+            Investment plans unlock once your release fee has been paid and confirmed.
           </p>
-          <div>
-            <label className="text-xs text-muted block mb-1.5">Amount ({selectedPlan.currency})</label>
-            <input
-              type="number"
-              step="any"
-              min={selectedPlan.min_amount}
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder={`Min ${selectedPlan.min_amount}`}
-              className="w-full bg-navy border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
-            />
-          </div>
-          {message && (
-            <p className={`text-sm ${message.type === "success" ? "text-accent" : "text-danger"}`}>{message.text}</p>
-          )}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold py-3 rounded-xl text-sm"
-          >
-            {submitting ? "Submitting..." : "Confirm Investment"}
-          </button>
-        </form>
-      )}
-      </>
+          <Link href="/wallet/release">
+            <Button className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95">
+              Go to Release Funds
+            </Button>
+          </Link>
+        </Card>
+      ) : (
+        <div className="space-y-3 mb-6">
+          {plans.length === 0 && <p className="text-muted-foreground text-sm text-center py-6">No active plans available</p>}
+          {plans.map((plan) => (
+            <Card key={plan.id} className="bg-card-navy border-[#1a3a6e] border-t-4 border-t-gold rounded-2xl p-5">
+              <p className="font-bold text-white uppercase mb-1">{plan.name}</p>
+              {plan.description && <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>}
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <p className="text-3xl font-bold text-gold leading-none">{plan.roi_percent}%</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">ROI</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">{plan.duration_days} days</p>
+                  <p className="text-sm text-white">Min: {plan.min_amount}</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-gold/15 text-gold border-gold/30 mb-4">
+                {plan.currency}
+              </Badge>
+              <Button
+                onClick={() => setSelectedPlan(plan)}
+                className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95"
+              >
+                Invest Now
+              </Button>
+            </Card>
+          ))}
+        </div>
       )}
 
-      <h2 className="text-sm font-semibold text-muted mb-3">Your Investments</h2>
+      <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
+        <DialogContent className="bg-card-navy border-[#1a3a6e] text-white">
+          <DialogHeader>
+            <DialogTitle className="text-gold uppercase tracking-wide">Invest in {selectedPlan?.name}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Amount ({selectedPlan?.currency})</Label>
+              <Input
+                type="number"
+                step="any"
+                min={selectedPlan?.min_amount}
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={`Min ${selectedPlan?.min_amount}`}
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95"
+              >
+                {submitting ? "Submitting..." : "Confirm Investment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <h2 className="text-sm font-bold uppercase tracking-widest text-gold border-b border-gold/30 pb-2 mb-4">
+        Your Investments
+      </h2>
       {investments.length === 0 ? (
-        <p className="text-muted text-sm text-center py-6">No investments yet.</p>
+        <p className="text-muted-foreground text-sm text-center py-6">No investments yet</p>
       ) : (
         <div className="space-y-3">
           {investments.map((inv) => (
-            <div key={inv.id} className="bg-card rounded-xl p-4 border border-white/5">
+            <Card key={inv.id} className="bg-card-navy border-[#1a3a6e] rounded-xl p-4">
               <div className="flex justify-between items-start mb-1">
-                <p className="font-medium">{inv.plan_name}</p>
-                <span className="text-xs px-2 py-1 rounded-full bg-accent/15 text-accent capitalize">{inv.status}</span>
+                <p className="font-medium text-white">{inv.plan_name}</p>
+                <Badge variant="outline" className="bg-green-500/15 text-green-400 border-green-500/30 capitalize">
+                  {inv.status}
+                </Badge>
               </div>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 {inv.amount} {inv.currency} · {inv.roi_percent}% ROI
               </p>
-              <p className="text-xs text-muted mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Started {new Date(inv.started_at).toLocaleDateString()}
                 {inv.matures_at && ` · Matures ${new Date(inv.matures_at).toLocaleDateString()}`}
               </p>
-            </div>
+            </Card>
           ))}
         </div>
       )}

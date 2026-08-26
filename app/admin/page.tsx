@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ShieldLogo from "@/app/components/ShieldLogo";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -33,30 +38,38 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-card rounded-2xl p-6 border border-white/5">
-        <h1 className="text-xl font-semibold mb-1">Admin Panel</h1>
-        <p className="text-sm text-muted mb-6">Sign in to manage the crypto wallet platform.</p>
+    <div className="min-h-screen bg-navy relative flex items-center justify-center px-6">
+      <div className="absolute inset-0 star-bg pointer-events-none" />
+      <Card className="relative w-full max-w-sm bg-card-navy border-[#1a3a6e] border-t-4 border-t-gold rounded-2xl p-6">
+        <div className="flex justify-center mb-4">
+          <ShieldLogo size={44} />
+        </div>
+        <h1 className="text-xl font-bold uppercase tracking-widest text-gold text-center mb-1">Admin Panel</h1>
+        <p className="text-sm text-muted-foreground text-center mb-6">Sign in to manage the QFS Wallet platform.</p>
 
-        <label className="text-xs text-muted block mb-1.5">Password</label>
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-navy border border-white/10 rounded-xl px-4 py-3 text-sm mb-4 focus:outline-none focus:border-accent"
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Password</Label>
+            <Input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+            />
+          </div>
 
-        {error && <p className="text-danger text-sm mb-4">{error}</p>}
+          {error && <p className="text-patriot-red text-sm">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold py-3 rounded-xl text-sm"
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

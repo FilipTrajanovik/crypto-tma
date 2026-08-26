@@ -3,6 +3,19 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AdminNav from "@/app/components/AdminNav";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/components/ui/toast";
 
 type Condition = {
   id: number;
@@ -74,6 +87,7 @@ export default function AdminReleasePage() {
           body: JSON.stringify(payload),
         });
       }
+      toast.add({ title: editingId ? "Condition updated" : "Condition created", type: "success" });
       resetForm();
       load();
     } finally {
@@ -83,116 +97,112 @@ export default function AdminReleasePage() {
 
   const handleDelete = async (id: number) => {
     await fetch(`/api/admin/release?id=${id}`, { method: "DELETE" });
+    toast.add({ title: "Condition deactivated", type: "success" });
     load();
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-navy">
+        <AdminNav />
+        <main className="max-w-4xl mx-auto px-5 py-6">
+          <Skeleton className="h-96 w-full rounded-2xl bg-card-navy" />
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-navy">
       <AdminNav />
       <main className="max-w-4xl mx-auto px-5 py-6">
-        <h1 className="text-xl font-semibold mb-6">Release Conditions</h1>
+        <h1 className="text-xl font-bold uppercase tracking-widest text-gold mb-6">Release Conditions</h1>
 
-        <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-5 border border-white/5 space-y-4 mb-8">
-          <h2 className="font-semibold">{editingId ? "Edit Condition" : "New Condition"}</h2>
-          <div>
-            <label className="text-xs text-muted block mb-1.5">Title</label>
-            <input
-              required
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted block mb-1.5">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-8">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <h2 className="font-bold uppercase tracking-wide text-white">{editingId ? "Edit Condition" : "New Condition"}</h2>
             <div>
-              <label className="text-xs text-muted block mb-1.5">Fee Amount</label>
-              <input
-                type="number"
-                step="any"
-                value={form.feeAmount}
-                onChange={(e) => setForm((f) => ({ ...f, feeAmount: e.target.value }))}
-                className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Title</Label>
+              <Input
+                required
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
               />
             </div>
             <div>
-              <label className="text-xs text-muted block mb-1.5">Fee Currency</label>
-              <select
-                value={form.feeCurrency}
-                onChange={(e) => setForm((f) => ({ ...f, feeCurrency: e.target.value }))}
-                className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-              >
-                <option value="USD">USD</option>
-                <option value="BTC">BTC</option>
-                <option value="ETH">ETH</option>
-              </select>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Description</Label>
+              <Input
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold px-5 py-2.5 rounded-xl text-sm"
-            >
-              {saving ? "Saving..." : editingId ? "Update Condition" : "Create Condition"}
-            </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="bg-white/10 hover:bg-white/15 transition-colors font-semibold px-5 py-2.5 rounded-xl text-sm"
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Fee Amount</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={form.feeAmount}
+                  onChange={(e) => setForm((f) => ({ ...f, feeAmount: e.target.value }))}
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Fee Currency</Label>
+                <Select value={form.feeCurrency} onValueChange={(v) => v && setForm((f) => ({ ...f, feeCurrency: v }))}>
+                  <SelectTrigger className="bg-navy border-[#1a3a6e] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card-navy border-[#1a3a6e] text-white">
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="BTC">BTC</SelectItem>
+                    <SelectItem value="ETH">ETH</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                disabled={saving}
+                className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
               >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
+                {saving ? "Saving..." : editingId ? "Update Condition" : "Create Condition"}
+              </Button>
+              {editingId && (
+                <Button type="button" variant="secondary" onClick={resetForm} className="font-bold uppercase tracking-wide">
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
+        </Card>
 
         <div className="space-y-3">
           {conditions.map((c) => (
-            <div key={c.id} className="bg-card rounded-2xl p-4 border border-white/5">
+            <Card key={c.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <div className="flex justify-between items-start mb-1">
-                <p className="font-semibold">
-                  {c.title} {!c.is_active && <span className="text-xs text-danger">(inactive)</span>}
+                <p className="font-bold text-white uppercase">
+                  {c.title} {!c.is_active && <span className="text-xs text-patriot-red normal-case">(inactive)</span>}
                 </p>
-                <span className="text-accent font-semibold text-sm">
+                <span className="text-patriot-red font-bold text-sm">
                   {Number(c.fee_amount)} {c.fee_currency}
                 </span>
               </div>
-              {c.description && <p className="text-sm text-muted mb-3">{c.description}</p>}
+              {c.description && <p className="text-sm text-muted-foreground mb-3">{c.description}</p>}
               <div className="flex gap-2">
-                <button
-                  onClick={() => startEdit(c)}
-                  className="text-xs bg-white/10 hover:bg-white/15 transition-colors px-3 py-1.5 rounded-lg"
-                >
+                <Button size="sm" variant="outline" onClick={() => startEdit(c)} className="border-gold text-gold hover:bg-gold/10">
                   Edit
-                </button>
+                </Button>
                 {c.is_active && (
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="text-xs bg-danger/15 hover:bg-danger/25 text-danger transition-colors px-3 py-1.5 rounded-lg"
-                  >
+                  <Button size="sm" variant="outline" onClick={() => handleDelete(c.id)} className="border-patriot-red text-patriot-red hover:bg-patriot-red/10">
                     Deactivate
-                  </button>
+                  </Button>
                 )}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </main>

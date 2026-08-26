@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import ShieldLogo from "@/app/components/ShieldLogo";
 
 const links = [
   { href: "/admin/dashboard", label: "Dashboard" },
@@ -21,26 +23,32 @@ export default function AdminNav() {
   };
 
   return (
-    <header className="border-b border-white/10 bg-card sticky top-0 z-40">
+    <header className="border-b border-[#1a3a6e] bg-card-navy sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-5 py-3">
         <div className="flex items-center justify-between gap-4 mb-2">
           <div className="flex items-center gap-3">
-            <Link href="/wallet" className="text-muted text-sm hover:text-accent transition-colors whitespace-nowrap">
+            <Link href="/wallet" className="text-muted-foreground text-sm hover:text-gold transition-colors whitespace-nowrap">
               ← Wallet
             </Link>
-            <span className="font-semibold text-accent whitespace-nowrap">Wallet Admin</span>
+            <div className="flex items-center gap-2">
+              <ShieldLogo size={20} />
+              <span className="font-bold uppercase tracking-widest text-gold whitespace-nowrap text-sm">QFS Wallet</span>
+            </div>
           </div>
-          <button onClick={handleLogout} className="text-sm text-muted hover:text-danger whitespace-nowrap">
-            Log Out
-          </button>
+          <div className="flex items-center gap-3">
+            <Badge className="bg-patriot-red text-white font-bold uppercase tracking-wide">Admin Panel</Badge>
+            <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-patriot-red whitespace-nowrap">
+              Log Out
+            </button>
+          </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto no-scrollbar">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
-                pathname === link.href ? "bg-accent text-navy font-medium" : "text-muted hover:bg-white/5"
+              className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap uppercase tracking-wide font-medium transition-colors ${
+                pathname === link.href ? "bg-gold text-navy" : "text-muted-foreground hover:bg-white/5"
               }`}
             >
               {link.label}

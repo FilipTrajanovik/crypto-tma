@@ -4,6 +4,15 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminNav from "@/app/components/AdminNav";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
+import { ArrowLeft, Wand2 } from "lucide-react";
 
 type UserDetail = {
   user: {
@@ -17,12 +26,14 @@ type UserDetail = {
     is_admin: boolean;
     release_paid: boolean;
     support_contact: string | null;
+    btc_address: string | null;
+    eth_address: string | null;
     created_at: string;
   };
   balance: { btc_amount: string; eth_amount: string; usd_cash: string };
   transactions: { id: number; type: string; amount: string; currency: string; status: string; note: string | null; created_at: string }[];
   investments: { id: number; amount: string; currency: string; status: string; plan_name: string; started_at: string; matures_at: string | null }[];
-  withdrawals: { id: number; amount: string; currency: string; wallet_address: string; status: string; created_at: string }[];
+  withdrawals: { id: number; amount: string; currency: string; wallet_address: string | null; status: string; created_at: string }[];
 };
 
 export default function AdminUserDetailPage() {
@@ -38,14 +49,20 @@ export default function AdminUserDetailPage() {
   const [usdCash, setUsdCash] = useState("");
   const [note, setNote] = useState("");
   const [supportContact, setSupportContact] = useState("");
+  const [btcAddress, setBtcAddress] = useState("");
+  const [ethAddress, setEthAddress] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [usdQuickSet, setUsdQuickSet] = useState("");
+  const [prices, setPrices] = useState<{ btc: number; eth: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [messageSent, setMessageSent] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [whoamiRes, res] = await Promise.all([fetch("/api/admin/whoami"), fetch(`/api/admin/users/${id}`)]);
+    const [whoamiRes, res, pricesRes] = await Promise.all([
+      fetch("/api/admin/whoami"),
+      fetch(`/api/admin/users/${id}`),
+      fetch("/api/prices"),
+    ]);
 
     if (whoamiRes.status === 401 || res.status === 401) {
       router.replace("/admin");
@@ -54,6 +71,10 @@ export default function AdminUserDetailPage() {
     if (whoamiRes.ok) {
       const identity = await whoamiRes.json();
       setIsSuperAdmin(identity.isSuperAdmin);
+    }
+    if (pricesRes.ok) {
+      const p = await pricesRes.json();
+      setPrices({ btc: p.btc, eth: p.eth });
     }
     if (res.status === 403) {
       setForbidden(true);
@@ -66,6 +87,8 @@ export default function AdminUserDetailPage() {
       setEthAmount(json.balance.eth_amount);
       setUsdCash(json.balance.usd_cash);
       setSupportContact(json.user.support_contact || "");
+      setBtcAddress(json.user.btc_address || "");
+      setEthAddress(json.user.eth_address || "");
     }
   }, [id, router]);
 
@@ -73,10 +96,17 @@ export default function AdminUserDetailPage() {
     load();
   }, [load]);
 
+  const handleQuickSetUsd = () => {
+    const usd = Number(usdQuickSet);
+    if (!usd || !prices) return;
+    setBtcAmount((usd / prices.btc).toFixed(8));
+    setEthAmount((usd / prices.eth).toFixed(8));
+    toast.add({ title: `Converted $${usd} at live prices`, type: "success" });
+  };
+
   const handleSaveBalance = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
     try {
       const res = await fetch(`/api/admin/users/${id}`, {
         method: "PATCH",
@@ -89,11 +119,11 @@ export default function AdminUserDetailPage() {
         }),
       });
       if (res.ok) {
-        setMessage("Balance updated.");
+        toast.add({ title: "Balance updated", type: "success" });
         setNote("");
         load();
       } else {
-        setMessage("Failed to update balance.");
+        toast.add({ title: "Failed to update balance", type: "error" });
       }
     } finally {
       setSaving(false);
@@ -110,6 +140,7 @@ export default function AdminUserDetailPage() {
         body: JSON.stringify({ note }),
       });
       setNote("");
+      toast.add({ title: "Note added", type: "success" });
       load();
     } finally {
       setSaving(false);
@@ -146,14 +177,15 @@ export default function AdminUserDetailPage() {
     load();
   };
 
-  const handleSaveSupportContact = async () => {
+  const handleSaveContactAndAddresses = async () => {
     setSaving(true);
     try {
       await fetch(`/api/admin/users/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supportContact }),
+        body: JSON.stringify({ supportContact, btcAddress, ethAddress }),
       });
+      toast.add({ title: "Saved", type: "success" });
       load();
     } finally {
       setSaving(false);
@@ -164,7 +196,6 @@ export default function AdminUserDetailPage() {
     e.preventDefault();
     if (!messageText.trim()) return;
     setSendingMessage(true);
-    setMessageSent(null);
     try {
       const res = await fetch(`/api/admin/users/${id}/message`, {
         method: "POST",
@@ -172,12 +203,12 @@ export default function AdminUserDetailPage() {
         body: JSON.stringify({ text: messageText }),
       });
       if (res.ok) {
-        setMessageSent("Message sent.");
+        toast.add({ title: "Message sent", type: "success" });
         setMessageText("");
         load();
       } else {
-        const data = await res.json().catch(() => ({}));
-        setMessageSent(data.error || "Failed to send message.");
+        const errData = await res.json().catch(() => ({}));
+        toast.add({ title: errData.error || "Failed to send message", type: "error" });
       }
     } finally {
       setSendingMessage(false);
@@ -186,12 +217,12 @@ export default function AdminUserDetailPage() {
 
   if (forbidden) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-navy">
         <AdminNav />
         <main className="max-w-4xl mx-auto px-5 py-6 text-center">
-          <p className="text-danger font-semibold mb-2">You haven&apos;t claimed this user</p>
-          <p className="text-sm text-muted mb-4">Search for them by exact name or phone on the dashboard to claim them first.</p>
-          <Link href="/admin/dashboard" className="text-accent text-sm">← Back to dashboard</Link>
+          <p className="text-patriot-red font-bold mb-2">You haven&apos;t claimed this user</p>
+          <p className="text-sm text-muted-foreground mb-4">Search for them by exact name or phone on the dashboard to claim them first.</p>
+          <Link href="/admin/dashboard" className="text-gold text-sm">← Back to dashboard</Link>
         </main>
       </div>
     );
@@ -199,8 +230,12 @@ export default function AdminUserDetailPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-navy">
+        <AdminNav />
+        <main className="max-w-4xl mx-auto px-5 py-6">
+          <Skeleton className="h-24 w-full rounded-2xl bg-card-navy mb-6" />
+          <Skeleton className="h-96 w-full rounded-2xl bg-card-navy" />
+        </main>
       </div>
     );
   }
@@ -209,190 +244,253 @@ export default function AdminUserDetailPage() {
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Unnamed User";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-navy">
       <AdminNav />
       <main className="max-w-4xl mx-auto px-5 py-6">
-        <Link href="/admin/dashboard" className="text-muted text-sm mb-4 inline-block">← Back to dashboard</Link>
+        <Link href="/admin/dashboard" className="text-muted-foreground text-sm mb-4 inline-flex items-center gap-1">
+          <ArrowLeft className="w-4 h-4" /> Back to dashboard
+        </Link>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div>
-            <h1 className="text-xl font-semibold">{displayName}</h1>
-            <p className="text-sm text-muted">
-              {user.username ? `@${user.username}` : "no username"} · Telegram ID {user.telegram_id} · {user.phone || "no phone"}
-            </p>
+          <div className="flex items-center gap-3">
+            <Avatar className="w-12 h-12 border border-[#1a3a6e]">
+              <AvatarFallback className="bg-gold/20 text-gold font-semibold">
+                {displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-xl font-bold text-white">{displayName}</h1>
+              <p className="text-sm text-muted-foreground">
+                {user.username ? `@${user.username}` : "no username"} · Telegram ID {user.telegram_id} · {user.phone || "no phone"}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
+            <Badge
               onClick={toggleActive}
-              className={`text-xs px-3 py-1.5 rounded-full ${user.is_active ? "bg-accent/15 text-accent" : "bg-danger/15 text-danger"}`}
+              variant="outline"
+              className={`cursor-pointer ${user.is_active ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}`}
             >
               {user.is_active ? "Active" : "Inactive"} — toggle
-            </button>
+            </Badge>
             {isSuperAdmin && (
-              <button
+              <Badge
                 onClick={toggleAdmin}
-                className={`text-xs px-3 py-1.5 rounded-full ${user.is_admin ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
+                variant="outline"
+                className={`cursor-pointer ${user.is_admin ? "bg-gold/15 text-gold border-gold/30" : "bg-white/10 text-muted-foreground"}`}
               >
                 {user.is_admin ? "Admin" : "Not admin"} — toggle
-              </button>
+              </Badge>
             )}
-            <button
+            <Badge
               onClick={toggleReleasePaid}
-              className={`text-xs px-3 py-1.5 rounded-full ${user.release_paid ? "bg-accent/15 text-accent" : "bg-white/10 text-muted"}`}
+              variant="outline"
+              className={`cursor-pointer ${user.release_paid ? "bg-gold/15 text-gold border-gold/30" : "bg-white/10 text-muted-foreground"}`}
             >
               {user.release_paid ? "Release paid" : "Release unpaid"} — toggle
-            </button>
+            </Badge>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <form onSubmit={handleSaveBalance} className="bg-card rounded-2xl p-5 border border-white/5 space-y-4">
-            <h2 className="font-semibold">Edit Balance</h2>
-            <div>
-              <label className="text-xs text-muted block mb-1.5">BTC Amount</label>
-              <input
-                type="number"
-                step="any"
-                value={btcAmount}
-                onChange={(e) => setBtcAmount(e.target.value)}
-                className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-              />
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+            <h2 className="font-bold uppercase tracking-wide text-gold mb-4">Edit Balances</h2>
+
+            <div className="bg-navy rounded-xl p-3 mb-4 border border-gold/30">
+              <Label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-1.5">
+                <Wand2 className="w-3.5 h-3.5 text-gold" /> Quick Set by USD Value
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  step="any"
+                  value={usdQuickSet}
+                  onChange={(e) => setUsdQuickSet(e.target.value)}
+                  placeholder="Enter USD amount"
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+                <Button
+                  type="button"
+                  onClick={handleQuickSetUsd}
+                  disabled={!prices}
+                  className="bg-gold text-navy font-bold whitespace-nowrap hover:brightness-95"
+                >
+                  Convert
+                </Button>
+              </div>
+              {prices && (
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Live: 1 BTC = ${prices.btc.toLocaleString()} · 1 ETH = ${prices.eth.toLocaleString()}
+                </p>
+              )}
             </div>
-            <div>
-              <label className="text-xs text-muted block mb-1.5">ETH Amount</label>
-              <input
-                type="number"
-                step="any"
-                value={ethAmount}
-                onChange={(e) => setEthAmount(e.target.value)}
-                className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted block mb-1.5">USD Cash</label>
-              <input
-                type="number"
-                step="any"
-                value={usdCash}
-                onChange={(e) => setUsdCash(e.target.value)}
-                className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted block mb-1.5">Note (optional)</label>
-              <input
-                type="text"
+
+            <form onSubmit={handleSaveBalance} className="space-y-4">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">BTC Amount</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={btcAmount}
+                  onChange={(e) => setBtcAmount(e.target.value)}
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">ETH Amount</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={ethAmount}
+                  onChange={(e) => setEthAmount(e.target.value)}
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">USD Cash</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={usdCash}
+                  onChange={(e) => setUsdCash(e.target.value)}
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Note (optional)</Label>
+                <Input
+                  type="text"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Reason for adjustment"
+                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={saving}
+                className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+              >
+                {saving ? "Saving..." : "Save Balance"}
+              </Button>
+            </form>
+          </Card>
+
+          <div className="space-y-6">
+            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+              <h2 className="font-bold uppercase tracking-wide text-gold mb-3">Add Manual Note</h2>
+              <Input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Reason for adjustment"
-                className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
+                placeholder="Write a note..."
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white mb-3"
               />
-            </div>
-            {message && <p className="text-sm text-accent">{message}</p>}
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold py-2.5 rounded-xl text-sm"
-            >
-              {saving ? "Saving..." : "Save Balance"}
-            </button>
-          </form>
+              <Button
+                onClick={handleAddNote}
+                disabled={saving || !note.trim()}
+                variant="secondary"
+                className="w-full font-bold uppercase tracking-wide disabled:opacity-60"
+              >
+                Add Note
+              </Button>
+            </Card>
 
-          <div className="bg-card rounded-2xl p-5 border border-white/5">
-            <h2 className="font-semibold mb-3">Add Manual Note</h2>
-            <p className="text-sm text-muted mb-4">Log a note without changing the balance.</p>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Write a note..."
-              rows={4}
-              className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent mb-3"
-            />
-            <button
-              onClick={handleAddNote}
-              disabled={saving || !note.trim()}
-              className="w-full bg-white/10 hover:bg-white/15 disabled:opacity-60 transition-colors font-semibold py-2.5 rounded-xl text-sm"
-            >
-              Add Note
-            </button>
-
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold mb-2">Withdrawal Requests</h3>
+            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-gold mb-2">Withdrawal Requests</h3>
               {withdrawals.length === 0 ? (
-                <p className="text-xs text-muted">None yet.</p>
+                <p className="text-xs text-muted-foreground">None yet.</p>
               ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2 max-h-40 overflow-y-auto">
                   {withdrawals.map((w) => (
                     <div key={w.id} className="text-xs bg-navy rounded-lg p-2 flex justify-between">
-                      <span>{w.amount} {w.currency}</span>
-                      <span className="capitalize text-muted">{w.status}</span>
+                      <span className="text-white">${Number(w.amount).toFixed(2)}</span>
+                      <span className="capitalize text-muted-foreground">{w.status}</span>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-card rounded-2xl p-5 border border-white/5">
-            <h2 className="font-semibold mb-1">Support Contact Override</h2>
-            <p className="text-sm text-muted mb-3">
-              Telegram username shown as this user&apos;s Contact Support. Leave blank to use you (once claimed) or the
-              platform default.
-            </p>
-            <div className="flex gap-2">
-              <input
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Deposit Addresses & Contact</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Custom BTC/ETH deposit addresses shown to this user only. Leave blank to use the platform default.
+            Support contact overrides the auto-assigned claiming admin.
+          </p>
+          <div className="grid md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">BTC Address</Label>
+              <Input
+                value={btcAddress}
+                onChange={(e) => setBtcAddress(e.target.value)}
+                placeholder="bc1q..."
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">ETH Address</Label>
+              <Input
+                value={ethAddress}
+                onChange={(e) => setEthAddress(e.target.value)}
+                placeholder="0x..."
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Support Contact</Label>
+              <Input
                 value={supportContact}
                 onChange={(e) => setSupportContact(e.target.value)}
-                placeholder="e.g. your_telegram_username"
-                className="flex-1 bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
+                placeholder="Telegram username"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white text-sm"
               />
-              <button
-                onClick={handleSaveSupportContact}
-                disabled={saving}
-                className="bg-white/10 hover:bg-white/15 disabled:opacity-60 transition-colors font-semibold px-4 py-2.5 rounded-xl text-sm whitespace-nowrap"
-              >
-                Save
-              </button>
             </div>
           </div>
+          <Button
+            onClick={handleSaveContactAndAddresses}
+            disabled={saving}
+            className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+          >
+            Save
+          </Button>
+        </Card>
 
-          <form onSubmit={handleSendMessage} className="bg-card rounded-2xl p-5 border border-white/5">
-            <h2 className="font-semibold mb-1">Send Message via Bot</h2>
-            <p className="text-sm text-muted mb-3">Sends a direct Telegram message to this user right now.</p>
-            <textarea
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Send Message via Bot</h2>
+          <p className="text-sm text-muted-foreground mb-3">Sends a direct Telegram message to this user right now.</p>
+          <form onSubmit={handleSendMessage} className="space-y-3">
+            <Input
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               placeholder="Write a message..."
-              rows={3}
-              className="w-full bg-navy border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent mb-3"
+              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
             />
-            {messageSent && <p className="text-sm text-accent mb-3">{messageSent}</p>}
-            <button
+            <Button
               type="submit"
               disabled={sendingMessage || !messageText.trim()}
-              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 transition-colors text-navy font-semibold py-2.5 rounded-xl text-sm"
+              className="w-full bg-patriot-red text-white font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
             >
               {sendingMessage ? "Sending..." : "Send Message"}
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-card rounded-2xl p-5 border border-white/5">
-            <h2 className="font-semibold mb-3">Transactions</h2>
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+            <h2 className="font-bold uppercase tracking-wide text-gold mb-3">Transactions</h2>
             {transactions.length === 0 ? (
-              <p className="text-sm text-muted">No transactions yet.</p>
+              <p className="text-sm text-muted-foreground">No transactions yet.</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {transactions.map((t) => (
                   <div key={t.id} className="text-sm bg-navy rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="capitalize font-medium">{t.type}</span>
-                      <span>{Number(t.amount) !== 0 ? `${t.amount} ${t.currency}` : ""}</span>
+                      <span className="capitalize font-medium text-white">{t.type}</span>
+                      <span className="text-white">{Number(t.amount) !== 0 ? `${t.amount} ${t.currency}` : ""}</span>
                     </div>
-                    <div className="flex justify-between text-xs text-muted mt-1">
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
                       <span>{new Date(t.created_at).toLocaleString()}</span>
                       <span className="capitalize">{t.status}</span>
                     </div>
@@ -401,26 +499,26 @@ export default function AdminUserDetailPage() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-card rounded-2xl p-5 border border-white/5">
-            <h2 className="font-semibold mb-3">Investments</h2>
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+            <h2 className="font-bold uppercase tracking-wide text-gold mb-3">Investments</h2>
             {investments.length === 0 ? (
-              <p className="text-sm text-muted">No investments yet.</p>
+              <p className="text-sm text-muted-foreground">No investments yet.</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {investments.map((inv) => (
                   <div key={inv.id} className="text-sm bg-navy rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="font-medium">{inv.plan_name}</span>
-                      <span className="capitalize text-muted">{inv.status}</span>
+                      <span className="font-medium text-white">{inv.plan_name}</span>
+                      <span className="capitalize text-muted-foreground">{inv.status}</span>
                     </div>
-                    <p className="text-xs text-muted mt-1">{inv.amount} {inv.currency}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{inv.amount} {inv.currency}</p>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </main>
     </div>

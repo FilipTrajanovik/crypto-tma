@@ -2,6 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import BottomNav from "@/app/components/BottomNav";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Transaction = {
   id: number;
@@ -16,27 +28,20 @@ type Transaction = {
 const TYPES = ["all", "deposit", "withdrawal", "invest", "release", "adjustment"];
 const STATUSES = ["all", "pending", "approved", "rejected", "completed"];
 
-const TYPE_ICON: Record<string, string> = {
-  deposit: "↓",
-  withdrawal: "↑",
-  invest: "📈",
-  release: "🔓",
-  adjustment: "⚙️",
+const TYPE_STYLES: Record<string, string> = {
+  deposit: "bg-green-500/15 text-green-400 border-green-500/30",
+  withdrawal: "bg-patriot-red/15 text-patriot-red border-patriot-red/30",
+  invest: "bg-gold/15 text-gold border-gold/30",
+  release: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  adjustment: "bg-white/10 text-muted-foreground border-white/20",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending: "bg-yellow-500/15 text-yellow-400",
-    approved: "bg-accent/15 text-accent",
-    completed: "bg-accent/15 text-accent",
-    rejected: "bg-danger/15 text-danger",
-  };
-  return (
-    <span className={`text-xs px-2 py-1 rounded-full capitalize ${styles[status] || "bg-white/10 text-muted"}`}>
-      {status}
-    </span>
-  );
-}
+const STATUS_STYLES: Record<string, string> = {
+  pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  completed: "bg-green-500/15 text-green-400 border-green-500/30",
+  approved: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  rejected: "bg-patriot-red/15 text-patriot-red border-patriot-red/30",
+};
 
 export default function HistoryPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -66,91 +71,117 @@ export default function HistoryPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="min-h-screen px-5 pt-6 pb-24">
-      <h1 className="text-xl font-semibold mb-4">Transaction History</h1>
+    <div className="min-h-screen bg-navy px-5 pt-6 pb-24 max-w-md mx-auto">
+      <h1 className="text-xl font-bold uppercase tracking-widest text-gold mb-5">Transaction History</h1>
 
-      <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
-        {TYPES.map((t) => (
-          <button
-            key={t}
-            onClick={() => {
-              setType(t);
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap capitalize transition-colors ${
-              type === t ? "bg-accent text-navy font-medium" : "bg-card text-muted"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <div className="flex gap-2 mb-5">
+        <Select
+          value={type}
+          onValueChange={(v) => {
+            if (!v) return;
+            setType(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="bg-card-navy border-[#1a3a6e] text-white flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-card-navy border-[#1a3a6e] text-white">
+            {TYPES.map((t) => (
+              <SelectItem key={t} value={t} className="capitalize">
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <div className="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
-        {STATUSES.map((s) => (
-          <button
-            key={s}
-            onClick={() => {
-              setStatus(s);
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap capitalize transition-colors ${
-              status === s ? "bg-accent text-navy font-medium" : "bg-card text-muted"
-            }`}
-          >
-            {s}
-          </button>
-        ))}
+        <Select
+          value={status}
+          onValueChange={(v) => {
+            if (!v) return;
+            setStatus(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="bg-card-navy border-[#1a3a6e] text-white flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-card-navy border-[#1a3a6e] text-white">
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s} className="capitalize">
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mt-10" />
-      ) : transactions.length === 0 ? (
-        <p className="text-muted text-sm text-center py-10">No transactions found.</p>
-      ) : (
-        <div className="space-y-3">
-          {transactions.map((tx) => (
-            <div key={tx.id} className="bg-card rounded-xl p-4 border border-white/5 flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-sm flex-shrink-0">
-                {TYPE_ICON[tx.type] || "•"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
-                  <p className="font-medium capitalize">{tx.type}</p>
-                  <p className="font-semibold">
-                    {Number(tx.amount) !== 0 ? `${tx.amount} ${tx.currency}` : tx.currency}
-                  </p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-xs text-muted">{new Date(tx.created_at).toLocaleString()}</p>
-                  <StatusBadge status={tx.status} />
-                </div>
-                {tx.note && <p className="text-xs text-gray-400 mt-1">{tx.note}</p>}
-              </div>
-            </div>
-          ))}
+        <div className="space-y-2">
+          <Skeleton className="h-14 w-full rounded-lg bg-card-navy" />
+          <Skeleton className="h-14 w-full rounded-lg bg-card-navy" />
+          <Skeleton className="h-14 w-full rounded-lg bg-card-navy" />
         </div>
+      ) : transactions.length === 0 ? (
+        <p className="text-muted-foreground text-sm text-center py-10">No transactions yet</p>
+      ) : (
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-[#1a3a6e] hover:bg-transparent">
+                <TableHead className="text-muted-foreground">Date</TableHead>
+                <TableHead className="text-muted-foreground">Type</TableHead>
+                <TableHead className="text-muted-foreground">Amount</TableHead>
+                <TableHead className="text-muted-foreground">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((tx, i) => (
+                <TableRow key={tx.id} className={`border-[#1a3a6e] ${i % 2 === 1 ? "bg-white/[0.02]" : ""}`}>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(tx.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`capitalize ${TYPE_STYLES[tx.type] || ""}`}>
+                      {tx.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-white font-medium">
+                    {Number(tx.amount) !== 0 ? `${tx.amount} ${tx.currency}` : tx.currency}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`capitalize ${STATUS_STYLES[tx.status] || ""}`}>
+                      {tx.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-6">
-          <button
+          <Button
+            variant="outline"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1.5 rounded-lg bg-card text-sm disabled:opacity-40"
+            className="border-gold text-gold hover:bg-gold/10 disabled:opacity-40"
           >
-            Prev
-          </button>
-          <span className="text-sm text-muted">
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
-          <button
+          <Button
+            variant="outline"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-1.5 rounded-lg bg-card text-sm disabled:opacity-40"
+            className="border-gold text-gold hover:bg-gold/10 disabled:opacity-40"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
 

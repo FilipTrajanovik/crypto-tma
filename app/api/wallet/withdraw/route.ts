@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
-const VALID_CURRENCIES = ["BTC", "ETH", "USD"];
-
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -11,7 +9,7 @@ export async function GET() {
   }
 
   const rows = await sql`
-    SELECT id, amount, currency, wallet_address, status, admin_note, created_at
+    SELECT id, amount, currency, status, admin_note, created_at
     FROM withdrawal_requests
     WHERE user_id = ${session.userId}
     ORDER BY created_at DESC
@@ -28,41 +26,35 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const amount = Number(body?.amount);
-  const currency = String(body?.currency || "").toUpperCase();
-  const walletAddress = String(body?.walletAddress || "").trim();
 
   if (!amount || amount <= 0) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
   }
-  if (!VALID_CURRENCIES.includes(currency)) {
-    return NextResponse.json({ error: "Invalid currency" }, { status: 400 });
-  }
-  if (!walletAddress) {
-    return NextResponse.json({ error: "Wallet address is required" }, { status: 400 });
+
+  const userRows = await sql`SELECT release_paid FROM users WHERE id = ${session.userId}`;
+  if (userRows[0]?.release_paid !== true) {
+    return NextResponse.json({ error: "Withdrawals unlock once your release fee is paid" }, { status: 403 });
   }
 
-  const balanceRows = await sql`SELECT btc_amount, eth_amount, usd_cash FROM balances WHERE user_id = ${session.userId}`;
+  const balanceRows = await sql`SELECT usd_cash FROM balances WHERE user_id = ${session.userId}`;
   const balance = balanceRows[0];
   if (!balance) {
     return NextResponse.json({ error: "Balance not found" }, { status: 404 });
   }
 
-  const available =
-    currency === "BTC" ? Number(balance.btc_amount) : currency === "ETH" ? Number(balance.eth_amount) : Number(balance.usd_cash);
-
-  if (amount > available) {
+  if (amount > Number(balance.usd_cash)) {
     return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
   }
 
   const rows = await sql`
-    INSERT INTO withdrawal_requests (user_id, amount, currency, wallet_address, status)
-    VALUES (${session.userId}, ${amount}, ${currency}, ${walletAddress}, 'pending')
-    RETURNING id, amount, currency, wallet_address, status, admin_note, created_at
+    INSERT INTO withdrawal_requests (user_id, amount, currency, status)
+    VALUES (${session.userId}, ${amount}, 'USD', 'pending')
+    RETURNING id, amount, currency, status, admin_note, created_at
   `;
 
   await sql`
     INSERT INTO transactions (user_id, type, amount, currency, status, note)
-    VALUES (${session.userId}, 'withdrawal', ${amount}, ${currency}, 'pending', ${"Withdrawal requested to " + walletAddress})
+    VALUES (${session.userId}, 'withdrawal', ${amount}, 'USD', 'pending', 'Withdrawal requested')
   `;
 
   return NextResponse.json({ withdrawal: rows[0] });
