@@ -9,10 +9,18 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Landmark, Send, TrendingUp, Unlock, ListOrdered, ArrowUp, ArrowDown, FileText, MessageCircle } from "lucide-react";
+import { Landmark, Send, TrendingUp, Unlock, ListOrdered, ArrowUp, ArrowDown, FileText, MessageCircle, Timer } from "lucide-react";
 
 type BalanceData = {
-  user: { firstName: string | null; lastName: string | null; username: string | null; avatarUrl: string | null; phone: string | null };
+  user: {
+    firstName: string | null;
+    lastName: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+    phone: string | null;
+    releasePaid: boolean;
+    releaseDeadline: string | null;
+  };
   balance: { btc: number; eth: number; gold: number; usdCash: number; btcValue: number; ethValue: number; goldValue: number; totalValue: number };
   prices: { btc: number; eth: number; gold: number; btcChange24h: number; ethChange24h: number };
   supportContact: string | null;
@@ -28,6 +36,17 @@ function formatCrypto(value: number, decimals = 6) {
   return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
 }
 
+function formatCountdown(msRemaining: number) {
+  const totalSeconds = Math.floor(msRemaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (days > 0) return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+  return `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+}
+
 const actions = [
   { href: "/wallet/deposit", label: "Deposit", icon: Landmark, variant: "gold" as const },
   { href: "/wallet/withdraw", label: "Withdraw", icon: Send, variant: "gold" as const },
@@ -41,6 +60,7 @@ export default function WalletPage() {
   const router = useRouter();
   const [data, setData] = useState<BalanceData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     try {
@@ -71,6 +91,12 @@ export default function WalletPage() {
     return () => clearInterval(interval);
   }, [load]);
 
+  useEffect(() => {
+    if (!data?.user.releaseDeadline) return;
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [data?.user.releaseDeadline]);
+
   if (error && !data) {
     return (
       <div className="min-h-screen bg-navy flex items-center justify-center px-6">
@@ -100,6 +126,8 @@ export default function WalletPage() {
 
   const { user, balance, prices } = data;
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Wallet";
+  const msRemaining = user.releaseDeadline ? new Date(user.releaseDeadline).getTime() - now : null;
+  const isExpired = msRemaining !== null && msRemaining <= 0;
 
   const handleContactSupport = () => {
     const contact = data.supportContact || FALLBACK_SUPPORT;
@@ -152,6 +180,28 @@ export default function WalletPage() {
           )}
         </div>
       </section>
+
+      {user.releaseDeadline && !user.releasePaid && (
+        <section className="relative px-5 mb-4">
+          <Link href="/wallet/release">
+            <Card
+              className={`rounded-2xl p-5 text-center border-[#1a3a6e] ${
+                isExpired ? "bg-patriot-red/10 border-l-4 border-l-patriot-red" : "bg-card-navy border-l-4 border-l-gold"
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red" : "text-gold"}`} />
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
+                </p>
+              </div>
+              <p className={`text-2xl font-bold tabular-nums ${isExpired ? "text-patriot-red" : "text-gold"}`}>
+                {isExpired ? "00h 00m 00s" : formatCountdown(msRemaining!)}
+              </p>
+            </Card>
+          </Link>
+        </section>
+      )}
 
       <section className="relative px-5 mb-6">
         <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-gold rounded-2xl p-6">

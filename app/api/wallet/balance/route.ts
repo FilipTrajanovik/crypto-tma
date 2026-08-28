@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   const [userRows, balanceRows, prices, supportContact] = await Promise.all([
-    sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid, notifications_allowed FROM users WHERE id = ${session.userId}`,
+    sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid, release_deadline, notifications_allowed FROM users WHERE id = ${session.userId}`,
     sql`SELECT btc_amount, eth_amount, usd_cash, gold_amount, updated_at FROM balances WHERE user_id = ${session.userId}`,
     getPrices(),
     getSupportContactForUser(session.userId),
@@ -49,6 +49,7 @@ export async function GET() {
       homeAddress: user.home_address,
       isAdmin: user.is_admin === true,
       releasePaid: user.release_paid === true,
+      releaseDeadline: user.release_deadline ?? null,
     },
     balance: {
       btc,
