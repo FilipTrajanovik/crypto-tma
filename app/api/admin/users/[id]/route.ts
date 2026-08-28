@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const userRows = await sql`
     SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, release_paid,
            assigned_admin_id, support_contact, btc_address, eth_address,
-           release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, created_at
+           release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, release_deadline, created_at
     FROM users WHERE id = ${userId}
   `;
   if (userRows.length === 0) {
@@ -85,6 +85,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeNote,
     releaseFeeAmount,
     releaseFeeCurrency,
+    releaseDeadline,
     btcAmount,
     ethAmount,
     usdCash,
@@ -128,6 +129,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeNote !== undefined ||
     releaseFeeAmount !== undefined ||
     releaseFeeCurrency !== undefined ||
+    releaseDeadline !== undefined ||
     assignedAdminChange !== undefined
   ) {
     await sql`
@@ -146,6 +148,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         release_fee_note = CASE WHEN ${releaseFeeNote !== undefined} THEN ${releaseFeeNote ?? null} ELSE release_fee_note END,
         release_fee_amount = CASE WHEN ${releaseFeeAmount !== undefined} THEN ${releaseFeeAmount ?? null} ELSE release_fee_amount END,
         release_fee_currency = CASE WHEN ${releaseFeeCurrency !== undefined} THEN ${releaseFeeCurrency ?? null} ELSE release_fee_currency END,
+        release_deadline = CASE WHEN ${releaseDeadline !== undefined} THEN ${releaseDeadline ?? null} ELSE release_deadline END,
         assigned_admin_id = CASE WHEN ${assignedAdminChange !== undefined} THEN ${assignedAdminChange ?? null} ELSE assigned_admin_id END
       WHERE id = ${userId}
     `;
@@ -165,6 +168,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (releaseFeeAmount !== undefined && releaseFeeAmount !== null) {
       notifications.push(
         `A release fee of ${releaseFeeAmount} ${releaseFeeCurrency || "USD"} has been set on your account. Check the Release Funds page for details.`
+      );
+    }
+    if (releaseDeadline !== undefined && releaseDeadline !== null) {
+      notifications.push(
+        `A release deadline has been set on your account: ${new Date(releaseDeadline).toLocaleString()}. Check the Release Funds page for your countdown.`
       );
     }
   }
@@ -206,6 +214,39 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await sendTelegramMessage(telegramId, notifications.join("\n\n"));
     }
   }
+
+  return NextResponse.json({ success: true });
+}
+
+/**
+ * Permanently deletes a user and every row referencing them. Super-admin only.
+ * Lets a user re-authenticate from scratch via the bot — a fresh row is
+ * inserted on next /api/auth/telegram call, so notifications/phone gates
+ * are re-triggered as if they were brand new.
+ */
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const identity = await getAdminIdentity();
+  if (!identity.isSuperAdmin) {
+    return NextResponse.json({ error: "Only a super-admin can delete users" }, { status: 403 });
+  }
+
+  const userId = Number(params.id);
+  if (!userId) {
+    return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
+  }
+
+  const existing = await sql`SELECT id FROM users WHERE id = ${userId}`;
+  if (existing.length === 0) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  await sql`UPDATE users SET assigned_admin_id = NULL WHERE assigned_admin_id = ${userId}`;
+  await sql`DELETE FROM user_documents WHERE user_id = ${userId} OR uploaded_by_admin_id = ${userId}`;
+  await sql`DELETE FROM transactions WHERE user_id = ${userId}`;
+  await sql`DELETE FROM investments WHERE user_id = ${userId}`;
+  await sql`DELETE FROM withdrawal_requests WHERE user_id = ${userId}`;
+  await sql`DELETE FROM balances WHERE user_id = ${userId}`;
+  await sql`DELETE FROM users WHERE id = ${userId}`;
 
   return NextResponse.json({ success: true });
 }

@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   const [userRows, balanceRows, prices, supportContact] = await Promise.all([
-    sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid FROM users WHERE id = ${session.userId}`,
+    sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid, notifications_allowed FROM users WHERE id = ${session.userId}`,
     sql`SELECT btc_amount, eth_amount, usd_cash, gold_amount, updated_at FROM balances WHERE user_id = ${session.userId}`,
     getPrices(),
     getSupportContactForUser(session.userId),
@@ -22,6 +22,9 @@ export async function GET() {
   }
 
   const user = userRows[0];
+  if (user.notifications_allowed !== true) {
+    return NextResponse.json({ error: "Notifications not enabled", code: "notifications_required" }, { status: 403 });
+  }
   const balance = balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0", gold_amount: "0", updated_at: null };
 
   const btc = Number(balance.btc_amount);

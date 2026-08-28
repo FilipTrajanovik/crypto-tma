@@ -11,7 +11,7 @@ export async function GET() {
 
   const [userRows, supportContact] = await Promise.all([
     sql`
-      SELECT release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, release_paid
+      SELECT release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, release_paid, release_deadline
       FROM users WHERE id = ${session.userId}
     `,
     getSupportContactForUser(session.userId),
@@ -28,5 +28,10 @@ export async function GET() {
         }
       : null;
 
-  return NextResponse.json({ fee, releasePaid: user?.release_paid === true, supportContact });
+  return NextResponse.json({
+    fee,
+    releasePaid: user?.release_paid === true,
+    releaseDeadline: user?.release_deadline ?? null,
+    supportContact,
+  });
 }

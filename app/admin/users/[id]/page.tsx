@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { ArrowLeft, Wand2, FileText, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Wand2, FileText, Upload, Trash2, UserX } from "lucide-react";
 
 type UserDetail = {
   user: {
@@ -34,6 +34,7 @@ type UserDetail = {
     release_fee_note: string | null;
     release_fee_amount: string | null;
     release_fee_currency: string | null;
+    release_deadline: string | null;
     created_at: string;
   };
   balance: { btc_amount: string; eth_amount: string; usd_cash: string; gold_amount: string };
@@ -52,6 +53,12 @@ type UserDoc = {
 };
 
 type AdminOption = { id: number; first_name: string | null; last_name: string | null; username: string | null };
+
+function toDatetimeLocal(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function formatDocSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -80,6 +87,7 @@ export default function AdminUserDetailPage() {
   const [releaseFeeNote, setReleaseFeeNote] = useState("");
   const [releaseFeeAmount, setReleaseFeeAmount] = useState("");
   const [releaseFeeCurrency, setReleaseFeeCurrency] = useState("USD");
+  const [releaseDeadline, setReleaseDeadline] = useState("");
   const [messageText, setMessageText] = useState("");
   const [usdQuickSet, setUsdQuickSet] = useState("");
   const [prices, setPrices] = useState<{ btc: number; eth: number; gold: number } | null>(null);
@@ -91,6 +99,8 @@ export default function AdminUserDetailPage() {
   const [docFile, setDocFile] = useState<File | null>(null);
   const [docNote, setDocNote] = useState("");
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const loadDocs = useCallback(async () => {
     const res = await fetch(`/api/admin/users/${id}/documents`);
@@ -142,6 +152,7 @@ export default function AdminUserDetailPage() {
       setReleaseFeeNote(json.user.release_fee_note || "");
       setReleaseFeeAmount(json.user.release_fee_amount ?? "");
       setReleaseFeeCurrency(json.user.release_fee_currency || "USD");
+      setReleaseDeadline(json.user.release_deadline ? toDatetimeLocal(json.user.release_deadline) : "");
     }
   }, [id, router]);
 
@@ -312,6 +323,46 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const handleSaveReleaseDeadline = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          releaseDeadline: releaseDeadline ? new Date(releaseDeadline).toISOString() : null,
+        }),
+      });
+      toast.add({ title: "Release timer saved", type: "success" });
+      load();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearReleaseDeadline = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ releaseDeadline: null }),
+      });
+      setReleaseDeadline("");
+      toast.add({ title: "Release timer cleared", type: "success" });
+      load();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleQuickAddTime = (hours: number) => {
+    const base = releaseDeadline ? new Date(releaseDeadline) : new Date();
+    const from = base.getTime() > Date.now() ? base : new Date();
+    from.setHours(from.getHours() + hours);
+    setReleaseDeadline(toDatetimeLocal(from.toISOString()));
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim()) return;
@@ -361,6 +412,30 @@ export default function AdminUserDetailPage() {
   const handleDeleteDoc = async (docId: number) => {
     await fetch(`/api/admin/users/${id}/documents/${docId}`, { method: "DELETE" });
     loadDocs();
+  };
+
+  const handleDeleteUser = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.add({ title: "User deleted — they can sign up again from scratch", type: "success" });
+        router.replace("/admin/dashboard");
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.add({ title: errData.error || "Failed to delete user", type: "error" });
+        setDeleting(false);
+        setConfirmDelete(false);
+      }
+    } catch {
+      toast.add({ title: "Failed to delete user", type: "error" });
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
   };
 
   if (forbidden) {
@@ -696,6 +771,56 @@ export default function AdminUserDetailPage() {
         </Card>
 
         <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Release Timer</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Set a countdown deadline for this user to release their funds. Shown as a live timer on their Release
+            Funds page. Leave blank for no timer.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Deadline</Label>
+              <Input
+                type="datetime-local"
+                value={releaseDeadline}
+                onChange={(e) => setReleaseDeadline(e.target.value)}
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Quick Add</Label>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(24)} className="border-gold/40 text-gold hover:bg-gold/10">
+                  +24h
+                </Button>
+                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(72)} className="border-gold/40 text-gold hover:bg-gold/10">
+                  +72h
+                </Button>
+                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(168)} className="border-gold/40 text-gold hover:bg-gold/10">
+                  +7d
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSaveReleaseDeadline}
+              disabled={saving}
+              className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+            >
+              Save
+            </Button>
+            <Button
+              onClick={handleClearReleaseDeadline}
+              disabled={saving}
+              variant="outline"
+              className="border-patriot-red text-patriot-red hover:bg-patriot-red/10 font-bold uppercase tracking-wide disabled:opacity-60"
+            >
+              Clear
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
           <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Send Message via Bot</h2>
           <p className="text-sm text-muted-foreground mb-3">Sends a direct Telegram message to this user right now.</p>
           <form onSubmit={handleSendMessage} className="space-y-3">
@@ -820,6 +945,30 @@ export default function AdminUserDetailPage() {
             )}
           </Card>
         </div>
+
+        {isSuperAdmin && (
+          <Card className="bg-card-navy border-patriot-red/40 rounded-2xl p-5 mt-6">
+            <h2 className="font-bold uppercase tracking-wide text-patriot-red mb-1">Danger Zone</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Permanently deletes this user and all their balances, transactions, investments, withdrawals, and
+              documents. They can then open the bot and sign up again as a brand-new user — starting over from the
+              notifications and phone-number prompts.
+            </p>
+            <Button
+              onClick={handleDeleteUser}
+              disabled={deleting}
+              variant="outline"
+              className={`font-bold uppercase tracking-wide disabled:opacity-60 ${
+                confirmDelete
+                  ? "bg-patriot-red text-white border-patriot-red hover:brightness-95"
+                  : "border-patriot-red text-patriot-red hover:bg-patriot-red/10"
+              }`}
+            >
+              <UserX className="w-4 h-4 mr-1.5" />
+              {deleting ? "Deleting..." : confirmDelete ? "Confirm Delete — This Cannot Be Undone" : "Delete User"}
+            </Button>
+          </Card>
+        )}
       </main>
     </div>
   );

@@ -49,6 +49,13 @@ export default function WalletPage() {
         router.replace("/auth");
         return;
       }
+      if (res.status === 403) {
+        const body = await res.json().catch(() => ({}));
+        if (body?.code === "notifications_required") {
+          router.replace("/auth");
+          return;
+        }
+      }
       if (!res.ok) throw new Error("Failed to load balance");
       const json = await res.json();
       setData(json);

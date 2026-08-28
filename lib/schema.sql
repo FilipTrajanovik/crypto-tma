@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS users (
   release_fee_note TEXT,
   release_fee_amount DECIMAL(18,2),
   release_fee_currency TEXT,
+  notifications_allowed BOOLEAN DEFAULT false,
+  release_deadline TIMESTAMPTZ,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -34,6 +36,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_title TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_note TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_amount DECIMAL(18,2);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_currency TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_allowed BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS release_deadline TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS balances (
   id SERIAL PRIMARY KEY,

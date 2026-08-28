@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         last_name = EXCLUDED.last_name,
         username = EXCLUDED.username,
         avatar_url = EXCLUDED.avatar_url
-      RETURNING id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, created_at
+      RETURNING id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, notifications_allowed, created_at
     `;
 
     const dbUser = rows[0];
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         phone: dbUser.phone,
         avatarUrl: dbUser.avatar_url,
         needsPhone: !dbUser.phone,
+        needsNotifications: dbUser.notifications_allowed !== true,
         isAdmin: dbUser.is_admin === true || dbUser.is_super_admin === true,
       },
     });

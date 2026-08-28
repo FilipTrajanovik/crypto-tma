@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lock, MessageCircle, CheckCircle2 } from "lucide-react";
+import { Lock, MessageCircle, CheckCircle2, Timer } from "lucide-react";
 
 type Fee = {
   title: string;
@@ -17,11 +17,24 @@ type Fee = {
 
 const FALLBACK_SUPPORT = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
 
+function formatCountdown(msRemaining: number) {
+  const totalSeconds = Math.floor(msRemaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (days > 0) return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+  return `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+}
+
 export default function ReleasePage() {
   const [fee, setFee] = useState<Fee | null>(null);
   const [releasePaid, setReleasePaid] = useState(false);
+  const [releaseDeadline, setReleaseDeadline] = useState<string | null>(null);
   const [supportContact, setSupportContact] = useState(FALLBACK_SUPPORT);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const load = (silent?: boolean) => {
@@ -30,6 +43,7 @@ export default function ReleasePage() {
         .then((data) => {
           setFee(data.fee);
           setReleasePaid(data.releasePaid === true);
+          setReleaseDeadline(data.releaseDeadline || null);
           if (data.supportContact) setSupportContact(data.supportContact);
         })
         .finally(() => {
@@ -40,6 +54,15 @@ export default function ReleasePage() {
     const interval = setInterval(() => load(true), 30_000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!releaseDeadline) return;
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [releaseDeadline]);
+
+  const msRemaining = releaseDeadline ? new Date(releaseDeadline).getTime() - now : null;
+  const isExpired = msRemaining !== null && msRemaining <= 0;
 
   const handleContactSupport = () => {
     const target = supportContact.startsWith("http") ? supportContact : `https://t.me/${supportContact.replace(/^@/, "")}`;
@@ -64,6 +87,27 @@ export default function ReleasePage() {
           </p>
         </div>
       </Card>
+
+      {!loading && releaseDeadline && !releasePaid && (
+        <Card
+          className={`rounded-2xl p-5 mb-6 text-center border-[#1a3a6e] ${
+            isExpired ? "bg-patriot-red/10 border-l-4 border-l-patriot-red" : "bg-card-navy border-l-4 border-l-gold"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red" : "text-gold"}`} />
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
+            </p>
+          </div>
+          <p className={`text-2xl font-bold tabular-nums ${isExpired ? "text-patriot-red" : "text-gold"}`}>
+            {isExpired ? "00h 00m 00s" : formatCountdown(msRemaining!)}
+          </p>
+          {isExpired && (
+            <p className="text-xs text-muted-foreground mt-2">Contact your account manager immediately.</p>
+          )}
+        </Card>
+      )}
 
       {loading ? (
         <div className="space-y-3 mb-6">
