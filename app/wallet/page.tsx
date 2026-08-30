@@ -76,12 +76,19 @@ export default function WalletPage() {
           return;
         }
       }
-      if (!res.ok) throw new Error("Failed to load balance");
+      if (!res.ok) {
+        setError(
+          res.status >= 500
+            ? "Our servers are having trouble right now. Please try again shortly."
+            : "Could not load your wallet. Pull to refresh."
+        );
+        return;
+      }
       const json = await res.json();
       setData(json);
       setError(null);
     } catch {
-      setError("Could not load your wallet. Pull to refresh.");
+      setError("No connection. Check your internet and try again.");
     }
   }, [router]);
 

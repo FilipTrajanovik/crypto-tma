@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, clearSessionCookie } from "@/lib/auth";
 import { getPrices } from "@/lib/prices";
 import { getSupportContactForUser } from "@/lib/support";
 
@@ -18,7 +18,10 @@ export async function GET() {
   ]);
 
   if (userRows.length === 0) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // The account behind this session was deleted — clear the stale cookie so
+    // the client treats this like an expired session and re-authenticates.
+    await clearSessionCookie();
+    return NextResponse.json({ error: "Session expired", code: "session_expired" }, { status: 401 });
   }
 
   const user = userRows[0];
