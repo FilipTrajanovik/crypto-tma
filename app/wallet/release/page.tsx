@@ -6,13 +6,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lock, MessageCircle, CheckCircle2, Timer } from "lucide-react";
+import { Lock, MessageCircle, CheckCircle2, Timer, Tag } from "lucide-react";
 
 type Fee = {
   title: string;
   note: string | null;
   amount: string;
   currency: string;
+  originalAmount: string;
+  discountType: "percent" | "fixed" | null;
+  discountValue: string | null;
+  savings: string;
 };
 
 function formatCountdown(msRemaining: number) {
@@ -130,9 +134,29 @@ export default function ReleasePage() {
               )}
             </div>
             {fee.note && <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{fee.note}</p>}
-            <p className="text-2xl font-bold text-patriot-red">
-              {Number(fee.amount).toLocaleString()} <span className="text-base">{fee.currency}</span>
-            </p>
+            {Number(fee.savings) > 0 ? (
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-lg font-medium text-muted-foreground line-through decoration-2">
+                    {Number(fee.originalAmount).toLocaleString()} {fee.currency}
+                  </p>
+                  <Badge variant="outline" className="bg-green-500/15 text-green-400 border-green-500/30 whitespace-nowrap">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {fee.discountType === "percent" ? `${fee.discountValue}% OFF` : `${fee.discountValue} ${fee.currency} OFF`}
+                  </Badge>
+                </div>
+                <p className="text-2xl font-bold text-patriot-red mt-1">
+                  {Number(fee.amount).toLocaleString()} <span className="text-base">{fee.currency}</span>
+                </p>
+                <p className="text-xs text-green-400 mt-1">
+                  You save {Number(fee.savings).toLocaleString()} {fee.currency}
+                </p>
+              </div>
+            ) : (
+              <p className="text-2xl font-bold text-patriot-red">
+                {Number(fee.amount).toLocaleString()} <span className="text-base">{fee.currency}</span>
+              </p>
+            )}
           </Card>
         </div>
       )}

@@ -34,6 +34,8 @@ type UserDetail = {
     release_fee_note: string | null;
     release_fee_amount: string | null;
     release_fee_currency: string | null;
+    release_fee_discount_type: "percent" | "fixed" | null;
+    release_fee_discount_value: string | null;
     release_deadline: string | null;
     created_at: string;
   };
@@ -87,6 +89,8 @@ export default function AdminUserDetailPage() {
   const [releaseFeeNote, setReleaseFeeNote] = useState("");
   const [releaseFeeAmount, setReleaseFeeAmount] = useState("");
   const [releaseFeeCurrency, setReleaseFeeCurrency] = useState("USD");
+  const [releaseFeeDiscountType, setReleaseFeeDiscountType] = useState<"percent" | "fixed" | "">("");
+  const [releaseFeeDiscountValue, setReleaseFeeDiscountValue] = useState("");
   const [releaseDeadline, setReleaseDeadline] = useState("");
   const [messageText, setMessageText] = useState("");
   const [usdQuickSet, setUsdQuickSet] = useState("");
@@ -152,6 +156,8 @@ export default function AdminUserDetailPage() {
       setReleaseFeeNote(json.user.release_fee_note || "");
       setReleaseFeeAmount(json.user.release_fee_amount ?? "");
       setReleaseFeeCurrency(json.user.release_fee_currency || "USD");
+      setReleaseFeeDiscountType(json.user.release_fee_discount_type || "");
+      setReleaseFeeDiscountValue(json.user.release_fee_discount_value ?? "");
       setReleaseDeadline(json.user.release_deadline ? toDatetimeLocal(json.user.release_deadline) : "");
     }
   }, [id, router]);
@@ -295,6 +301,8 @@ export default function AdminUserDetailPage() {
           releaseFeeNote: releaseFeeNote || null,
           releaseFeeAmount: releaseFeeAmount === "" ? null : Number(releaseFeeAmount),
           releaseFeeCurrency: releaseFeeCurrency || null,
+          releaseFeeDiscountType: releaseFeeDiscountType || null,
+          releaseFeeDiscountValue: releaseFeeDiscountValue === "" ? null : Number(releaseFeeDiscountValue),
         }),
       });
       toast.add({ title: "Release fee saved", type: "success" });
@@ -310,12 +318,21 @@ export default function AdminUserDetailPage() {
       await fetch(`/api/admin/users/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ releaseFeeTitle: null, releaseFeeNote: null, releaseFeeAmount: null, releaseFeeCurrency: null }),
+        body: JSON.stringify({
+          releaseFeeTitle: null,
+          releaseFeeNote: null,
+          releaseFeeAmount: null,
+          releaseFeeCurrency: null,
+          releaseFeeDiscountType: null,
+          releaseFeeDiscountValue: null,
+        }),
       });
       setReleaseFeeTitle("");
       setReleaseFeeNote("");
       setReleaseFeeAmount("");
       setReleaseFeeCurrency("USD");
+      setReleaseFeeDiscountType("");
+      setReleaseFeeDiscountValue("");
       toast.add({ title: "Release fee cleared", type: "success" });
       load();
     } finally {
@@ -748,6 +765,33 @@ export default function AdminUserDetailPage() {
                 onChange={(e) => setReleaseFeeCurrency(e.target.value)}
                 placeholder="USD"
                 className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Discount Type</Label>
+              <select
+                value={releaseFeeDiscountType}
+                onChange={(e) => setReleaseFeeDiscountType(e.target.value as "percent" | "fixed" | "")}
+                className="w-full bg-navy border border-[#1a3a6e] rounded-md px-3 py-2 text-white text-sm focus-visible:border-gold h-9"
+              >
+                <option value="">No discount</option>
+                <option value="percent">Percentage (%)</option>
+                <option value="fixed">Fixed amount ({releaseFeeCurrency || "USD"})</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">
+                Discount Value {releaseFeeDiscountType === "percent" ? "(%)" : releaseFeeDiscountType === "fixed" ? `(${releaseFeeCurrency || "USD"})` : ""}
+              </Label>
+              <Input
+                type="number"
+                step="any"
+                min={0}
+                value={releaseFeeDiscountValue}
+                onChange={(e) => setReleaseFeeDiscountValue(e.target.value)}
+                disabled={!releaseFeeDiscountType}
+                placeholder={releaseFeeDiscountType === "percent" ? "e.g. 20" : "e.g. 10"}
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white disabled:opacity-50"
               />
             </div>
           </div>

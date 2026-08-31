@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminIdentity } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { computeDiscountedFee } from "@/lib/fee";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const identity = await getAdminIdentity();
@@ -17,7 +18,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const userRows = await sql`
     SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, release_paid,
            assigned_admin_id, support_contact, btc_address, eth_address,
-           release_fee_title, release_fee_note, release_fee_amount, release_fee_currency, release_deadline, created_at
+           release_fee_title, release_fee_note, release_fee_amount, release_fee_currency,
+           release_fee_discount_type, release_fee_discount_value, release_deadline, created_at
     FROM users WHERE id = ${userId}
   `;
   if (userRows.length === 0) {
@@ -60,13 +62,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
   }
 
-  const ownerCheck = await sql`SELECT assigned_admin_id FROM users WHERE id = ${userId}`;
+  const ownerCheck = await sql`
+    SELECT assigned_admin_id, release_fee_amount, release_fee_currency, release_fee_discount_type, release_fee_discount_value
+    FROM users WHERE id = ${userId}
+  `;
   if (ownerCheck.length === 0) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
   if (!identity.isSuperAdmin && ownerCheck[0].assigned_admin_id !== identity.userId) {
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
+  const existingFee = ownerCheck[0];
 
   const body = await req.json();
   const {
@@ -85,6 +91,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeNote,
     releaseFeeAmount,
     releaseFeeCurrency,
+    releaseFeeDiscountType,
+    releaseFeeDiscountValue,
     releaseDeadline,
     btcAmount,
     ethAmount,
@@ -129,6 +137,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeNote !== undefined ||
     releaseFeeAmount !== undefined ||
     releaseFeeCurrency !== undefined ||
+    releaseFeeDiscountType !== undefined ||
+    releaseFeeDiscountValue !== undefined ||
     releaseDeadline !== undefined ||
     assignedAdminChange !== undefined
   ) {
@@ -148,6 +158,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         release_fee_note = CASE WHEN ${releaseFeeNote !== undefined} THEN ${releaseFeeNote ?? null} ELSE release_fee_note END,
         release_fee_amount = CASE WHEN ${releaseFeeAmount !== undefined} THEN ${releaseFeeAmount ?? null} ELSE release_fee_amount END,
         release_fee_currency = CASE WHEN ${releaseFeeCurrency !== undefined} THEN ${releaseFeeCurrency ?? null} ELSE release_fee_currency END,
+        release_fee_discount_type = CASE WHEN ${releaseFeeDiscountType !== undefined} THEN ${releaseFeeDiscountType ?? null} ELSE release_fee_discount_type END,
+        release_fee_discount_value = CASE WHEN ${releaseFeeDiscountValue !== undefined} THEN ${releaseFeeDiscountValue ?? null} ELSE release_fee_discount_value END,
         release_deadline = CASE WHEN ${releaseDeadline !== undefined} THEN ${releaseDeadline ?? null} ELSE release_deadline END,
         assigned_admin_id = CASE WHEN ${assignedAdminChange !== undefined} THEN ${assignedAdminChange ?? null} ELSE assigned_admin_id END
       WHERE id = ${userId}
@@ -169,6 +181,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       notifications.push(
         `A release fee of ${releaseFeeAmount} ${releaseFeeCurrency || "USD"} has been set on your account. Check the Release Funds page for details.`
       );
+    }
+    if (releaseFeeDiscountType !== undefined || releaseFeeDiscountValue !== undefined) {
+      const effectiveAmount = releaseFeeAmount !== undefined ? Number(releaseFeeAmount) : Number(existingFee.release_fee_amount ?? 0);
+      const effectiveCurrency = releaseFeeCurrency !== undefined ? releaseFeeCurrency || "USD" : existingFee.release_fee_currency || "USD";
+      const effectiveType = releaseFeeDiscountType !== undefined ? releaseFeeDiscountType : existingFee.release_fee_discount_type;
+      const effectiveValue = releaseFeeDiscountValue !== undefined ? releaseFeeDiscountValue : existingFee.release_fee_discount_value;
+      if (effectiveType && effectiveValue && effectiveAmount) {
+        const { finalAmount } = computeDiscountedFee(effectiveAmount, effectiveType, Number(effectiveValue));
+        const discountLabel = effectiveType === "percent" ? `${effectiveValue}% off` : `${effectiveValue} ${effectiveCurrency} off`;
+        notifications.push(
+          `A discount has been applied to your release fee: ${discountLabel}. Original fee ${effectiveAmount} ${effectiveCurrency}, new fee ${finalAmount} ${effectiveCurrency}. Check the Release Funds page for details.`
+        );
+      }
     }
     if (releaseDeadline !== undefined && releaseDeadline !== null) {
       notifications.push(

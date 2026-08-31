@@ -60,7 +60,7 @@ export default function AuthorizedPersonsPage() {
           <ShieldCheck className="w-5 h-5 text-gold shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
             Only the individuals listed here are officially authorized by the organization to assist with your
-            account. Search by name to confirm someone's identity before trusting any instructions they give you.
+            account. Search by name to confirm someone&apos;s identity before trusting any instructions they give you.
           </p>
         </div>
       </Card>
