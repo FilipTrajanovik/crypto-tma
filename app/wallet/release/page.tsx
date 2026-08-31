@@ -15,8 +15,6 @@ type Fee = {
   currency: string;
 };
 
-const FALLBACK_SUPPORT = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
-
 function formatCountdown(msRemaining: number) {
   const totalSeconds = Math.floor(msRemaining / 1000);
   const days = Math.floor(totalSeconds / 86400);
@@ -32,7 +30,7 @@ export default function ReleasePage() {
   const [fee, setFee] = useState<Fee | null>(null);
   const [releasePaid, setReleasePaid] = useState(false);
   const [releaseDeadline, setReleaseDeadline] = useState<string | null>(null);
-  const [supportContact, setSupportContact] = useState(FALLBACK_SUPPORT);
+  const [supportContact, setSupportContact] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
 
@@ -44,7 +42,7 @@ export default function ReleasePage() {
           setFee(data.fee);
           setReleasePaid(data.releasePaid === true);
           setReleaseDeadline(data.releaseDeadline || null);
-          if (data.supportContact) setSupportContact(data.supportContact);
+          setSupportContact(data.supportContact || null);
         })
         .finally(() => {
           if (!silent) setLoading(false);
@@ -65,6 +63,7 @@ export default function ReleasePage() {
   const isExpired = msRemaining !== null && msRemaining <= 0;
 
   const handleContactSupport = () => {
+    if (!supportContact) return;
     const target = supportContact.startsWith("http") ? supportContact : `https://t.me/${supportContact.replace(/^@/, "")}`;
     const tg = (window as unknown as { Telegram?: { WebApp?: { openTelegramLink?: (url: string) => void } } }).Telegram;
     if (tg?.WebApp?.openTelegramLink) {
@@ -140,7 +139,8 @@ export default function ReleasePage() {
 
       <Button
         onClick={handleContactSupport}
-        className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 mb-6"
+        disabled={!supportContact}
+        className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <MessageCircle className="w-4 h-4 mr-2" />
         Contact Support

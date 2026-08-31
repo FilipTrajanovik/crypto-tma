@@ -26,8 +26,6 @@ type BalanceData = {
   supportContact: string | null;
 };
 
-const FALLBACK_SUPPORT = process.env.NEXT_PUBLIC_BOT_USERNAME || "support";
-
 function formatUsd(value: number) {
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 }
@@ -137,7 +135,8 @@ export default function WalletPage() {
   const isExpired = msRemaining !== null && msRemaining <= 0;
 
   const handleContactSupport = () => {
-    const contact = data.supportContact || FALLBACK_SUPPORT;
+    if (!data.supportContact) return;
+    const contact = data.supportContact;
     const target = contact.startsWith("http") ? contact : `https://t.me/${contact.replace(/^@/, "")}`;
     const tg = (window as unknown as { Telegram?: { WebApp?: { openTelegramLink?: (url: string) => void } } }).Telegram;
     if (tg?.WebApp?.openTelegramLink) {
@@ -266,7 +265,8 @@ export default function WalletPage() {
       <section className="relative px-5 mb-6">
         <button
           onClick={handleContactSupport}
-          className="w-full flex items-center justify-center gap-2 h-14 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 bg-card-navy border border-gold/40 text-gold hover:bg-gold/10"
+          disabled={!data.supportContact}
+          className="w-full flex items-center justify-center gap-2 h-14 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 bg-card-navy border border-gold/40 text-gold hover:bg-gold/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <MessageCircle className="w-4 h-4" />
           Contact Support
