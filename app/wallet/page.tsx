@@ -163,7 +163,7 @@ export default function WalletPage() {
             </Avatar>
           </div>
         </div>
-        <p className="text-center text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
+        <p className="text-center text-xs text-gold-gradient tracking-widest uppercase">Secure • Private • Trusted</p>
       </header>
 
       <section className="relative px-5 flex items-center justify-center gap-6 mb-4 text-sm">
@@ -191,17 +191,26 @@ export default function WalletPage() {
         <section className="relative px-5 mb-4">
           <Link href="/wallet/release">
             <Card
-              className={`rounded-2xl p-5 text-center border-[#1a3a6e] ${
-                isExpired ? "bg-patriot-red/10 border-l-4 border-l-patriot-red" : "bg-card-navy border-l-4 border-l-gold"
+              className={`relative overflow-hidden rounded-2xl p-5 text-center border-[#1a3a6e] ${
+                isExpired ? "bg-card-gradient-red border-l-4 border-l-patriot-red" : "bg-card-gradient-gold border-l-4 border-l-gold"
               }`}
             >
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red" : "text-gold"}`} />
+              <div
+                className={`absolute -inset-x-6 -inset-y-10 rounded-full blur-2xl anim-pulse-glow ${
+                  isExpired ? "bg-patriot-red/20" : "bg-gold/20"
+                }`}
+              />
+              <div className="relative flex items-center justify-center gap-2 mb-2">
+                <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-gold"}`} />
                 <p className="text-xs uppercase tracking-widest text-muted-foreground">
                   {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
                 </p>
               </div>
-              <p className={`text-2xl font-bold tabular-nums ${isExpired ? "text-patriot-red" : "text-gold"}`}>
+              <p
+                className={`relative text-2xl font-mono font-semibold tabular-nums ${
+                  isExpired ? "text-red-gradient" : "text-gold-gradient"
+                }`}
+              >
                 {isExpired ? "00h 00m 00s" : formatCountdown(msRemaining!)}
               </p>
             </Card>
@@ -210,13 +219,15 @@ export default function WalletPage() {
       )}
 
       <section className="relative px-5 mb-6">
-        <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-gold rounded-2xl p-6">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Portfolio Value</p>
-          <p className="text-4xl font-bold text-gold mb-4">{formatUsd(balance.totalValue)}</p>
+        <Card className="card-sheen bg-card-gradient-gold border-[#1a3a6e] border-l-4 border-l-gold rounded-2xl p-6">
+          <p className="relative text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Portfolio Value</p>
+          <p className="relative font-display text-4xl font-semibold tracking-tight text-gold-gradient-glow mb-4">
+            {formatUsd(balance.totalValue)}
+          </p>
 
           <Separator className="bg-[#1a3a6e] mb-4" />
 
-          <div className="space-y-2">
+          <div className="relative space-y-2">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">₿ Bitcoin</span>
               <span className="text-white">
@@ -244,16 +255,17 @@ export default function WalletPage() {
       </section>
 
       <section className="relative px-5 grid grid-cols-2 gap-3 mb-6">
-        {actions.map(({ href, label, icon: Icon, variant }) => (
+        {actions.map(({ href, label, icon: Icon, variant }, i) => (
           <Link
             key={href}
             href={href}
-            className={`flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 ${
+            style={{ animationDelay: `${i * 0.06}s` }}
+            className={`anim-rise flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 ${
               variant === "gold"
-                ? "bg-gold text-navy hover:brightness-95"
+                ? "bg-gold-gradient text-navy shadow-gold-glow hover:brightness-105"
                 : variant === "red"
-                ? "bg-patriot-red text-white hover:brightness-95"
-                : "border-2 border-gold text-gold hover:bg-gold/10"
+                ? "bg-red-gradient text-white shadow-red-glow hover:brightness-105"
+                : "border-2 border-gold/60 text-gold bg-gold/5 hover:bg-gold/10"
             }`}
           >
             <Icon className="w-5 h-5" />
@@ -266,7 +278,7 @@ export default function WalletPage() {
         <button
           onClick={handleContactSupport}
           disabled={!data.supportContact}
-          className="w-full flex items-center justify-center gap-2 h-14 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 bg-card-navy border border-gold/40 text-gold hover:bg-gold/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="w-full flex items-center justify-center gap-2 h-14 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 bg-card-gradient-gold border border-gold/40 text-gold hover:bg-gold/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <MessageCircle className="w-4 h-4" />
           Contact Support

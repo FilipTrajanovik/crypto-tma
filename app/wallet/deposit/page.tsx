@@ -33,8 +33,8 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
   };
 
   return (
-    <Card className="bg-card-navy border-[#1a3a6e] border-t-4 border-t-gold rounded-2xl p-5">
-      <p className="text-patriot-red uppercase text-xs tracking-widest font-bold mb-4">{label} Address</p>
+    <Card className="bg-card-gradient border-[#1a3a6e] border-t-4 border-t-gold rounded-2xl p-5">
+      <p className="text-red-gradient uppercase text-xs tracking-widest font-bold mb-4">{label} Address</p>
 
       {!address ? (
         <p className="text-sm text-muted-foreground">Not configured yet. Contact support for a deposit address.</p>
@@ -52,12 +52,17 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
             )}
           </div>
 
-          <div className="bg-navy rounded-xl px-3 py-3 mb-3 break-all text-sm text-white font-mono flex items-center gap-2">
-            <span className="text-gold">{symbol}</span>
+          <div className="bg-navy rounded-xl px-3 py-3 mb-3 break-all text-sm text-white font-mono flex items-center gap-2 border border-[#1a3a6e]">
+            <span className="text-gold-bright">{symbol}</span>
             {address}
           </div>
 
-          <Button onClick={handleCopy} className="w-full bg-gold text-navy font-bold hover:brightness-95">
+          <Button
+            onClick={handleCopy}
+            className={`w-full font-bold transition-colors ${
+              copied ? "bg-verified text-navy hover:brightness-105" : "bg-gold-gradient text-navy shadow-gold-glow hover:brightness-105"
+            }`}
+          >
             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
             {copied ? "Copied!" : "Copy Address"}
           </Button>
@@ -105,7 +110,7 @@ export default function DepositPage() {
         </div>
       )}
 
-      <Card className="mt-6 bg-card-navy border-gold/40 rounded-2xl p-4">
+      <Card className="mt-6 bg-card-gradient-gold border-gold/40 rounded-2xl p-4">
         <div className="flex gap-3">
           <TriangleAlert className="w-5 h-5 text-gold shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">

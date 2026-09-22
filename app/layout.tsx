@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Fraunces } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,11 @@ const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+});
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-fraunces",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geistSans.variable, geistMono.variable)}>
+    <html lang="en" className={cn("font-sans", geistSans.variable, geistMono.variable, fraunces.variable)}>
       <head>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </head>

@@ -81,9 +81,9 @@ export default function ReleasePage() {
     <div className="min-h-screen bg-navy px-5 pt-6 pb-10 max-w-md mx-auto">
       <PageHeader title="Release Funds" />
 
-      <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-patriot-red rounded-2xl p-5 mb-6">
+      <Card className="bg-card-gradient-red border-[#1a3a6e] border-l-4 border-l-patriot-red rounded-2xl p-5 mb-6">
         <div className="flex gap-3">
-          <Lock className="w-5 h-5 text-patriot-red shrink-0 mt-0.5" />
+          <Lock className="w-5 h-5 text-patriot-red-bright shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
             Your invested and locked funds can be released once your account manager confirms the fee below has
             been paid.
@@ -93,21 +93,30 @@ export default function ReleasePage() {
 
       {!loading && releaseDeadline && !releasePaid && (
         <Card
-          className={`rounded-2xl p-5 mb-6 text-center border-[#1a3a6e] ${
-            isExpired ? "bg-patriot-red/10 border-l-4 border-l-patriot-red" : "bg-card-navy border-l-4 border-l-gold"
+          className={`relative overflow-hidden rounded-2xl p-5 mb-6 text-center border-[#1a3a6e] ${
+            isExpired ? "bg-card-gradient-red border-l-4 border-l-patriot-red" : "bg-card-gradient-gold border-l-4 border-l-gold"
           }`}
         >
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red" : "text-gold"}`} />
+          <div
+            className={`absolute -inset-x-6 -inset-y-10 rounded-full blur-2xl anim-pulse-glow ${
+              isExpired ? "bg-patriot-red/20" : "bg-gold/20"
+            }`}
+          />
+          <div className="relative flex items-center justify-center gap-2 mb-2">
+            <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-gold"}`} />
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
             </p>
           </div>
-          <p className={`text-2xl font-bold tabular-nums ${isExpired ? "text-patriot-red" : "text-gold"}`}>
+          <p
+            className={`relative text-2xl font-mono font-semibold tabular-nums ${
+              isExpired ? "text-red-gradient" : "text-gold-gradient"
+            }`}
+          >
             {isExpired ? "00h 00m 00s" : formatCountdown(msRemaining!)}
           </p>
           {isExpired && (
-            <p className="text-xs text-muted-foreground mt-2">Contact your account manager immediately.</p>
+            <p className="relative text-xs text-muted-foreground mt-2">Contact your account manager immediately.</p>
           )}
         </Card>
       )}
@@ -124,11 +133,11 @@ export default function ReleasePage() {
         </Card>
       ) : (
         <div className="space-y-3 mb-6">
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+          <Card className="bg-card-gradient border-[#1a3a6e] rounded-2xl p-5">
             <div className="flex justify-between items-start mb-1">
-              <p className="font-bold text-white uppercase">{fee.title}</p>
+              <p className="font-display font-semibold text-white uppercase tracking-tight">{fee.title}</p>
               {releasePaid && (
-                <Badge variant="outline" className="bg-green-500/15 text-green-400 border-green-500/30 whitespace-nowrap">
+                <Badge variant="outline" className="bg-verified/15 text-verified-bright border-verified/30 whitespace-nowrap">
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Paid
                 </Badge>
               )}
@@ -140,20 +149,20 @@ export default function ReleasePage() {
                   <p className="text-lg font-medium text-muted-foreground line-through decoration-2">
                     {Number(fee.originalAmount).toLocaleString()} {fee.currency}
                   </p>
-                  <Badge variant="outline" className="bg-green-500/15 text-green-400 border-green-500/30 whitespace-nowrap">
+                  <Badge variant="outline" className="bg-verified/15 text-verified-bright border-verified/30 whitespace-nowrap">
                     <Tag className="w-3 h-3 mr-1" />
                     {fee.discountType === "percent" ? `${fee.discountValue}% OFF` : `${fee.discountValue} ${fee.currency} OFF`}
                   </Badge>
                 </div>
-                <p className="text-2xl font-bold text-patriot-red mt-1">
+                <p className="font-display text-2xl font-semibold text-red-gradient mt-1">
                   {Number(fee.amount).toLocaleString()} <span className="text-base">{fee.currency}</span>
                 </p>
-                <p className="text-xs text-green-400 mt-1">
+                <p className="text-xs text-verified-bright mt-1">
                   You save {Number(fee.savings).toLocaleString()} {fee.currency}
                 </p>
               </div>
             ) : (
-              <p className="text-2xl font-bold text-patriot-red">
+              <p className="font-display text-2xl font-semibold text-red-gradient">
                 {Number(fee.amount).toLocaleString()} <span className="text-base">{fee.currency}</span>
               </p>
             )}
@@ -164,7 +173,7 @@ export default function ReleasePage() {
       <Button
         onClick={handleContactSupport}
         disabled={!supportContact}
-        className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full bg-gold-gradient text-navy font-bold uppercase tracking-wide shadow-gold-glow hover:brightness-105 mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <MessageCircle className="w-4 h-4 mr-2" />
         Contact Support

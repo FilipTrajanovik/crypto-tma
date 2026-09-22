@@ -10,8 +10,8 @@ export default function PageHeader({ title, subtitle, backHref = "/wallet" }: { 
         <ArrowLeft className="w-5 h-5" />
       </Link>
       <div>
-        <h1 className="text-xl font-bold uppercase tracking-widest text-gold">{title}</h1>
-        {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-gold-gradient">{title}</h1>
+        {subtitle && <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{subtitle}</p>}
       </div>
     </div>
   );

@@ -29,18 +29,18 @@ const TYPES = ["all", "deposit", "withdrawal", "invest", "release", "adjustment"
 const STATUSES = ["all", "pending", "approved", "rejected", "completed"];
 
 const TYPE_STYLES: Record<string, string> = {
-  deposit: "bg-green-500/15 text-green-400 border-green-500/30",
-  withdrawal: "bg-patriot-red/15 text-patriot-red border-patriot-red/30",
-  invest: "bg-gold/15 text-gold border-gold/30",
+  deposit: "bg-verified/15 text-verified-bright border-verified/30",
+  withdrawal: "bg-patriot-red/15 text-patriot-red-bright border-patriot-red/30",
+  invest: "bg-gold/15 text-gold-bright border-gold/30",
   release: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   adjustment: "bg-white/10 text-muted-foreground border-white/20",
 };
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-  completed: "bg-green-500/15 text-green-400 border-green-500/30",
+  completed: "bg-verified/15 text-verified-bright border-verified/30",
   approved: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  rejected: "bg-patriot-red/15 text-patriot-red border-patriot-red/30",
+  rejected: "bg-patriot-red/15 text-patriot-red-bright border-patriot-red/30",
 };
 
 export default function HistoryPage() {
@@ -77,7 +77,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-navy px-5 pt-6 pb-24 max-w-md mx-auto">
-      <h1 className="text-xl font-bold uppercase tracking-widest text-gold mb-5">Transaction History</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-tight text-gold-gradient mb-5">Transaction History</h1>
 
       <div className="flex gap-2 mb-5">
         <Select
@@ -130,7 +130,7 @@ export default function HistoryPage() {
       ) : transactions.length === 0 ? (
         <p className="text-muted-foreground text-sm text-center py-10">No transactions yet</p>
       ) : (
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+        <Card className="bg-card-gradient border-[#1a3a6e] rounded-2xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="border-[#1a3a6e] hover:bg-transparent">
@@ -142,7 +142,11 @@ export default function HistoryPage() {
             </TableHeader>
             <TableBody>
               {transactions.map((tx, i) => (
-                <TableRow key={tx.id} className={`border-[#1a3a6e] ${i % 2 === 1 ? "bg-white/[0.02]" : ""}`}>
+                <TableRow
+                  key={tx.id}
+                  style={{ animationDelay: `${i * 0.04}s` }}
+                  className={`anim-slide-in border-[#1a3a6e] ${i % 2 === 1 ? "bg-white/[0.02]" : ""}`}
+                >
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                     {new Date(tx.created_at).toLocaleDateString()}
                   </TableCell>
