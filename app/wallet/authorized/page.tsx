@@ -105,13 +105,19 @@ export default function AuthorizedPersonsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">Officially authorized representative</p>
               </div>
-              <button
-                onClick={() => person.username && openTelegram(person.username)}
-                className="shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-lg font-bold text-xs uppercase tracking-wide bg-gold text-navy hover:brightness-95 active:scale-95 transition-transform"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                Contact
-              </button>
+              {person.username ? (
+                <button
+                  onClick={() => openTelegram(person.username as string)}
+                  className="shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-lg font-bold text-xs uppercase tracking-wide bg-gold text-navy hover:brightness-95 active:scale-95 transition-transform"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Contact
+                </button>
+              ) : (
+                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide px-2 text-right">
+                  No Telegram username
+                </span>
+              )}
             </Card>
           );
         })}

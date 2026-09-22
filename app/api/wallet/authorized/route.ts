@@ -19,7 +19,6 @@ export async function GET(req: NextRequest) {
     FROM users
     WHERE (is_admin = true OR is_super_admin = true)
       AND is_active = true
-      AND username IS NOT NULL AND username <> ''
       AND (first_name ILIKE ${"%" + search + "%"} OR last_name ILIKE ${"%" + search + "%"} OR concat_ws(' ', first_name, last_name) ILIKE ${"%" + search + "%"})
     ORDER BY first_name ASC
     LIMIT 20
