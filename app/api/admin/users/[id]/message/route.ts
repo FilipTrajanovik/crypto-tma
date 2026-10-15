@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!target) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  if (!identity.isSuperAdmin && target.assigned_admin_id !== identity.userId) {
+  if (!can(identity, "message_users") && target.assigned_admin_id !== identity.userId) {
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
 

@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Idempotent for databases created before these columns existed.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_super_admin BOOLEAN DEFAULT false;
+-- NULL = unrestricted super-admin; otherwise a JSON array of permission keys (see lib/permissions.ts)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS home_address TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_title TEXT;

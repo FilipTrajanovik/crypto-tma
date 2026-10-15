@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can, type AdminIdentity } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB
 
-async function assertClaimed(identity: { isSuperAdmin: boolean; userId: number | null }, userId: number) {
+async function assertClaimed(identity: AdminIdentity, userId: number) {
   const rows = await sql`SELECT telegram_id, assigned_admin_id FROM users WHERE id = ${userId}`;
   const target = rows[0];
   if (!target) return { error: "User not found", status: 404 } as const;
-  if (!identity.isSuperAdmin && target.assigned_admin_id !== identity.userId) {
+  if (!can(identity, "view_documents") && target.assigned_admin_id !== identity.userId) {
     return { error: "You have not claimed this user", status: 403 } as const;
   }
   return { target } as const;

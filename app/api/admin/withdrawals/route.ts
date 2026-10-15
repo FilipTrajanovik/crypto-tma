@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function GET(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
   const statusFilter = status && status !== "all" ? status : null;
 
-  const rows = identity.isSuperAdmin
+  const rows = can(identity, "manage_withdrawals")
     ? statusFilter
       ? await sql`
           SELECT w.id, w.user_id, w.amount, w.currency, w.wallet_address, w.status, w.admin_note, w.created_at,
@@ -76,7 +76,7 @@ export async function PATCH(req: NextRequest) {
   if (!withdrawal) {
     return NextResponse.json({ error: "Withdrawal not found" }, { status: 404 });
   }
-  if (!identity.isSuperAdmin && withdrawal.assigned_admin_id !== identity.userId) {
+  if (!can(identity, "manage_withdrawals") && withdrawal.assigned_admin_id !== identity.userId) {
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
   if (withdrawal.status !== "pending") {

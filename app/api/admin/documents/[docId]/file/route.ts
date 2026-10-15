@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 
 export async function GET(req: NextRequest, { params }: { params: { docId: string } }) {
   const identity = await getAdminIdentity();
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: { docId: strin
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if (!identity.isSuperAdmin && doc.assigned_admin_id !== identity.userId) {
+  if (!can(identity, "view_documents") && doc.assigned_admin_id !== identity.userId) {
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
 

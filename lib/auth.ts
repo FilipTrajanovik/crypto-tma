@@ -2,6 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { sql } from "@/lib/db";
+import { ALL_PERMISSIONS, resolvePermissions, type PermissionKey } from "@/lib/permissions";
 
 const SESSION_COOKIE = "session";
 const ADMIN_COOKIE = "admin_session";
@@ -129,7 +130,14 @@ export type AdminIdentity = {
   isOwner: boolean;
   /** The admin's own user id, when authenticated via Telegram (null for the password login). */
   userId: number | null;
+  /** Fine-grained rights of a super-admin. The owner and unrestricted super-admins hold all of them. */
+  permissions: PermissionKey[];
 };
+
+/** True when the caller is a super-admin that holds the given permission. */
+export function can(identity: AdminIdentity, permission: PermissionKey): boolean {
+  return identity.isSuperAdmin && identity.permissions.includes(permission);
+}
 
 /**
  * Resolves who is making an admin request: the password-based owner login
@@ -141,16 +149,20 @@ export async function getAdminIdentity(): Promise<AdminIdentity> {
   const store = await cookies();
   const token = store.get(ADMIN_COOKIE)?.value;
   if (token && verifyAdminToken(token)) {
-    return { isAdmin: true, isSuperAdmin: true, isOwner: true, userId: null };
+    return { isAdmin: true, isSuperAdmin: true, isOwner: true, userId: null, permissions: ALL_PERMISSIONS };
   }
 
   const session = await getSession();
-  if (!session) return { isAdmin: false, isSuperAdmin: false, isOwner: false, userId: null };
+  if (!session) return { isAdmin: false, isSuperAdmin: false, isOwner: false, userId: null, permissions: [] };
 
-  const rows = await sql`SELECT is_admin, is_super_admin FROM users WHERE id = ${session.userId}`;
+  // Falls back gracefully if the permissions column has not been migrated yet (treated as unrestricted).
+  const rows = await sql`SELECT is_admin, is_super_admin, permissions FROM users WHERE id = ${session.userId}`.catch(
+    () => sql`SELECT is_admin, is_super_admin FROM users WHERE id = ${session.userId}`
+  );
   const isSuperAdmin = rows[0]?.is_super_admin === true;
   const isAdmin = isSuperAdmin || rows[0]?.is_admin === true;
-  return { isAdmin, isSuperAdmin, isOwner: false, userId: isAdmin ? session.userId : null };
+  const permissions = isSuperAdmin ? resolvePermissions(rows[0]?.permissions) : [];
+  return { isAdmin, isSuperAdmin, isOwner: false, userId: isAdmin ? session.userId : null, permissions };
 }
 
 export async function getAdminSession(): Promise<boolean> {

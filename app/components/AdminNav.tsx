@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +12,19 @@ const links = [
   { href: "/admin/plans", label: "Plans" },
   { href: "/admin/settings", label: "Settings" },
 ];
+const adminsLink = { href: "/admin/admins", label: "Admins" };
 
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/whoami")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setIsSuperAdmin(d?.isSuperAdmin === true))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     await fetch("/api/admin/login", { method: "DELETE" });
@@ -42,7 +52,7 @@ export default function AdminNav() {
           </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto no-scrollbar -mx-1 px-1">
-          {links.map((link) => (
+          {(isSuperAdmin ? [...links, adminsLink] : links).map((link) => (
             <Link
               key={link.href}
               href={link.href}

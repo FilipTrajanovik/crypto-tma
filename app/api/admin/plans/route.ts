@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 
 export async function GET() {
   const identity = await getAdminIdentity();
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  if (!identity.isSuperAdmin) {
+  if (!can(identity, "manage_plans")) {
     return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 
@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest) {
   if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  if (!identity.isSuperAdmin) {
+  if (!can(identity, "manage_plans")) {
     return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 
@@ -74,7 +74,7 @@ export async function DELETE(req: NextRequest) {
   if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  if (!identity.isSuperAdmin) {
+  if (!can(identity, "manage_plans")) {
     return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { computeDiscountedFee } from "@/lib/fee";
 
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (ownerCheck.length === 0) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  if (!identity.isSuperAdmin && ownerCheck[0].assigned_admin_id !== identity.userId) {
+  if (!can(identity, "edit_users") && ownerCheck[0].assigned_admin_id !== identity.userId) {
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
   const existingFee = ownerCheck[0];
@@ -102,13 +102,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   } = body;
 
   // Only a super-admin can grant or revoke plain admin access...
-  const adminChange = identity.isSuperAdmin ? makeAdmin : undefined;
+  const adminChange = can(identity, "edit_users") ? makeAdmin : undefined;
   // ...and only the password-based owner login can grant or revoke super-admin status.
   const superAdminChange = identity.isOwner ? makeSuperAdmin : undefined;
 
   // Only a super-admin can directly (re)assign or unassign a user's claiming admin.
   let assignedAdminChange: number | null | undefined = undefined;
-  if (identity.isSuperAdmin && assignedAdminId !== undefined) {
+  if (can(identity, "edit_users") && assignedAdminId !== undefined) {
     if (assignedAdminId === null) {
       assignedAdminChange = null;
     } else {
@@ -142,6 +142,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseDeadline !== undefined ||
     assignedAdminChange !== undefined
   ) {
+    // New super-admins start with no extra rights (granted on the Admins page); demotion clears them.
+    if (superAdminChange === true) {
+      await sql`UPDATE users SET permissions = '[]'::jsonb WHERE id = ${userId} AND is_super_admin = false`;
+    } else if (superAdminChange === false) {
+      await sql`UPDATE users SET permissions = NULL WHERE id = ${userId}`;
+    }
     await sql`
       UPDATE users SET
         first_name = COALESCE(${firstName ?? null}, first_name),
@@ -251,7 +257,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
  */
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const identity = await getAdminIdentity();
-  if (!identity.isSuperAdmin) {
+  if (!can(identity, "delete_users")) {
     return NextResponse.json({ error: "Only a super-admin can delete users" }, { status: 403 });
   }
 

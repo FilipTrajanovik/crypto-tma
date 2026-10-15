@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 
 export async function GET() {
   const identity = await getAdminIdentity();
   if (!identity.isAdmin) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  if (identity.isSuperAdmin && !can(identity, "view_stats")) {
+    return NextResponse.json({ error: "Missing permission" }, { status: 403 });
   }
 
   if (identity.isSuperAdmin) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, can } from "@/lib/auth";
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string; docId: string } }) {
   const identity = await getAdminIdentity();
@@ -18,7 +18,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (userRows.length === 0) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  if (!identity.isSuperAdmin && userRows[0].assigned_admin_id !== identity.userId) {
+  if (!can(identity, "view_documents") && userRows[0].assigned_admin_id !== identity.userId) {
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
 
