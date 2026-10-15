@@ -9,7 +9,6 @@ import ShieldLogo from "@/app/components/ShieldLogo";
 const links = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/withdrawals", label: "Withdrawals" },
-  { href: "/admin/plans", label: "Plans" },
   { href: "/admin/settings", label: "Settings" },
 ];
 const adminsLink = { href: "/admin/admins", label: "Admins" };

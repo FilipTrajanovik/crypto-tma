@@ -31,14 +31,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
 
-  const [balanceRows, transactionRows, investmentRows, withdrawalRows] = await Promise.all([
+  const [balanceRows, transactionRows, withdrawalRows] = await Promise.all([
     sql`SELECT btc_amount, eth_amount, usd_cash, gold_amount, updated_at FROM balances WHERE user_id = ${userId}`,
     sql`SELECT id, type, amount, currency, status, note, created_at FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`,
-    sql`
-      SELECT i.id, i.amount, i.currency, i.status, i.started_at, i.matures_at, p.name AS plan_name
-      FROM investments i JOIN investment_plans p ON p.id = i.plan_id
-      WHERE i.user_id = ${userId} ORDER BY i.started_at DESC
-    `,
     sql`SELECT id, amount, currency, wallet_address, status, admin_note, created_at FROM withdrawal_requests WHERE user_id = ${userId} ORDER BY created_at DESC`,
   ]);
 
@@ -46,7 +41,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     user: target,
     balance: balanceRows[0] ?? { btc_amount: "0", eth_amount: "0", usd_cash: "0", gold_amount: "0" },
     transactions: transactionRows,
-    investments: investmentRows,
     withdrawals: withdrawalRows,
   });
 }
@@ -181,7 +175,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       notifications.push("You have been granted super-admin access — you can now see and manage every user.");
     }
     if (releasePaid === true) {
-      notifications.push("Your release fee has been confirmed. Investment plans and withdrawals are now unlocked.");
+      notifications.push("Your release fee has been confirmed. Withdrawals are now unlocked.");
     }
     if (releaseFeeAmount !== undefined && releaseFeeAmount !== null) {
       notifications.push(
@@ -274,7 +268,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   await sql`UPDATE users SET assigned_admin_id = NULL WHERE assigned_admin_id = ${userId}`;
   await sql`DELETE FROM user_documents WHERE user_id = ${userId} OR uploaded_by_admin_id = ${userId}`;
   await sql`DELETE FROM transactions WHERE user_id = ${userId}`;
-  await sql`DELETE FROM investments WHERE user_id = ${userId}`;
   await sql`DELETE FROM withdrawal_requests WHERE user_id = ${userId}`;
   await sql`DELETE FROM balances WHERE user_id = ${userId}`;
   await sql`DELETE FROM users WHERE id = ${userId}`;

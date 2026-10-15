@@ -33,8 +33,8 @@ on first open.
    ```
 
    Or paste the contents of `lib/schema.sql` into the Neon SQL editor and run it. This creates all
-   tables (`users`, `balances`, `transactions`, `investment_plans`, `investments`,
-   `withdrawal_requests`, `user_documents`) and seeds two default investment plans. The release fee
+   tables (`users`, `balances`, `transactions`,
+   `withdrawal_requests`, `user_documents`). The release fee
    shown to each user (title, note, amount, currency) is configured per user by an admin — there's
    no platform-wide release fee.
 
@@ -112,7 +112,6 @@ Now opening your bot in Telegram and tapping the menu button (or the "Open Walle
   /wallet/page.tsx                main dashboard
   /wallet/deposit/page.tsx        BTC/ETH deposit addresses + QR codes
   /wallet/withdraw/page.tsx       withdrawal request form + history
-  /wallet/invest/page.tsx         investment plans + user investments
   /wallet/release/page.tsx        per-user release fee + contact support
   /wallet/history/page.tsx        paginated, filterable transaction history
   /wallet/profile/page.tsx        user profile + logout
@@ -120,7 +119,6 @@ Now opening your bot in Telegram and tapping the menu button (or the "Open Walle
   /admin/dashboard/page.tsx       stats + user list/search
   /admin/users/[id]/page.tsx      edit balances, view activity, add notes
   /admin/withdrawals/page.tsx     approve/reject withdrawal requests
-  /admin/plans/page.tsx           manage investment plans
   /admin/release/page.tsx         manage release fund conditions
 /app/api                         route handlers backing all pages above
 /lib
@@ -137,10 +135,9 @@ Go to `/admin`, sign in with `ADMIN_PASSWORD`. From there you can:
 
 - View total users, BTC/ETH under management, and pending withdrawal count.
 - Search and click into any user to edit their BTC/ETH/USD balances directly, add manual notes, and
-  view their transactions, investments, and withdrawal requests.
+  view their transactions and withdrawal requests.
 - Approve or reject withdrawal requests (approving deducts the balance and logs a completed
   transaction; rejecting logs a rejected transaction without touching the balance).
-- Create, edit, and deactivate investment plans.
 - Create, edit, and deactivate release fund conditions.
 
 ## Notes

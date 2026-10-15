@@ -5,7 +5,6 @@ export const PERMISSIONS = [
   { key: "view_documents", label: "View user documents", hint: "Open uploaded documents" },
   { key: "message_users", label: "Message users", hint: "Send Telegram messages to users" },
   { key: "manage_withdrawals", label: "Manage withdrawals", hint: "See and approve/reject all withdrawals" },
-  { key: "manage_plans", label: "Manage plans", hint: "Create, edit and disable investment plans" },
   { key: "manage_settings", label: "Manage settings", hint: "Support contact and deposit addresses" },
 ] as const;
 

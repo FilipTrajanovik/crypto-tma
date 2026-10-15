@@ -238,7 +238,7 @@ export default function ProfilePage() {
               <ShieldCheck className="w-5 h-5 text-gold-bright" />
               <div>
                 <p className="font-bold text-gold-bright uppercase text-sm tracking-wide">Admin Panel</p>
-                <p className="text-xs text-muted-foreground">Manage users, withdrawals, plans & release conditions</p>
+                <p className="text-xs text-muted-foreground">Manage users, withdrawals & release conditions</p>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gold-bright" />

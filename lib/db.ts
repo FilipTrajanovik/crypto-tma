@@ -60,28 +60,6 @@ export type DbTransaction = {
   created_at: string;
 };
 
-export type DbInvestmentPlan = {
-  id: number;
-  name: string;
-  description: string | null;
-  min_amount: string;
-  roi_percent: string;
-  duration_days: number;
-  currency: string;
-  is_active: boolean;
-};
-
-export type DbInvestment = {
-  id: number;
-  user_id: number;
-  plan_id: number;
-  amount: string;
-  currency: string;
-  status: string;
-  started_at: string;
-  matures_at: string | null;
-};
-
 export type DbWithdrawalRequest = {
   id: number;
   user_id: number;

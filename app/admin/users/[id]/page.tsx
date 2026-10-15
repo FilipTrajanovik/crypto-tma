@@ -41,7 +41,6 @@ type UserDetail = {
   };
   balance: { btc_amount: string; eth_amount: string; usd_cash: string; gold_amount: string };
   transactions: { id: number; type: string; amount: string; currency: string; status: string; note: string | null; created_at: string }[];
-  investments: { id: number; amount: string; currency: string; status: string; plan_name: string; started_at: string; matures_at: string | null }[];
   withdrawals: { id: number; amount: string; currency: string; wallet_address: string | null; status: string; created_at: string }[];
 };
 
@@ -480,7 +479,7 @@ export default function AdminUserDetailPage() {
     );
   }
 
-  const { user, transactions, investments, withdrawals } = data;
+  const { user, transactions, withdrawals } = data;
   const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Unnamed User";
 
   return (
@@ -970,31 +969,13 @@ export default function AdminUserDetailPage() {
             )}
           </Card>
 
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
-            <h2 className="font-bold uppercase tracking-wide text-gold mb-3">Investments</h2>
-            {investments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No investments yet.</p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {investments.map((inv) => (
-                  <div key={inv.id} className="text-sm bg-navy rounded-lg p-3">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-white">{inv.plan_name}</span>
-                      <span className="capitalize text-muted-foreground">{inv.status}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{inv.amount} {inv.currency}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
         </div>
 
         {isSuperAdmin && (
           <Card className="bg-card-navy border-patriot-red/40 rounded-2xl p-5 mt-6">
             <h2 className="font-bold uppercase tracking-wide text-patriot-red mb-1">Danger Zone</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Permanently deletes this user and all their balances, transactions, investments, withdrawals, and
+              Permanently deletes this user and all their balances, transactions, withdrawals, and
               documents. They can then open the bot and sign up again as a brand-new user — starting over from the
               notifications and phone-number prompts.
             </p>
