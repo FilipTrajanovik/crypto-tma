@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Landmark, Send, ShieldCheck, Unlock, ListOrdered, ArrowUp, ArrowDown, FileText, MessageCircle, Timer } from "lucide-react";
+import { Landmark, Send, ShieldCheck, Unlock, ArrowUp, ArrowDown, FileText, MessageCircle, Timer } from "lucide-react";
 
 type BalanceData = {
   user: {
@@ -50,7 +50,6 @@ const actions = [
   { href: "/wallet/withdraw", label: "Withdraw", icon: Send, variant: "gold" as const },
   { href: "/wallet/authorized", label: "Authorized Persons", icon: ShieldCheck, variant: "gold" as const },
   { href: "/wallet/release", label: "Release Funds", icon: Unlock, variant: "red" as const },
-  { href: "/wallet/history", label: "History", icon: ListOrdered, variant: "outline" as const },
   { href: "/wallet/documents", label: "Documents", icon: FileText, variant: "outline" as const },
 ];
 

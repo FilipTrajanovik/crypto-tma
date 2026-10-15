@@ -113,7 +113,6 @@ Now opening your bot in Telegram and tapping the menu button (or the "Open Walle
   /wallet/deposit/page.tsx        BTC/ETH deposit addresses + QR codes
   /wallet/withdraw/page.tsx       withdrawal request form + history
   /wallet/release/page.tsx        per-user release fee + contact support
-  /wallet/history/page.tsx        paginated, filterable transaction history
   /wallet/profile/page.tsx        user profile + logout
   /admin/page.tsx                 admin login
   /admin/dashboard/page.tsx       stats + user list/search

@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Clock, User } from "lucide-react";
+import { Home, User } from "lucide-react";
 
 export default function BottomNav() {
   const pathname = usePathname();
 
   const items = [
     { href: "/wallet", label: "Home", icon: Home },
-    { href: "/wallet/history", label: "History", icon: Clock },
     { href: "/wallet/profile", label: "Profile", icon: User },
   ];
 
@@ -23,7 +22,7 @@ export default function BottomNav() {
       <div className="relative flex justify-around items-center h-16 max-w-md mx-auto">
         <span
           className="absolute top-1.5 h-[3px] w-6 rounded-full bg-gold-gradient shadow-[0_0_10px_rgba(201,168,76,0.7)] transition-transform duration-300 ease-[cubic-bezier(.65,0,.35,1)]"
-          style={{ left: `calc(${activeIndex} * (100% / 3) + (100% / 3 - 1.5rem) / 2)` }}
+          style={{ left: `calc(${activeIndex} * (100% / 2) + (100% / 2 - 1.5rem) / 2)` }}
         />
         {items.map(({ href, label, icon: Icon }, i) => {
           const active = i === activeIndex && pathname === href;
