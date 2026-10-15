@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search")?.trim();
 
   if (identity.isSuperAdmin) {
+    // Every word typed must appear somewhere in name/username/phone, so "First Last" works.
+    const terms = (search ?? "").split(/\s+/).filter(Boolean).map((t) => "%" + t.replace(/[\\%_]/g, "\\$&") + "%");
     // Full visibility over every user, fuzzy search like before.
     const rows = search
       ? await sql`
@@ -21,7 +23,7 @@ export async function GET(req: NextRequest) {
           FROM users u
           LEFT JOIN LATERAL (SELECT btc_amount, eth_amount, usd_cash FROM balances WHERE user_id = u.id ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 1) b ON true
           LEFT JOIN users a ON a.id = u.assigned_admin_id
-          WHERE u.first_name ILIKE ${"%" + search + "%"} OR u.last_name ILIKE ${"%" + search + "%"} OR u.username ILIKE ${"%" + search + "%"} OR u.phone ILIKE ${"%" + search + "%"}
+          WHERE concat_ws(' ', u.first_name, u.last_name, u.username, u.phone) ILIKE ALL (${terms})
           ORDER BY u.created_at DESC
         `
       : await sql`
