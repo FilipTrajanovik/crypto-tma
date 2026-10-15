@@ -12,13 +12,22 @@ export async function GET() {
     return NextResponse.json({ error: "Super-admin access required" }, { status: 403 });
   }
 
+  // Falls back to no permissions column if the migration has not been run yet.
   const rows = await sql`
     SELECT u.id, u.first_name, u.last_name, u.username, u.is_admin, u.is_super_admin, u.permissions,
            (SELECT COUNT(*)::int FROM users c WHERE c.assigned_admin_id = u.id) AS claimed_users
     FROM users u
     WHERE u.is_admin = true OR u.is_super_admin = true
     ORDER BY u.first_name ASC
-  `;
+  `.catch(
+    () => sql`
+      SELECT u.id, u.first_name, u.last_name, u.username, u.is_admin, u.is_super_admin,
+             (SELECT COUNT(*)::int FROM users c WHERE c.assigned_admin_id = u.id) AS claimed_users
+      FROM users u
+      WHERE u.is_admin = true OR u.is_super_admin = true
+      ORDER BY u.first_name ASC
+    `
+  );
 
   const admins = rows.map((a) => ({
     id: a.id,

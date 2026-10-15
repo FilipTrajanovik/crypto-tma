@@ -44,6 +44,8 @@ export default function AdminsPage() {
       setAdmins(data.admins);
       setIsOwner(data.isOwner);
       setDrafts({});
+    } else {
+      toast.add({ title: "Could not load admins", type: "error" });
     }
     setLoading(false);
   }, [router]);
