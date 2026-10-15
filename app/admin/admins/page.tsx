@@ -21,6 +21,14 @@ type AdminRow = {
   permissions: string[];
 };
 
+type SearchUser = {
+  id: number;
+  first_name: string | null;
+  last_name: string | null;
+  username: string | null;
+  phone: string | null;
+};
+
 export default function AdminsPage() {
   const router = useRouter();
   const [admins, setAdmins] = useState<AdminRow[]>([]);
@@ -28,6 +36,9 @@ export default function AdminsPage() {
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState<Record<number, string[]>>({});
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<SearchUser[]>([]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/admins");
@@ -74,6 +85,28 @@ export default function AdminsPage() {
     }
   };
 
+  const runSearch = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data.users);
+      } else {
+        toast.add({ title: "Search failed", type: "error" });
+      }
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const promote = async (userId: number) => {
+    await patch(userId, { isSuperAdmin: true }, "Promoted to super admin");
+    setResults((r) => r.filter((u) => u.id !== userId));
+  };
+
   const toggle = (a: AdminRow, key: string) => {
     const current = drafts[a.id] ?? a.permissions;
     setDrafts({ ...drafts, [a.id]: current.includes(key) ? current.filter((k) => k !== key) : [...current, key] });
@@ -97,6 +130,66 @@ export default function AdminsPage() {
             ? "Promote an admin to super-admin and choose exactly what they can do. A super-admin can always see every user; the permissions below limit what they can change."
             : "Only the owner can change roles and permissions."}
         </p>
+
+        {isOwner && (
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4 mb-4">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Add a super admin</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                runSearch();
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search any user by name, username or phone"
+                className="flex-1 min-w-0 rounded-xl bg-navy border border-[#1a3a6e] px-3 h-11 sm:h-9 text-sm text-white placeholder:text-muted-foreground"
+              />
+              <Button
+                type="submit"
+                disabled={searching || !query.trim()}
+                className="bg-gold text-navy font-bold uppercase tracking-wide h-11 sm:h-9"
+              >
+                Search
+              </Button>
+            </form>
+            {results.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {results.map((u) => {
+                  const label = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || `User #${u.id}`;
+                  const already = admins.find((a) => a.id === u.id)?.is_super_admin;
+                  return (
+                    <div key={u.id} className="flex items-center justify-between gap-3 rounded-xl bg-navy p-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-white truncate">{label}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {u.username ? `@${u.username}` : ""}
+                          {u.username && u.phone ? " · " : ""}
+                          {u.phone ?? ""}
+                        </p>
+                      </div>
+                      {already ? (
+                        <Badge variant="outline" className="bg-patriot-red/15 text-patriot-red border-patriot-red/30">Super Admin</Badge>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busyId === u.id}
+                          onClick={() => promote(u.id)}
+                          className="border-gold text-gold hover:bg-gold/10 h-10 sm:h-8 shrink-0"
+                        >
+                          Make super admin
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        )}
 
         {loading ? (
           <Skeleton className="h-64 w-full rounded-2xl bg-card-navy" />

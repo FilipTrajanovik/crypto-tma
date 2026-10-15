@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminIdentity } from "@/lib/auth";
+import { sendTelegramMessage } from "@/lib/telegram";
 import { ALL_PERMISSIONS, resolvePermissions } from "@/lib/permissions";
 
 export async function GET() {
@@ -59,9 +60,21 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
   }
 
-  const existing = await sql`SELECT id, is_admin, is_super_admin FROM users WHERE id = ${userId}`;
-  if (existing.length === 0 || !(existing[0].is_admin || existing[0].is_super_admin)) {
+  const existing = await sql`SELECT id, telegram_id, is_admin, is_super_admin FROM users WHERE id = ${userId}`;
+  if (existing.length === 0) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  // Promoting a regular user straight to super-admin is allowed; every other change needs an existing admin.
+  const promoting = body.isSuperAdmin === true && !existing[0].is_super_admin;
+  if (!promoting && !(existing[0].is_admin || existing[0].is_super_admin)) {
     return NextResponse.json({ error: "Not an admin" }, { status: 400 });
+  }
+
+  if (promoting) {
+    await sql`UPDATE users SET is_admin = true WHERE id = ${userId}`;
+    if (existing[0].telegram_id) {
+      await sendTelegramMessage(existing[0].telegram_id, "You have been granted super-admin access — you can now see and manage every user.");
+    }
   }
 
   if (typeof body.isSuperAdmin === "boolean") {
