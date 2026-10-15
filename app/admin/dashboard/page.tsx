@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminNav from "@/app/components/AdminNav";
@@ -74,15 +74,20 @@ export default function AdminDashboardPage() {
   const [admins, setAdmins] = useState<AdminOption[]>([]);
   const [reassigningId, setReassigningId] = useState<number | null>(null);
 
+  const latestRequest = useRef(0);
+
   const loadFullUsers = useCallback(async (q: string) => {
+    const requestId = ++latestRequest.current;
     const params = q ? `?search=${encodeURIComponent(q)}` : "";
     const res = await fetch(`/api/admin/users${params}`);
+    if (requestId !== latestRequest.current) return; // stale response
     if (res.status === 401) {
       router.replace("/admin");
       return;
     }
     if (res.ok) {
       const data = await res.json();
+      if (requestId !== latestRequest.current) return;
       setUsers(data.users);
     }
   }, [router]);
@@ -169,7 +174,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="min-h-screen bg-navy">
         <AdminNav />
-        <main className="max-w-5xl mx-auto px-5 py-6">
+        <main className="max-w-5xl mx-auto px-4 sm:px-5 py-4 sm:py-6">
           <Skeleton className="h-24 w-full rounded-2xl bg-card-navy mb-6" />
           <Skeleton className="h-96 w-full rounded-2xl bg-card-navy" />
         </main>
@@ -180,24 +185,24 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-navy">
       <AdminNav />
-      <main className="max-w-5xl mx-auto px-5 py-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-5 py-4 sm:py-6">
         {isSuperAdmin && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Users</p>
-              <p className="text-2xl font-bold text-gold">{stats?.totalUsers ?? 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gold">{stats?.totalUsers ?? 0}</p>
             </Card>
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">BTC Under Management</p>
-              <p className="text-2xl font-bold text-gold">{stats?.totalBtc.toFixed(4) ?? "0"}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gold">{stats?.totalBtc.toFixed(4) ?? "0"}</p>
             </Card>
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">ETH Under Management</p>
-              <p className="text-2xl font-bold text-gold">{stats?.totalEth.toFixed(4) ?? "0"}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gold">{stats?.totalEth.toFixed(4) ?? "0"}</p>
             </Card>
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Pending Withdrawals</p>
-              <p className="text-2xl font-bold text-patriot-red">{stats?.pendingWithdrawals ?? 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-patriot-red">{stats?.pendingWithdrawals ?? 0}</p>
             </Card>
           </div>
         )}
@@ -206,33 +211,33 @@ export default function AdminDashboardPage() {
           <div className="grid grid-cols-2 gap-3 mb-8">
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">My Users</p>
-              <p className="text-2xl font-bold text-gold">{myStats?.myUsers ?? 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gold">{myStats?.myUsers ?? 0}</p>
             </Card>
             <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Pending Withdrawals</p>
-              <p className="text-2xl font-bold text-patriot-red">{myStats?.pendingWithdrawals ?? 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-patriot-red">{myStats?.pendingWithdrawals ?? 0}</p>
             </Card>
           </div>
         )}
 
         {!isSuperAdmin && (
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-8">
+          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8">
             <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Find & Claim a User</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Enter their exact full name (as shown on Telegram) or exact phone number. Matches are only shown for
               exact hits, and you must claim a user before you can manage them.
             </p>
-            <form onSubmit={handleClaimSearch} className="flex gap-2 mb-2">
+            <form onSubmit={handleClaimSearch} className="flex flex-col sm:flex-row gap-2 mb-2">
               <Input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="e.g. Johnny Hackle or +38970..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white flex-1"
+                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white flex-1 h-11 sm:h-9 text-base sm:text-sm"
               />
               <Button
                 type="submit"
                 disabled={searching}
-                className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap"
+                className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap h-11 sm:h-9"
               >
                 {searching ? "Searching..." : "Search"}
               </Button>
@@ -246,8 +251,8 @@ export default function AdminDashboardPage() {
                   <p className="text-sm text-muted-foreground">No exact match found. Double-check the spelling or phone number.</p>
                 )}
                 {searchResults.map((u) => (
-                  <div key={u.id} className="bg-navy rounded-xl p-3 flex items-center justify-between gap-3">
-                    <div>
+                  <div key={u.id} className="bg-navy rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <p className="font-medium text-sm text-white">
                         {[u.first_name, u.last_name].filter(Boolean).join(" ") || "Unnamed"}
                       </p>
@@ -284,20 +289,68 @@ export default function AdminDashboardPage() {
           </Card>
         )}
 
-        <div className="flex items-center justify-between mb-4 gap-3">
-          <h2 className="text-lg font-bold uppercase tracking-wide text-white">{isSuperAdmin ? "Users" : "My Users"}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+          <h2 className="text-base sm:text-lg font-bold uppercase tracking-wide text-white">{isSuperAdmin ? "Users" : "My Users"}</h2>
           {isSuperAdmin && (
             <Input
               type="text"
               placeholder="Search by name, username, phone"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-card-navy border-[#1a3a6e] focus-visible:border-gold text-white w-64"
+              className="bg-card-navy border-[#1a3a6e] focus-visible:border-gold text-white w-full sm:w-64 h-11 sm:h-9 text-base sm:text-sm"
             />
           )}
         </div>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+        <div className="md:hidden space-y-3">
+          {users.map((u) => (
+            <Card key={u.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-white truncate">
+                    {[u.first_name, u.last_name].filter(Boolean).join(" ") || "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {u.username ? `@${u.username}` : "no username"} · {u.phone || "no phone"}
+                  </p>
+                </div>
+                <Badge variant="outline" className={u.is_active ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}>
+                  {u.is_active ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+              <p className="text-xs text-white mb-3">
+                {Number(u.btc_amount).toFixed(4)} BTC / {Number(u.eth_amount).toFixed(4)} ETH / ${Number(u.usd_cash).toFixed(2)}
+              </p>
+              {isSuperAdmin && (
+                <select
+                  value={u.assigned_admin_id ?? ""}
+                  onChange={(e) => handleReassign(u.id, e.target.value)}
+                  disabled={reassigningId === u.id}
+                  className="w-full mb-3 bg-navy border border-[#1a3a6e] rounded-md px-3 h-11 text-white text-base focus-visible:border-gold disabled:opacity-60"
+                >
+                  <option value="">Unassigned</option>
+                  {admins.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {[a.first_name, a.last_name].filter(Boolean).join(" ") || a.username || `Admin #${a.id}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <Link href={`/admin/users/${u.id}`} className="block">
+                <Button variant="outline" className="w-full h-11 border-gold text-gold hover:bg-gold/10">
+                  Manage
+                </Button>
+              </Link>
+            </Card>
+          ))}
+          {users.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">
+              {isSuperAdmin ? "No users found." : "You haven't claimed any users yet — search above to find one."}
+            </p>
+          )}
+        </div>
+
+        <Card className="hidden md:block bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

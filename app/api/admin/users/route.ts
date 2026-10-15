@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
                  u.assigned_admin_id, a.first_name AS assigned_admin_first_name, a.last_name AS assigned_admin_last_name,
                  COALESCE(b.btc_amount, 0) AS btc_amount, COALESCE(b.eth_amount, 0) AS eth_amount, COALESCE(b.usd_cash, 0) AS usd_cash
           FROM users u
-          LEFT JOIN balances b ON b.user_id = u.id
+          LEFT JOIN LATERAL (SELECT btc_amount, eth_amount, usd_cash FROM balances WHERE user_id = u.id ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 1) b ON true
           LEFT JOIN users a ON a.id = u.assigned_admin_id
           WHERE u.first_name ILIKE ${"%" + search + "%"} OR u.last_name ILIKE ${"%" + search + "%"} OR u.username ILIKE ${"%" + search + "%"} OR u.phone ILIKE ${"%" + search + "%"}
           ORDER BY u.created_at DESC
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
                  u.assigned_admin_id, a.first_name AS assigned_admin_first_name, a.last_name AS assigned_admin_last_name,
                  COALESCE(b.btc_amount, 0) AS btc_amount, COALESCE(b.eth_amount, 0) AS eth_amount, COALESCE(b.usd_cash, 0) AS usd_cash
           FROM users u
-          LEFT JOIN balances b ON b.user_id = u.id
+          LEFT JOIN LATERAL (SELECT btc_amount, eth_amount, usd_cash FROM balances WHERE user_id = u.id ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 1) b ON true
           LEFT JOIN users a ON a.id = u.assigned_admin_id
           ORDER BY u.created_at DESC
         `;
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.phone, u.avatar_url, u.is_active, u.created_at,
              COALESCE(b.btc_amount, 0) AS btc_amount, COALESCE(b.eth_amount, 0) AS eth_amount, COALESCE(b.usd_cash, 0) AS usd_cash
       FROM users u
-      LEFT JOIN balances b ON b.user_id = u.id
+      LEFT JOIN LATERAL (SELECT btc_amount, eth_amount, usd_cash FROM balances WHERE user_id = u.id ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 1) b ON true
       WHERE u.assigned_admin_id = ${identity.userId}
       ORDER BY u.created_at DESC
     `;

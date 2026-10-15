@@ -23,30 +23,30 @@ export default function AdminNav() {
 
   return (
     <header className="border-b border-[#1a3a6e] bg-card-navy sticky top-0 z-40">
-      <div className="max-w-5xl mx-auto px-5 py-3">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <div className="flex items-center gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-5 py-2 sm:py-3">
+        <div className="flex items-center justify-between gap-2 sm:gap-4 mb-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link href="/wallet" className="text-muted-foreground text-sm hover:text-gold transition-colors whitespace-nowrap">
               ← Wallet
             </Link>
             <div className="flex items-center gap-2">
               <ShieldLogo size={20} />
-              <span className="font-bold uppercase tracking-widest text-gold whitespace-nowrap text-sm">Q F S Wallet</span>
+              <span className="font-bold uppercase tracking-wider sm:tracking-widest text-gold whitespace-nowrap text-xs sm:text-sm">Q F S Wallet</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge className="bg-patriot-red text-white font-bold uppercase tracking-wide">Admin Panel</Badge>
+          <div className="flex items-center gap-3 shrink-0">
+            <Badge className="hidden sm:inline-flex bg-patriot-red text-white font-bold uppercase tracking-wide">Admin Panel</Badge>
             <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-patriot-red whitespace-nowrap">
               Log Out
             </button>
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto no-scrollbar">
+        <nav className="flex gap-1 overflow-x-auto no-scrollbar -mx-1 px-1">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap uppercase tracking-wide font-medium transition-colors ${
+              className={`px-3 py-2 sm:py-1.5 rounded-lg text-xs sm:text-sm whitespace-nowrap flex-1 sm:flex-none text-center uppercase tracking-wide font-medium transition-colors ${
                 pathname === link.href ? "bg-gold text-navy" : "text-muted-foreground hover:bg-white/5"
               }`}
             >
