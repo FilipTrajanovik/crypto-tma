@@ -3,7 +3,7 @@ import { sql } from "@/lib/db";
 import { getAdminIdentity, can, canManageAdmins } from "@/lib/auth";
 import { logAdminAction } from "@/lib/admin-log";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { validPaymentLink } from "@/lib/withdrawal-fee";
+import { validPaymentLink, parseFee, ensureFeeColumns } from "@/lib/withdrawal-fee";
 import { computeDiscountedFee } from "@/lib/fee";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, release_paid,
            assigned_admin_id, support_contact, btc_address, eth_address,
            release_fee_title, release_fee_note, release_fee_amount, release_fee_currency,
-           release_fee_discount_type, release_fee_discount_value, release_payment_link, release_deadline, created_at
+           release_fee_discount_type, release_fee_discount_value, release_payment_link, withdrawal_fee_type, withdrawal_fee_value, release_deadline, created_at
     FROM users WHERE id = ${userId}
   `;
   if (userRows.length === 0) {
@@ -90,6 +90,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeDiscountType,
     releaseFeeDiscountValue,
     releasePaymentLink,
+    withdrawalFeeType,
+    withdrawalFeeValue,
     releaseDeadline,
     btcAmount,
     ethAmount,
@@ -124,6 +126,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
+  let withdrawalFee: ReturnType<typeof parseFee> | null = null;
+  if (withdrawalFeeType !== undefined) {
+    withdrawalFee = parseFee(withdrawalFeeType, withdrawalFeeValue);
+    if (!withdrawalFee.ok) return NextResponse.json({ error: withdrawalFee.error }, { status: 400 });
+  }
+
   const notifications: string[] = [];
 
   if (
@@ -144,10 +152,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeDiscountType !== undefined ||
     releaseFeeDiscountValue !== undefined ||
     releasePaymentLink !== undefined ||
+    withdrawalFeeType !== undefined ||
     releaseDeadline !== undefined ||
     assignedAdminChange !== undefined
   ) {
     // New super-admins start with no extra rights (granted on the Admins page); demotion clears them.
+    if (withdrawalFee) await ensureFeeColumns();
     if (superAdminChange === true) {
       await sql`UPDATE users SET permissions = '[]'::jsonb WHERE id = ${userId} AND is_super_admin = false`;
     } else if (superAdminChange === false) {
@@ -172,6 +182,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         release_fee_discount_type = CASE WHEN ${releaseFeeDiscountType !== undefined} THEN ${releaseFeeDiscountType ?? null} ELSE release_fee_discount_type END,
         release_fee_discount_value = CASE WHEN ${releaseFeeDiscountValue !== undefined} THEN ${releaseFeeDiscountValue ?? null} ELSE release_fee_discount_value END,
         release_payment_link = CASE WHEN ${releasePaymentLink !== undefined} THEN ${releasePaymentLink ?? null} ELSE release_payment_link END,
+        withdrawal_fee_type = CASE WHEN ${withdrawalFee !== null} THEN ${withdrawalFee?.ok ? withdrawalFee.config.type : null} ELSE withdrawal_fee_type END,
+        withdrawal_fee_value = CASE WHEN ${withdrawalFee !== null} THEN ${withdrawalFee?.ok && withdrawalFee.config.type ? withdrawalFee.config.value : null} ELSE withdrawal_fee_value END,
         release_deadline = CASE WHEN ${releaseDeadline !== undefined} THEN ${releaseDeadline ?? null} ELSE release_deadline END,
         assigned_admin_id = CASE WHEN ${assignedAdminChange !== undefined} THEN ${assignedAdminChange ?? null} ELSE assigned_admin_id END
       WHERE id = ${userId}
@@ -199,6 +211,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     if (releasePaymentLink !== undefined) {
       logs.push([releasePaymentLink === null ? "Removed the release payment link" : "Set the release payment link", releasePaymentLink ?? undefined]);
+    }
+    if (withdrawalFee?.ok) {
+      const c = withdrawalFee.config;
+      logs.push(["Set the withdrawal fee", c.type ? (c.type === "percent" ? `${c.value}%` : `$${c.value}`) : "none"]);
     }
     if (releaseDeadline !== undefined) {
       logs.push([releaseDeadline === null ? "Cleared the release deadline" : "Set the release deadline", releaseDeadline ? new Date(releaseDeadline).toISOString() : undefined]);

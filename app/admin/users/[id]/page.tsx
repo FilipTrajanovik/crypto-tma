@@ -36,6 +36,8 @@ type UserDetail = {
     release_fee_discount_type: "percent" | "fixed" | null;
     release_fee_discount_value: string | null;
     release_payment_link: string | null;
+    withdrawal_fee_type: "fixed" | "percent" | null;
+    withdrawal_fee_value: string | null;
     release_deadline: string | null;
     created_at: string;
   };
@@ -108,6 +110,8 @@ export default function AdminUserDetailPage() {
   const [releaseFeeDiscountType, setReleaseFeeDiscountType] = useState<"percent" | "fixed" | "">("");
   const [releaseFeeDiscountValue, setReleaseFeeDiscountValue] = useState("");
   const [releasePaymentLink, setReleasePaymentLink] = useState("");
+  const [wFeeType, setWFeeType] = useState<"none" | "fixed" | "percent">("none");
+  const [wFeeValue, setWFeeValue] = useState("");
   const [releaseDeadline, setReleaseDeadline] = useState("");
   const [messageText, setMessageText] = useState("");
   const [usdQuickSet, setUsdQuickSet] = useState("");
@@ -165,6 +169,8 @@ export default function AdminUserDetailPage() {
       setReleaseFeeDiscountType(json.user.release_fee_discount_type || "");
       setReleaseFeeDiscountValue(json.user.release_fee_discount_value ?? "");
       setReleasePaymentLink(json.user.release_payment_link || "");
+      setWFeeType(json.user.withdrawal_fee_type === "fixed" || json.user.withdrawal_fee_type === "percent" ? json.user.withdrawal_fee_type : "none");
+      setWFeeValue(json.user.withdrawal_fee_value ? String(Number(json.user.withdrawal_fee_value)) : "");
       setReleaseDeadline(json.user.release_deadline ? toDatetimeLocal(json.user.release_deadline) : "");
     }
   }, [id, router]);
@@ -291,6 +297,8 @@ export default function AdminUserDetailPage() {
           releaseFeeDiscountType: releaseFeeDiscountType || null,
           releaseFeeDiscountValue: releaseFeeDiscountValue === "" ? null : Number(releaseFeeDiscountValue),
           releasePaymentLink: releasePaymentLink.trim() || null,
+          withdrawalFeeType: wFeeType,
+          withdrawalFeeValue: wFeeValue,
         }),
       });
       if (!res.ok) {
@@ -319,6 +327,7 @@ export default function AdminUserDetailPage() {
           releaseFeeDiscountType: null,
           releaseFeeDiscountValue: null,
           releasePaymentLink: null,
+          withdrawalFeeType: "none",
         }),
       });
       setReleaseFeeTitle("");
@@ -328,6 +337,8 @@ export default function AdminUserDetailPage() {
       setReleaseFeeDiscountType("");
       setReleaseFeeDiscountValue("");
       setReleasePaymentLink("");
+      setWFeeType("none");
+      setWFeeValue("");
       toast.add({ title: "Release fee cleared", type: "success" });
       load();
     } finally {
@@ -678,6 +689,23 @@ export default function AdminUserDetailPage() {
                 <div className="sm:col-span-2">
                   <Label htmlFor="r-link" className={labelClass}>Payment link (optional)</Label>
                   <Input id="r-link" type="url" value={releasePaymentLink} onChange={(e) => setReleasePaymentLink(e.target.value)} placeholder="https://… — a Pay Fee button shows only when set" className={fieldClass} />
+                </div>
+                <div>
+                  <Label htmlFor="w-type" className={labelClass}>Withdrawal fee</Label>
+                  <select
+                    id="w-type"
+                    value={wFeeType}
+                    onChange={(e) => setWFeeType(e.target.value as "none" | "fixed" | "percent")}
+                    className="w-full h-11 bg-transparent border-0 border-b border-line text-base text-white focus-visible:border-brand"
+                  >
+                    <option value="none" className="bg-card-navy">No fee</option>
+                    <option value="fixed" className="bg-card-navy">Fixed ($)</option>
+                    <option value="percent" className="bg-card-navy">Percent (%)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="w-val" className={labelClass}>{wFeeType === "percent" ? "Fee (%)" : "Fee amount ($)"}</Label>
+                  <Input id="w-val" type="number" step="any" min="0" value={wFeeValue} onChange={(e) => setWFeeValue(e.target.value)} disabled={wFeeType === "none"} placeholder={wFeeType === "percent" ? "e.g. 2.5" : "e.g. 25"} className={fieldClass} />
                 </div>
               </div>
               <div className="flex items-center gap-5 mt-6">

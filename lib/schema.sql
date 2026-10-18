@@ -43,11 +43,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS release_deadline TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_discount_type TEXT; -- 'percent' or 'fixed'
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_fee_discount_value DECIMAL(18,2);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS release_payment_link TEXT; -- per-client override
--- Per-admin defaults applied to the clients an admin claimed
+-- Per-client withdrawal fee, set by the admin
 ALTER TABLE users ADD COLUMN IF NOT EXISTS withdrawal_fee_type TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS withdrawal_fee_value DECIMAL(18,8);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_payment_link TEXT;
-ALTER TABLE settings ADD COLUMN IF NOT EXISTS release_payment_link TEXT;
+
 
 CREATE TABLE IF NOT EXISTS balances (
   id SERIAL PRIMARY KEY,
@@ -114,7 +113,6 @@ CREATE TABLE IF NOT EXISTS settings (
   eth_address TEXT,
   withdrawal_fee_type TEXT, -- fixed (USD) or percent; NULL = no fee
   withdrawal_fee_value DECIMAL(18,8),
-  release_payment_link TEXT, -- owner's default Pay Fee link
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
