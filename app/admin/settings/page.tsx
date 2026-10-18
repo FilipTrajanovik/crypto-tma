@@ -15,6 +15,8 @@ export default function AdminSettingsPage() {
   const [supportContact, setSupportContact] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
   const [ethAddress, setEthAddress] = useState("");
+  const [feeType, setFeeType] = useState<"none" | "fixed" | "percent">("none");
+  const [feeValue, setFeeValue] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -29,6 +31,8 @@ export default function AdminSettingsPage() {
       setSupportContact(data.settings?.support_contact || "");
       setBtcAddress(data.settings?.btc_address || "");
       setEthAddress(data.settings?.eth_address || "");
+      setFeeType(data.settings?.withdrawal_fee_type === "fixed" || data.settings?.withdrawal_fee_type === "percent" ? data.settings.withdrawal_fee_type : "none");
+      setFeeValue(data.settings?.withdrawal_fee_value ? String(Number(data.settings.withdrawal_fee_value)) : "");
     }
     setLoading(false);
   }, [router]);
@@ -41,12 +45,17 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await fetch("/api/admin/settings", {
+      const res = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supportContact, btcAddress, ethAddress }),
+        body: JSON.stringify({ supportContact, btcAddress, ethAddress, withdrawalFeeType: feeType, withdrawalFeeValue: feeValue }),
       });
-      toast.add({ title: "Settings saved", type: "success" });
+      if (res.ok) {
+        toast.add({ title: "Settings saved", type: "success" });
+      } else {
+        const body = await res.json().catch(() => ({}));
+        toast.add({ title: body.error || "Could not save settings", type: "error" });
+      }
     } finally {
       setSaving(false);
     }
@@ -106,6 +115,41 @@ export default function AdminSettingsPage() {
                 placeholder="0x..."
                 className="bg-navy border-line focus-visible:border-brand text-white font-mono"
               />
+            </div>
+
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Withdrawal Fee</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Applies to every new withdrawal request and is taken out of the amount the client receives. A fixed fee
+                is in USD and is converted at the current price for BTC, ETH and gold. You can still change the fee on
+                an individual pending request.
+              </p>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {(["none", "fixed", "percent"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setFeeType(t)}
+                    className={`h-10 rounded-lg text-sm font-semibold transition-colors ${
+                      feeType === t ? "bg-brand text-navy" : "bg-navy border border-line text-muted-foreground"
+                    }`}
+                  >
+                    {t === "none" ? "No fee" : t === "fixed" ? "Fixed ($)" : "Percent (%)"}
+                  </button>
+                ))}
+              </div>
+              {feeType !== "none" && (
+                <Input
+                  type="number"
+                  step="any"
+                  min="0"
+                  max={feeType === "percent" ? 99.99 : undefined}
+                  value={feeValue}
+                  onChange={(e) => setFeeValue(e.target.value)}
+                  placeholder={feeType === "fixed" ? "e.g. 25 (USD)" : "e.g. 2.5 (%)"}
+                  className="bg-navy border-line focus-visible:border-brand text-white"
+                />
+              )}
             </div>
 
             <Button

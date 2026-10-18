@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { getPrices } from "@/lib/prices";
+import { ensureFeeColumns, getFeeConfig, computeFeeAmount } from "@/lib/withdrawal-fee";
 
 const CURRENCIES = ["USD", "BTC", "ETH", "GOLD"] as const;
 type Currency = (typeof CURRENCIES)[number];
@@ -19,14 +21,25 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const rows = await sql`
-    SELECT id, amount, currency, status, admin_note, created_at
-    FROM withdrawal_requests
-    WHERE user_id = ${session.userId}
-    ORDER BY created_at DESC
-  `;
+  await ensureFeeColumns();
+  const [rows, feeConfig, prices] = await Promise.all([
+    sql`
+      SELECT id, amount, currency, status, admin_note, fee_type, fee_value, fee_amount, created_at
+      FROM withdrawal_requests
+      WHERE user_id = ${session.userId}
+      ORDER BY created_at DESC
+    `,
+    getFeeConfig(),
+    getPrices(),
+  ]);
 
-  return NextResponse.json({ withdrawals: rows });
+  // feeConfig and rates let the form show a fee estimate; the server
+  // recalculates the real fee when the request is created.
+  return NextResponse.json({
+    withdrawals: rows,
+    feeConfig,
+    rates: { BTC: prices.btc, ETH: prices.eth, GOLD: prices.gold },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -67,10 +80,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
   }
 
+  const [feeConfig, prices] = await Promise.all([getFeeConfig(), getPrices()]);
+  const feeAmount = computeFeeAmount(amount, currency, feeConfig, prices);
+  if (feeAmount >= amount) {
+    return NextResponse.json({ error: "Amount is too small to cover the withdrawal fee" }, { status: 400 });
+  }
+
   const rows = await sql`
-    INSERT INTO withdrawal_requests (user_id, amount, currency, status)
-    VALUES (${session.userId}, ${amount}, ${currency}, 'pending')
-    RETURNING id, amount, currency, status, admin_note, created_at
+    INSERT INTO withdrawal_requests (user_id, amount, currency, status, fee_type, fee_value, fee_amount)
+    VALUES (${session.userId}, ${amount}, ${currency}, 'pending', ${feeConfig.type}, ${feeConfig.type ? feeConfig.value : null}, ${feeAmount})
+    RETURNING id, amount, currency, status, admin_note, fee_type, fee_value, fee_amount, created_at
   `;
 
   await sql`
@@ -80,7 +99,7 @@ export async function POST(req: NextRequest) {
 
   const requester = userRows[0];
   const name = [requester.first_name, requester.last_name].filter(Boolean).join(" ") || requester.username || `User #${session.userId}`;
-  const message = `New withdrawal request: ${name} requested ${amount} ${currency}. Review it in the admin panel.`;
+  const message = `New withdrawal request: ${name} requested ${amount} ${currency}${feeAmount > 0 ? ` (fee ${feeAmount} ${currency})` : ""}. Review it in the admin panel.`;
 
   if (requester?.admin_telegram_id) {
     await sendTelegramMessage(requester.admin_telegram_id, message);

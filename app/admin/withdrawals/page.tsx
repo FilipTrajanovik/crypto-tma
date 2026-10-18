@@ -25,6 +25,9 @@ type Withdrawal = {
   currency: string;
   status: string;
   created_at: string;
+  fee_type: string | null;
+  fee_value: string | null;
+  fee_amount: string;
   first_name: string | null;
   last_name: string | null;
   username: string | null;
@@ -41,6 +44,8 @@ export default function AdminWithdrawalsPage() {
   const [dialogState, setDialogState] = useState<{ id: number; action: "approved" | "rejected" } | null>(null);
   const [note, setNote] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [feeType, setFeeType] = useState<"none" | "fixed" | "percent">("none");
+  const [feeValue, setFeeValue] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,7 +72,12 @@ export default function AdminWithdrawalsPage() {
       const res = await fetch("/api/admin/withdrawals", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: dialogState.id, status: dialogState.action, adminNote: note || undefined }),
+        body: JSON.stringify({
+          id: dialogState.id,
+          status: dialogState.action,
+          adminNote: note || undefined,
+          ...(dialogState.action === "approved" ? { feeType, feeValue } : {}),
+        }),
       });
       if (res.ok) {
         toast.add({ title: `Withdrawal ${dialogState.action}`, type: "success" });
@@ -75,7 +85,8 @@ export default function AdminWithdrawalsPage() {
         setNote("");
         load();
       } else {
-        toast.add({ title: "Failed to process withdrawal", type: "error" });
+        const body = await res.json().catch(() => ({}));
+        toast.add({ title: body.error || "Failed to process withdrawal", type: "error" });
       }
     } finally {
       setProcessing(false);
@@ -114,6 +125,7 @@ export default function AdminWithdrawalsPage() {
                   <TableRow className="border-line hover:bg-transparent">
                     <TableHead className="text-muted-foreground">User</TableHead>
                     <TableHead className="text-muted-foreground">Amount</TableHead>
+                    <TableHead className="text-muted-foreground">Fee</TableHead>
                     <TableHead className="text-muted-foreground">Date</TableHead>
                     <TableHead className="text-muted-foreground">Status</TableHead>
                     <TableHead className="text-muted-foreground">Actions</TableHead>
@@ -130,6 +142,11 @@ export default function AdminWithdrawalsPage() {
                       </TableCell>
                       <TableCell className="text-white font-medium">
                         {w.currency === "USD" ? `$${Number(w.amount).toFixed(2)}` : `${Number(w.amount)} ${w.currency}`}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground tabular-nums">
+                        {Number(w.fee_amount) > 0
+                          ? `${w.currency === "USD" ? "$" : ""}${Number(w.fee_amount)}${w.currency === "USD" ? "" : ` ${w.currency}`}`
+                          : "None"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
@@ -151,7 +168,11 @@ export default function AdminWithdrawalsPage() {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => setDialogState({ id: w.id, action: "approved" })}
+                              onClick={() => {
+                                setFeeType(w.fee_type === "fixed" || w.fee_type === "percent" ? w.fee_type : "none");
+                                setFeeValue(w.fee_value ? String(Number(w.fee_value)) : "");
+                                setDialogState({ id: w.id, action: "approved" });
+                              }}
                               className="bg-verified text-navy hover:brightness-110 font-bold uppercase text-xs"
                             >
                               Approve
@@ -181,6 +202,38 @@ export default function AdminWithdrawalsPage() {
                 {dialogState?.action === "approved" ? "Approve" : "Reject"} Withdrawal
               </DialogTitle>
             </DialogHeader>
+            {dialogState?.action === "approved" && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Withdrawal fee, taken out of the amount the client receives. Change it to override the default for this request.
+                </p>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {(["none", "fixed", "percent"] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setFeeType(t)}
+                      className={`h-9 rounded-lg text-sm font-semibold ${
+                        feeType === t ? "bg-brand text-navy" : "bg-navy border border-line text-muted-foreground"
+                      }`}
+                    >
+                      {t === "none" ? "No fee" : t === "fixed" ? "Fixed ($)" : "Percent (%)"}
+                    </button>
+                  ))}
+                </div>
+                {feeType !== "none" && (
+                  <Input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={feeValue}
+                    onChange={(e) => setFeeValue(e.target.value)}
+                    placeholder={feeType === "fixed" ? "Amount in USD" : "Percent"}
+                    className="bg-navy border-line focus-visible:border-brand text-white"
+                  />
+                )}
+              </div>
+            )}
             <Input
               value={note}
               onChange={(e) => setNote(e.target.value)}

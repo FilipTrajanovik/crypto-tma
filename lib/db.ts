@@ -36,6 +36,8 @@ export type DbSettings = {
   support_contact: string | null;
   btc_address: string | null;
   eth_address: string | null;
+  withdrawal_fee_type: string | null;
+  withdrawal_fee_value: string | null;
   updated_at: string;
 };
 
@@ -66,6 +68,9 @@ export type DbWithdrawalRequest = {
   amount: string;
   currency: string;
   wallet_address: string;
+  fee_type: string | null;
+  fee_value: string | null;
+  fee_amount: string;
   status: string;
   admin_note: string | null;
   created_at: string;

@@ -72,6 +72,9 @@ CREATE TABLE IF NOT EXISTS withdrawal_requests (
   amount DECIMAL(18,8) NOT NULL,
   currency TEXT NOT NULL DEFAULT 'USD',
   wallet_address TEXT,
+  fee_type TEXT, -- fixed (USD) or percent, copied from settings when created
+  fee_value DECIMAL(18,8),
+  fee_amount DECIMAL(18,8) NOT NULL DEFAULT 0, -- in the withdrawal currency, deducted from the amount
   status TEXT NOT NULL DEFAULT 'pending',
   admin_note TEXT,
   created_at TIMESTAMP DEFAULT NOW()
@@ -103,6 +106,8 @@ CREATE TABLE IF NOT EXISTS settings (
   support_contact TEXT,
   btc_address TEXT,
   eth_address TEXT,
+  withdrawal_fee_type TEXT, -- fixed (USD) or percent; NULL = no fee
+  withdrawal_fee_value DECIMAL(18,8),
   updated_at TIMESTAMP DEFAULT NOW()
 );
 

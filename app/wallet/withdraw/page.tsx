@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { Lock } from "lucide-react";
+import { computeFeeAmount, type FeeConfig } from "@/lib/fee-calc";
 
 type Withdrawal = {
   id: number;
@@ -18,6 +19,7 @@ type Withdrawal = {
   currency: string;
   status: string;
   admin_note: string | null;
+  fee_amount?: string;
   created_at: string;
 };
 
@@ -54,6 +56,8 @@ export default function WithdrawPage() {
   const [releasePaid, setReleasePaid] = useState(false);
   const [balances, setBalances] = useState<Record<Currency, number>>({ USD: 0, BTC: 0, ETH: 0, GOLD: 0 });
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [feeConfig, setFeeConfig] = useState<FeeConfig>({ type: null, value: 0 });
+  const [rates, setRates] = useState({ btc: 0, eth: 0, gold: 0 });
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
@@ -66,6 +70,8 @@ export default function WithdrawPage() {
     if (withdrawRes.ok) {
       const data = await withdrawRes.json();
       setWithdrawals(data.withdrawals);
+      if (data.feeConfig) setFeeConfig(data.feeConfig);
+      if (data.rates) setRates({ btc: data.rates.BTC, eth: data.rates.ETH, gold: data.rates.GOLD });
     }
     setLoading(false);
   }, []);
@@ -78,6 +84,15 @@ export default function WithdrawPage() {
 
   const meta = CURRENCIES.find((c) => c.value === currency)!;
   const available = balances[currency];
+
+  // Same maths the server uses. The server recalculates the real fee when the
+  // request is created; nothing is shown when the fee is zero.
+  const amountNum = Number(amount);
+  const feeAmount = amountNum > 0 ? computeFeeAmount(amountNum, currency, feeConfig, rates) : 0;
+  const feeTooHigh = feeAmount > 0 && feeAmount >= amountNum;
+  const fmtAmount = (n: number) => (currency === "USD" ? `$${n.toFixed(2)}` : `${n} ${currency}`);
+
+  const hasFees = withdrawals.some((w) => Number(w.fee_amount) > 0);
 
   const applyPercent = (p: number) => {
     setPercent(p);
@@ -205,9 +220,25 @@ export default function WithdrawPage() {
               </div>
             </div>
 
+            {feeAmount > 0 && (
+              <div className="space-y-1.5 border-t border-line pt-3 text-sm tabular-nums">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Fee{feeConfig.type === "percent" ? ` (${feeConfig.value}%)` : ""}
+                  </span>
+                  <span className="text-white">− {fmtAmount(feeAmount)}</span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span className="text-muted-foreground font-normal">You receive</span>
+                  <span className="text-white">{feeTooHigh ? "—" : fmtAmount(amountNum - feeAmount)}</span>
+                </div>
+                {feeTooHigh && <p className="text-xs text-patriot-red">Amount is too small to cover the fee.</p>}
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={submitting || !releasePaid}
+              disabled={submitting || !releasePaid || feeTooHigh}
               className="w-full h-12 text-base bg-patriot-red text-white font-semibold hover:brightness-95 disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Submit Request"}
@@ -232,6 +263,7 @@ export default function WithdrawPage() {
                 <TableHead className="text-muted-foreground">Date</TableHead>
                 <TableHead className="text-muted-foreground">Amount</TableHead>
                 <TableHead className="text-muted-foreground">Status</TableHead>
+                {hasFees && <TableHead className="text-muted-foreground">Fee</TableHead>}
                 <TableHead className="text-muted-foreground">Note</TableHead>
               </TableRow>
             </TableHeader>
@@ -245,6 +277,15 @@ export default function WithdrawPage() {
                   <TableCell>
                     <StatusBadge status={w.status} />
                   </TableCell>
+                  {hasFees && (
+                  <TableCell className="text-xs text-muted-foreground tabular-nums">
+                    {Number(w.fee_amount) > 0
+                      ? w.currency === "USD"
+                        ? `$${Number(w.fee_amount).toFixed(2)}`
+                        : `${Number(w.fee_amount)} ${w.currency}`
+                      : "—"}
+                  </TableCell>
+                  )}
                   <TableCell className="text-xs text-muted-foreground">{w.admin_note || "—"}</TableCell>
                 </TableRow>
               ))}
