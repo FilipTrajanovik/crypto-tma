@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminIdentity, can } from "@/lib/auth";
+import { documentResponse } from "@/lib/document-response";
 
 export async function GET(req: NextRequest, { params }: { params: { docId: string } }) {
   const identity = await getAdminIdentity();
@@ -26,12 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: { docId: strin
     return NextResponse.json({ error: "You have not claimed this user" }, { status: 403 });
   }
 
-  const buffer = Buffer.from(doc.data, "base64");
-  return new NextResponse(buffer, {
-    headers: {
-      "Content-Type": doc.mime_type,
-      "Content-Disposition": `inline; filename="${encodeURIComponent(doc.file_name)}"`,
-      "Cache-Control": "private, max-age=60",
-    },
+  return documentResponse(doc as { file_name: string; mime_type: string; data: string }, {
+    download: req.nextUrl.searchParams.get("download") === "1",
   });
 }

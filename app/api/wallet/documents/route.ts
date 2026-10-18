@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   const rows = await sql`
-    SELECT id, file_name, mime_type, file_size, note, created_at
+    SELECT id, file_name, mime_type, file_size, created_at
     FROM user_documents WHERE user_id = ${session.userId} ORDER BY created_at DESC
   `;
 

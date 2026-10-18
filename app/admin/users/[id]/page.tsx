@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminNav from "@/app/components/AdminNav";
+import AdminDocuments from "@/app/components/AdminDocuments";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { ArrowLeft, Wand2, FileText, Upload, Trash2, UserX } from "lucide-react";
+import { ArrowLeft, Wand2, UserX } from "lucide-react";
 
 type UserDetail = {
   user: {
@@ -44,27 +45,12 @@ type UserDetail = {
   withdrawals: { id: number; amount: string; currency: string; wallet_address: string | null; status: string; created_at: string }[];
 };
 
-type UserDoc = {
-  id: number;
-  file_name: string;
-  mime_type: string;
-  file_size: number;
-  note: string | null;
-  created_at: string;
-};
-
 type AdminOption = { id: number; first_name: string | null; last_name: string | null; username: string | null };
 
 function toDatetimeLocal(iso: string) {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function formatDocSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function AdminUserDetailPage() {
@@ -96,22 +82,10 @@ export default function AdminUserDetailPage() {
   const [prices, setPrices] = useState<{ btc: number; eth: number; gold: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [docs, setDocs] = useState<UserDoc[]>([]);
   const [admins, setAdmins] = useState<AdminOption[]>([]);
   const [reassigning, setReassigning] = useState(false);
-  const [docFile, setDocFile] = useState<File | null>(null);
-  const [docNote, setDocNote] = useState("");
-  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const loadDocs = useCallback(async () => {
-    const res = await fetch(`/api/admin/users/${id}/documents`);
-    if (res.ok) {
-      const data = await res.json();
-      setDocs(data.documents);
-    }
-  }, [id]);
 
   const load = useCallback(async () => {
     const [whoamiRes, res, pricesRes] = await Promise.all([
@@ -163,8 +137,7 @@ export default function AdminUserDetailPage() {
 
   useEffect(() => {
     load();
-    loadDocs();
-  }, [load, loadDocs]);
+  }, [load]);
 
   const handleQuickSetUsd = (value: string) => {
     setUsdQuickSet(value);
@@ -400,34 +373,6 @@ export default function AdminUserDetailPage() {
     } finally {
       setSendingMessage(false);
     }
-  };
-
-  const handleUploadDoc = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!docFile) return;
-    setUploadingDoc(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", docFile);
-      if (docNote.trim()) formData.append("note", docNote.trim());
-      const res = await fetch(`/api/admin/users/${id}/documents`, { method: "POST", body: formData });
-      if (res.ok) {
-        toast.add({ title: "Document uploaded", type: "success" });
-        setDocFile(null);
-        setDocNote("");
-        loadDocs();
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        toast.add({ title: errData.error || "Failed to upload document", type: "error" });
-      }
-    } finally {
-      setUploadingDoc(false);
-    }
-  };
-
-  const handleDeleteDoc = async (docId: number) => {
-    await fetch(`/api/admin/users/${id}/documents/${docId}`, { method: "DELETE" });
-    loadDocs();
   };
 
   const handleDeleteUser = async () => {
@@ -883,67 +828,7 @@ export default function AdminUserDetailPage() {
           </form>
         </Card>
 
-        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Documents</h2>
-          <p className="text-sm text-muted-foreground mb-3">Upload a file for this user to see (with preview) in their wallet app.</p>
-          <form onSubmit={handleUploadDoc} className="flex flex-col sm:flex-row gap-2 mb-4">
-            <Input
-              type="file"
-              onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
-              className="bg-navy border-line focus-visible:border-brand text-white file:text-brand"
-            />
-            <Input
-              value={docNote}
-              onChange={(e) => setDocNote(e.target.value)}
-              placeholder="Note (optional)"
-              className="bg-navy border-line focus-visible:border-brand text-white sm:max-w-[220px]"
-            />
-            <Button
-              type="submit"
-              disabled={uploadingDoc || !docFile}
-              className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap"
-            >
-              <Upload className="w-4 h-4 mr-1.5" />
-              {uploadingDoc ? "Uploading..." : "Upload"}
-            </Button>
-          </form>
-
-          {docs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {docs.map((doc) => {
-                const fileUrl = `/api/admin/documents/${doc.id}/file`;
-                const isImage = doc.mime_type.startsWith("image/");
-                return (
-                  <div key={doc.id} className="bg-navy rounded-xl p-3 flex items-start gap-3">
-                    {isImage ? (
-                      <a href={fileUrl} target="_blank" rel="noreferrer" className="shrink-0">
-                        <img src={fileUrl} alt={doc.file_name} className="w-14 h-14 rounded-lg object-cover border border-line" />
-                      </a>
-                    ) : (
-                      <a href={fileUrl} target="_blank" rel="noreferrer" className="shrink-0 w-14 h-14 rounded-lg bg-card-navy border border-line flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-brand" />
-                      </a>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <a href={fileUrl} target="_blank" rel="noreferrer" className="text-sm text-white font-medium truncate block hover:text-brand">
-                        {doc.file_name}
-                      </a>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDocSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
-                      {doc.note && <p className="text-xs text-gray-400 mt-1">{doc.note}</p>}
-                    </div>
-                    <button onClick={() => handleDeleteDoc(doc.id)} className="shrink-0 text-muted-foreground hover:text-patriot-red">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+        <AdminDocuments userId={id} />
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card className="bg-card-navy border-line rounded-2xl p-5">

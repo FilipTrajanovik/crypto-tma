@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminIdentity, can, type AdminIdentity } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { resolveMimeType } from "@/lib/document-response";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB
 
@@ -32,8 +33,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   const rows = await sql`
-    SELECT id, file_name, mime_type, file_size, note, created_at
-    FROM user_documents WHERE user_id = ${userId} ORDER BY created_at DESC
+    SELECT d.id, d.file_name, d.mime_type, d.file_size, d.created_at,
+           NULLIF(TRIM(CONCAT(a.first_name, ' ', a.last_name)), '') AS uploaded_by_name, a.username AS uploaded_by_username
+    FROM user_documents d LEFT JOIN users a ON a.id = d.uploaded_by_admin_id
+    WHERE d.user_id = ${userId} ORDER BY d.created_at DESC
   `;
 
   return NextResponse.json({ documents: rows });
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const form = await req.formData();
   const file = form.get("file");
-  const note = String(form.get("note") || "").trim();
+  const notify = form.get("notify") !== "0";
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "A file is required" }, { status: 400 });
@@ -72,16 +75,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const buffer = Buffer.from(await file.arrayBuffer());
   const base64 = buffer.toString("base64");
 
+  const fileName = file.name.slice(0, 200) || "document";
+  const mimeType = resolveMimeType(fileName, file.type);
+
   await sql`
-    INSERT INTO user_documents (user_id, uploaded_by_admin_id, file_name, mime_type, file_size, data, note)
-    VALUES (${userId}, ${identity.userId}, ${file.name}, ${file.type || "application/octet-stream"}, ${file.size}, ${base64}, ${note || null})
+    INSERT INTO user_documents (user_id, uploaded_by_admin_id, file_name, mime_type, file_size, data)
+    VALUES (${userId}, ${identity.userId}, ${fileName}, ${mimeType}, ${file.size}, ${base64})
   `;
 
   const telegramId = check.target.telegram_id;
-  if (telegramId) {
+  if (telegramId && notify) {
     await sendTelegramMessage(
       telegramId,
-      `A new document (${file.name}) has been uploaded to your account. Open the wallet app and go to Documents to view it.`
+      `A new document (${fileName}) has been uploaded to your account. Open the wallet app and go to Documents to view it.`
     );
   }
 
