@@ -448,7 +448,8 @@ export default function AdminUserDetailPage() {
         cash: n(data.balance.usd_cash),
       }
     : null;
-  const total = holdings ? holdings.btc + holdings.eth + holdings.gold + holdings.cash : null;
+  // Portfolio value is the cash balance set here, same as the client sees.
+  const total = holdings ? holdings.cash : null;
   const isSelf = selfId !== null && selfId === user.id;
 
   const fieldClass =
