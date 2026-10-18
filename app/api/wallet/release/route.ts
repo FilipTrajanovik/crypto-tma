@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { getSupportContactForUser } from "@/lib/support";
 import { computeDiscountedFee } from "@/lib/fee";
+import { getPaymentLinkForUser } from "@/lib/withdrawal-fee";
 
 export async function GET() {
   const session = await getSession();
@@ -10,13 +11,14 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [userRows, supportContact] = await Promise.all([
+  const [userRows, supportContact, paymentLink] = await Promise.all([
     sql`
       SELECT release_fee_title, release_fee_note, release_fee_amount, release_fee_currency,
-             release_fee_discount_type, release_fee_discount_value, release_paid, release_deadline, release_payment_link
+             release_fee_discount_type, release_fee_discount_value, release_paid, release_deadline
       FROM users WHERE id = ${session.userId}
     `,
     getSupportContactForUser(session.userId),
+    getPaymentLinkForUser(session.userId),
   ]);
 
   const user = userRows[0];
@@ -45,7 +47,7 @@ export async function GET() {
     fee,
     releasePaid: user?.release_paid === true,
     releaseDeadline: user?.release_deadline ?? null,
-    paymentLink: user?.release_payment_link || null,
+    paymentLink,
     supportContact,
   });
 }

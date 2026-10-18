@@ -29,7 +29,7 @@ export async function GET() {
       WHERE user_id = ${session.userId}
       ORDER BY created_at DESC
     `,
-    getFeeConfig(),
+    getFeeConfig(session.userId),
     getPrices(),
   ]);
 
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
   }
 
-  const [feeConfig, prices] = await Promise.all([getFeeConfig(), getPrices()]);
+  const [feeConfig, prices] = await Promise.all([getFeeConfig(session.userId), getPrices()]);
   const feeAmount = computeFeeAmount(amount, currency, feeConfig, prices);
   if (feeAmount >= amount) {
     return NextResponse.json({ error: "Amount is too small to cover the withdrawal fee" }, { status: 400 });

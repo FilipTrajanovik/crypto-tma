@@ -19,6 +19,10 @@ export function ensureFeeColumns(): Promise<void> {
     columnsReady = (async () => {
       await sql`ALTER TABLE settings ADD COLUMN IF NOT EXISTS withdrawal_fee_type TEXT`;
       await sql`ALTER TABLE settings ADD COLUMN IF NOT EXISTS withdrawal_fee_value DECIMAL(18,8)`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS withdrawal_fee_type TEXT`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS withdrawal_fee_value DECIMAL(18,8)`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_payment_link TEXT`;
+      await sql`ALTER TABLE settings ADD COLUMN IF NOT EXISTS release_payment_link TEXT`;
       await sql`ALTER TABLE withdrawal_requests ADD COLUMN IF NOT EXISTS fee_type TEXT`;
       await sql`ALTER TABLE withdrawal_requests ADD COLUMN IF NOT EXISTS fee_value DECIMAL(18,8)`;
       await sql`ALTER TABLE withdrawal_requests ADD COLUMN IF NOT EXISTS fee_amount DECIMAL(18,8) NOT NULL DEFAULT 0`;
@@ -42,10 +46,48 @@ export function parseFee(type: unknown, value: unknown): { ok: true; config: Fee
   return { ok: true, config: { type, value: n } };
 }
 
-export async function getFeeConfig(): Promise<FeeConfig> {
+/**
+ * The fee that applies to a client: the one set by the admin who claimed them.
+ * Only clients nobody has claimed fall back to the owner's default on the settings row.
+ */
+export async function getFeeConfig(userId?: number): Promise<FeeConfig> {
   await ensureFeeColumns();
+  if (userId !== undefined) {
+    const owner = await sql`
+      SELECT u.assigned_admin_id, a.withdrawal_fee_type, a.withdrawal_fee_value
+      FROM users u LEFT JOIN users a ON a.id = u.assigned_admin_id
+      WHERE u.id = ${userId}
+    `;
+    if (owner[0]?.assigned_admin_id != null) {
+      const parsed = parseFee(owner[0].withdrawal_fee_type, owner[0].withdrawal_fee_value);
+      return parsed.ok ? parsed.config : { type: null, value: 0 };
+    }
+  }
   const rows = await sql`SELECT withdrawal_fee_type, withdrawal_fee_value FROM settings ORDER BY id ASC LIMIT 1`;
   const parsed = parseFee(rows[0]?.withdrawal_fee_type, rows[0]?.withdrawal_fee_value);
   return parsed.ok ? parsed.config : { type: null, value: 0 };
 }
 
+/** Pay Fee link for a client: their own override, then their claiming admin's; the owner's default only for unclaimed clients. */
+export async function getPaymentLinkForUser(userId: number): Promise<string | null> {
+  await ensureFeeColumns();
+  const rows = await sql`
+    SELECT u.release_payment_link, u.assigned_admin_id, a.admin_payment_link,
+           (SELECT release_payment_link FROM settings ORDER BY id ASC LIMIT 1) AS default_link
+    FROM users u LEFT JOIN users a ON a.id = u.assigned_admin_id
+    WHERE u.id = ${userId}
+  `;
+  const r = rows[0];
+  if (!r) return null;
+  if (r.release_payment_link) return r.release_payment_link;
+  return r.assigned_admin_id != null ? r.admin_payment_link || null : r.default_link || null;
+}
+
+export function validPaymentLink(value: unknown): boolean {
+  try {
+    const u = new URL(String(value));
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}

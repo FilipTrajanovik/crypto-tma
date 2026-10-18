@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { getAdminIdentity, can, canManageAdmins } from "@/lib/auth";
 import { logAdminAction } from "@/lib/admin-log";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { validPaymentLink } from "@/lib/withdrawal-fee";
 import { computeDiscountedFee } from "@/lib/fee";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -117,11 +118,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   if (releasePaymentLink !== undefined && releasePaymentLink !== null) {
-    let valid = false;
-    try {
-      const u = new URL(String(releasePaymentLink));
-      valid = u.protocol === "https:" || u.protocol === "http:";
-    } catch {}
+    const valid = validPaymentLink(releasePaymentLink);
     if (!valid) {
       return NextResponse.json({ error: "Payment link must be a valid http(s) URL" }, { status: 400 });
     }
