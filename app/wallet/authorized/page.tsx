@@ -55,9 +55,9 @@ export default function AuthorizedPersonsPage() {
     <div className="min-h-screen bg-navy px-5 pt-6 pb-10 max-w-md mx-auto">
       <PageHeader title="Authorized Persons" subtitle="Verify who is officially permitted to act on your account" />
 
-      <Card className="bg-card-gradient-gold border-[#1a3a6e] border-l-4 border-l-gold rounded-2xl p-5 mb-6">
+      <Card className="bg-card-gradient-premium border-line border-l-4 border-l-brand rounded-2xl p-5 mb-6">
         <div className="flex gap-3">
-          <ShieldCheck className="w-5 h-5 text-gold-bright shrink-0 mt-0.5" />
+          <ShieldCheck className="w-5 h-5 text-brand-bright shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
             Only the individuals listed here are officially authorized by the organization to assist with your
             account. Search by name to confirm someone&apos;s identity before trusting any instructions they give you.
@@ -71,7 +71,7 @@ export default function AuthorizedPersonsPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name, e.g. Martin"
-          className="bg-card-navy border-[#1a3a6e] focus-visible:border-gold text-white pl-9"
+          className="bg-card-navy border-line focus-visible:border-brand text-white pl-9"
         />
       </div>
 
@@ -96,11 +96,11 @@ export default function AuthorizedPersonsPage() {
             <Card
               key={person.id}
               style={{ animationDelay: `${i * 0.05}s` }}
-              className="anim-rise bg-card-gradient border-[#1a3a6e] rounded-2xl p-4 flex items-center gap-3 transition-colors hover:border-gold/40"
+              className="anim-rise bg-card-gradient border-line rounded-2xl p-4 flex items-center gap-3 transition-colors hover:border-brand/40"
             >
-              <Avatar className="w-11 h-11 border border-[#1a3a6e] shadow-gold-glow">
+              <Avatar className="w-11 h-11 border border-line shadow-brand-glow">
                 <AvatarImage src={person.avatarUrl || undefined} alt={displayName} />
-                <AvatarFallback className="bg-gold-gradient text-navy font-display font-semibold">
+                <AvatarFallback className="bg-brand-gradient text-navy font-display font-semibold">
                   {displayName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -116,13 +116,13 @@ export default function AuthorizedPersonsPage() {
               {person.username ? (
                 <button
                   onClick={() => openTelegram(person.username as string)}
-                  className="shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-lg font-bold text-xs uppercase tracking-wide bg-gold-gradient text-navy shadow-gold-glow hover:brightness-105 active:scale-95 transition-transform"
+                  className="shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-lg font-bold text-xs uppercase tracking-wide bg-brand-gradient text-navy shadow-brand-glow hover:brightness-105 active:scale-95 transition-transform"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   Contact
                 </button>
               ) : (
-                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide px-2 text-right border border-dashed border-[#1a3a6e] rounded-lg py-2 max-w-[70px] leading-tight">
+                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide px-2 text-right border border-dashed border-line rounded-lg py-2 max-w-[70px] leading-tight">
                   No Telegram username
                 </span>
               )}

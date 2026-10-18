@@ -67,13 +67,13 @@ export default function AdminSettingsPage() {
     <div className="min-h-screen bg-navy">
       <AdminNav />
       <main className="max-w-2xl mx-auto px-5 py-6">
-        <h1 className="text-xl font-bold uppercase tracking-widest text-gold mb-2">Platform Settings</h1>
+        <h1 className="text-xl font-bold uppercase tracking-widest text-brand mb-2">Platform Settings</h1>
         <p className="text-sm text-muted-foreground mb-6">
           These apply platform-wide. A user&apos;s claiming admin (or a manual override on their profile) takes
           priority over the defaults below.
         </p>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
+        <Card className="bg-card-navy border-line rounded-2xl p-5">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Default Support Contact</Label>
@@ -84,7 +84,7 @@ export default function AdminSettingsPage() {
                 value={supportContact}
                 onChange={(e) => setSupportContact(e.target.value)}
                 placeholder="e.g. cryptowallet_support"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
 
@@ -94,7 +94,7 @@ export default function AdminSettingsPage() {
                 value={btcAddress}
                 onChange={(e) => setBtcAddress(e.target.value)}
                 placeholder="bc1q..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white font-mono"
+                className="bg-navy border-line focus-visible:border-brand text-white font-mono"
               />
             </div>
 
@@ -104,14 +104,14 @@ export default function AdminSettingsPage() {
                 value={ethAddress}
                 onChange={(e) => setEthAddress(e.target.value)}
                 placeholder="0x..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white font-mono"
+                className="bg-navy border-line focus-visible:border-brand text-white font-mono"
               />
             </div>
 
             <Button
               type="submit"
               disabled={saving}
-              className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+              className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Settings"}
             </Button>

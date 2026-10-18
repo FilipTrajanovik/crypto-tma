@@ -61,7 +61,7 @@ export default function WalletDocumentsPage() {
             const isImage = doc.mime_type.startsWith("image/");
             const isPdf = doc.mime_type === "application/pdf";
             return (
-              <Card key={doc.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+              <Card key={doc.id} className="bg-card-navy border-line rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-white truncate">{doc.file_name}</p>
@@ -72,7 +72,7 @@ export default function WalletDocumentsPage() {
                   <a
                     href={fileUrl}
                     download={doc.file_name}
-                    className="shrink-0 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-gold hover:brightness-95"
+                    className="shrink-0 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-brand hover:brightness-95"
                   >
                     <Download className="w-3.5 h-3.5" /> Download
                   </a>
@@ -80,18 +80,18 @@ export default function WalletDocumentsPage() {
 
                 {isImage ? (
                   <a href={fileUrl} target="_blank" rel="noreferrer">
-                    <img src={fileUrl} alt={doc.file_name} className="w-full rounded-xl border border-[#1a3a6e] object-contain max-h-72" />
+                    <img src={fileUrl} alt={doc.file_name} className="w-full rounded-xl border border-line object-contain max-h-72" />
                   </a>
                 ) : isPdf ? (
-                  <iframe src={fileUrl} className="w-full h-72 rounded-xl border border-[#1a3a6e] bg-white" title={doc.file_name} />
+                  <iframe src={fileUrl} className="w-full h-72 rounded-xl border border-line bg-white" title={doc.file_name} />
                 ) : (
                   <a
                     href={fileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 text-sm text-muted-foreground bg-navy rounded-xl p-3 border border-[#1a3a6e]"
+                    className="flex items-center gap-2 text-sm text-muted-foreground bg-navy rounded-xl p-3 border border-line"
                   >
-                    <FileText className="w-4 h-4 text-gold shrink-0" /> Preview not available — tap to open
+                    <FileText className="w-4 h-4 text-brand shrink-0" /> Preview not available — tap to open
                   </a>
                 )}
 

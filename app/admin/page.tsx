@@ -39,12 +39,12 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-navy relative flex items-center justify-center px-6">
-      <div className="absolute inset-0 star-bg pointer-events-none" />
-      <Card className="relative w-full max-w-sm bg-card-navy border-[#1a3a6e] border-t-4 border-t-gold rounded-2xl p-6">
+      <div className="absolute inset-0 ambient-bg pointer-events-none" />
+      <Card className="relative w-full max-w-sm bg-card-navy border-line border-t-4 border-t-brand rounded-2xl p-6">
         <div className="flex justify-center mb-4">
           <ShieldLogo size={44} />
         </div>
-        <h1 className="text-xl font-bold uppercase tracking-widest text-gold text-center mb-1">Admin Panel</h1>
+        <h1 className="text-xl font-bold uppercase tracking-widest text-brand text-center mb-1">Admin Panel</h1>
         <p className="text-sm text-muted-foreground text-center mb-6">Sign in to manage the Q F S Wallet platform.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              className="bg-navy border-line focus-visible:border-brand text-white"
             />
           </div>
 
@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+            className="w-full bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>

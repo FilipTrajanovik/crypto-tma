@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ShieldLogo from "@/app/components/ShieldLogo";
+import GlobeBackdrop from "@/app/components/GlobeBackdrop";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Smartphone, TriangleAlert, ShieldCheck, Loader2, Bell, ArrowDown } from "lucide-react";
@@ -51,8 +52,8 @@ export default function AuthPage() {
 
     tg.ready();
     tg.expand();
-    tg.setHeaderColor?.("#0a1628");
-    tg.setBackgroundColor?.("#0a1628");
+    tg.setHeaderColor?.("#071426");
+    tg.setBackgroundColor?.("#071426");
 
     try {
       const res = await fetch("/api/auth/telegram", {
@@ -158,7 +159,7 @@ export default function AuthPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-navy flex flex-col items-center justify-center gap-4 px-6">
-        <Loader2 className="w-8 h-8 text-gold animate-spin" />
+        <Loader2 className="w-8 h-8 text-brand animate-spin" />
         <p className="text-muted-foreground text-sm">Connecting to Telegram...</p>
       </div>
     );
@@ -167,9 +168,10 @@ export default function AuthPage() {
   if (status === "no-telegram") {
     const botUsername = process.env.NEXT_PUBLIC_BOT_USERNAME;
     return (
-      <div className="min-h-screen bg-navy relative flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="absolute inset-0 star-bg pointer-events-none" />
-        <Smartphone className="w-14 h-14 text-gold relative" />
+      <div className="min-h-screen bg-navy relative overflow-hidden flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="absolute inset-0 ambient-bg pointer-events-none" />
+        <GlobeBackdrop className="absolute -top-4 left-1/2 -translate-x-1/2 w-[115%] max-w-[26rem] opacity-90" />
+        <Smartphone className="w-14 h-14 text-brand relative" />
         <h1 className="text-xl font-bold uppercase tracking-widest text-white relative">Open in Telegram</h1>
         <p className="text-muted-foreground text-sm max-w-xs relative">
           This wallet only works inside the Telegram app. Tap below to open it in Telegram.
@@ -177,7 +179,7 @@ export default function AuthPage() {
         {botUsername && (
           <a
             href={`https://t.me/${botUsername}`}
-            className="mt-2 inline-flex items-center justify-center rounded-lg bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 w-full max-w-xs relative h-9 px-4 text-sm"
+            className="mt-2 inline-flex items-center justify-center rounded-lg bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 w-full max-w-xs relative h-9 px-4 text-sm"
           >
             Open in Telegram
           </a>
@@ -192,7 +194,7 @@ export default function AuthPage() {
         <TriangleAlert className="w-14 h-14 text-patriot-red" />
         <h1 className="text-xl font-bold uppercase tracking-widest text-white">Something Went Wrong</h1>
         <p className="text-muted-foreground text-sm max-w-xs">{error}</p>
-        <Button onClick={authenticate} className="mt-4 bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95">
+        <Button onClick={authenticate} className="mt-4 bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95">
           Try Again
         </Button>
       </div>
@@ -201,16 +203,17 @@ export default function AuthPage() {
 
   if (status === "need-notifications") {
     return (
-      <div className="min-h-screen bg-navy relative flex flex-col items-center justify-center gap-6 px-6 text-center">
-        <div className="absolute inset-0 star-bg pointer-events-none" />
+      <div className="min-h-screen bg-navy relative overflow-hidden flex flex-col items-center justify-center gap-6 px-6 text-center">
+        <div className="absolute inset-0 ambient-bg pointer-events-none" />
+        <GlobeBackdrop className="absolute -top-4 left-1/2 -translate-x-1/2 w-[115%] max-w-[26rem] opacity-90" />
         <ShieldLogo size={64} />
         <div className="relative">
           <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Q F S Wallet</h1>
-          <p className="text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
+          <p className="text-xs text-brand tracking-widest uppercase">Secure • Private • Trusted</p>
         </div>
-        <Separator className="bg-gold/30 w-24 relative" />
+        <Separator className="bg-brand/30 w-24 relative" />
         <div className="relative">
-          <Bell className="w-8 h-8 text-gold mx-auto mb-3" />
+          <Bell className="w-8 h-8 text-brand mx-auto mb-3" />
           <h2 className="text-lg font-bold uppercase tracking-wide text-white mb-1">Turn On Notifications</h2>
           <p className="text-muted-foreground text-sm max-w-xs mx-auto">
             You must allow the bot to message you before you can use the wallet — this is how we send you
@@ -218,26 +221,26 @@ export default function AuthPage() {
           </p>
         </div>
         {error && <p className="text-patriot-red text-sm font-medium relative max-w-xs">{error}</p>}
-        <ArrowDown className="w-6 h-6 text-gold animate-bounce relative" />
+        <ArrowDown className="w-6 h-6 text-brand animate-bounce relative" />
         <Button
           onClick={handleRequestNotifications}
           disabled={requestingNotifications}
-          className="relative w-full max-w-xs h-16 rounded-2xl bg-gold text-navy font-bold uppercase tracking-wide text-base shadow-[0_0_0_4px_rgba(212,175,55,0.25)] hover:brightness-95 hover:shadow-[0_0_0_6px_rgba(212,175,55,0.35)] active:scale-95 disabled:opacity-60 animate-pulse transition-all"
+          className="relative w-full max-w-xs h-16 rounded-2xl bg-brand text-navy font-bold uppercase tracking-wide text-base shadow-[0_0_0_4px_rgba(22,139,255,0.25)] hover:brightness-95 hover:shadow-[0_0_0_6px_rgba(22,139,255,0.35)] active:scale-95 disabled:opacity-60 animate-pulse transition-all"
         >
           {requestingNotifications ? "Waiting for confirmation..." : "Allow Notifications"}
         </Button>
         <p className="text-xs text-muted-foreground max-w-xs relative">Tap the button above and choose &quot;Allow&quot;.</p>
         {notificationsDeclinedOnce && (
-          <div className="relative max-w-xs bg-card-navy border border-[#1a3a6e] rounded-xl p-4 mt-2">
+          <div className="relative max-w-xs bg-card-navy border border-line rounded-xl p-4 mt-2">
             <p className="text-xs text-muted-foreground leading-relaxed">
               Telegram won&apos;t show this popup again right away. Close this wallet, open your chat with the bot,
-              send it any message (e.g. tap <span className="text-gold">Start</span>), then reopen the wallet from
+              send it any message (e.g. tap <span className="text-brand">Start</span>), then reopen the wallet from
               the bot to get the prompt again.
             </p>
             {process.env.NEXT_PUBLIC_BOT_USERNAME && (
               <a
                 href={`https://t.me/${process.env.NEXT_PUBLIC_BOT_USERNAME}`}
-                className="mt-3 inline-flex items-center justify-center rounded-lg bg-card-navy border border-gold/40 text-gold font-bold uppercase tracking-wide hover:bg-gold/10 w-full h-9 px-4 text-xs"
+                className="mt-3 inline-flex items-center justify-center rounded-lg bg-card-navy border border-brand/40 text-brand font-bold uppercase tracking-wide hover:bg-brand/10 w-full h-9 px-4 text-xs"
               >
                 Open Bot Chat
               </a>
@@ -249,27 +252,28 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-navy relative flex flex-col items-center justify-center gap-6 px-6 text-center">
-      <div className="absolute inset-0 star-bg pointer-events-none" />
+    <div className="min-h-screen bg-navy relative overflow-hidden flex flex-col items-center justify-center gap-6 px-6 text-center">
+      <div className="absolute inset-0 ambient-bg pointer-events-none" />
+        <GlobeBackdrop className="absolute -top-4 left-1/2 -translate-x-1/2 w-[115%] max-w-[26rem] opacity-90" />
       <ShieldLogo size={64} />
       <div className="relative">
         <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Q F S Wallet</h1>
-        <p className="text-xs text-gold tracking-widest uppercase">Secure • Private • Trusted</p>
+        <p className="text-xs text-brand tracking-widest uppercase">Secure • Private • Trusted</p>
       </div>
-      <Separator className="bg-gold/30 w-24 relative" />
+      <Separator className="bg-brand/30 w-24 relative" />
       <div className="relative">
-        <ShieldCheck className="w-8 h-8 text-gold mx-auto mb-3" />
+        <ShieldCheck className="w-8 h-8 text-brand mx-auto mb-3" />
         <h2 className="text-lg font-bold uppercase tracking-wide text-white mb-1">Connect Your Phone</h2>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto">
           We need your phone number to secure your account and enable withdrawals.
         </p>
       </div>
       {error && <p className="text-patriot-red text-sm relative">{error}</p>}
-      <ArrowDown className="w-6 h-6 text-gold animate-bounce relative" />
+      <ArrowDown className="w-6 h-6 text-brand animate-bounce relative" />
       <Button
         onClick={handleRequestContact}
         disabled={requestingPhone}
-        className="relative w-full max-w-xs h-16 rounded-2xl bg-gold text-navy font-bold uppercase tracking-wide text-base shadow-[0_0_0_4px_rgba(212,175,55,0.25)] hover:brightness-95 hover:shadow-[0_0_0_6px_rgba(212,175,55,0.35)] active:scale-95 disabled:opacity-60 animate-pulse transition-all"
+        className="relative w-full max-w-xs h-16 rounded-2xl bg-brand text-navy font-bold uppercase tracking-wide text-base shadow-[0_0_0_4px_rgba(22,139,255,0.25)] hover:brightness-95 hover:shadow-[0_0_0_6px_rgba(22,139,255,0.35)] active:scale-95 disabled:opacity-60 animate-pulse transition-all"
       >
         <Smartphone className="w-5 h-5 mr-2" />
         {requestingPhone ? "Waiting for confirmation..." : "Tap to Share Phone Number"}

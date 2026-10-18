@@ -34,13 +34,13 @@ const PERCENT_STOPS = [25, 50, 75, 100];
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    pending: "bg-gold/15 text-gold border-gold/30",
-    approved: "bg-green-500/15 text-green-400 border-green-500/30",
-    completed: "bg-green-500/15 text-green-400 border-green-500/30",
+    pending: "bg-brand/15 text-brand border-brand/30",
+    approved: "bg-verified/15 text-verified-bright border-verified/30",
+    completed: "bg-verified/15 text-verified-bright border-verified/30",
     rejected: "bg-patriot-red/15 text-patriot-red border-patriot-red/30",
   };
   return (
-    <Badge variant="outline" className={`capitalize ${styles[status] || "bg-white/10 text-muted-foreground"}`}>
+    <Badge variant="outline" className={`capitalize ${styles[status] || "bg-white/5 text-muted-foreground border-line"}`}>
       {status}
     </Badge>
   );
@@ -126,7 +126,7 @@ export default function WithdrawPage() {
       {loading ? (
         <Skeleton className="h-56 w-full rounded-2xl bg-card-navy mb-8" />
       ) : (
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-8">
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-8">
           {!releasePaid && (
             <div className="flex items-center gap-2 bg-patriot-red/10 border border-patriot-red/30 rounded-xl px-4 py-3 mb-4">
               <Lock className="w-4 h-4 text-patriot-red shrink-0" />
@@ -145,7 +145,7 @@ export default function WithdrawPage() {
                     disabled={!releasePaid}
                     onClick={() => handleCurrencyChange(c.value)}
                     className={`h-9 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                      currency === c.value ? "bg-gold text-navy" : "bg-navy border border-[#1a3a6e] text-muted-foreground"
+                      currency === c.value ? "bg-brand text-navy" : "bg-navy border border-line text-muted-foreground"
                     }`}
                   >
                     {c.value}
@@ -173,7 +173,7 @@ export default function WithdrawPage() {
                   setPercent(available > 0 ? Math.min(100, Math.round((Number(e.target.value) / available) * 100)) : 0);
                 }}
                 placeholder="0.00"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
 
@@ -186,7 +186,7 @@ export default function WithdrawPage() {
                 value={percent}
                 onChange={handleSliderChange}
                 disabled={!releasePaid || available <= 0}
-                className="w-full accent-gold disabled:opacity-50"
+                className="w-full accent-brand disabled:opacity-50"
               />
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {PERCENT_STOPS.map((p) => (
@@ -196,7 +196,7 @@ export default function WithdrawPage() {
                     disabled={!releasePaid || available <= 0}
                     onClick={() => applyPercent(p)}
                     className={`h-8 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                      percent === p ? "bg-gold text-navy" : "bg-navy border border-[#1a3a6e] text-muted-foreground"
+                      percent === p ? "bg-brand text-navy" : "bg-navy border border-line text-muted-foreground"
                     }`}
                   >
                     {p}%
@@ -216,7 +216,7 @@ export default function WithdrawPage() {
         </Card>
       )}
 
-      <h2 className="text-sm font-bold uppercase tracking-widest text-gold border-b border-gold/30 pb-2 mb-4">
+      <h2 className="text-sm font-bold uppercase tracking-widest text-brand border-b border-brand/30 pb-2 mb-4">
         Your Requests
       </h2>
 
@@ -225,10 +225,10 @@ export default function WithdrawPage() {
       ) : withdrawals.length === 0 ? (
         <p className="text-muted-foreground text-sm text-center py-8">No withdrawal requests yet</p>
       ) : (
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+        <Card className="bg-card-navy border-line rounded-2xl overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#1a3a6e] hover:bg-transparent">
+              <TableRow className="border-line hover:bg-transparent">
                 <TableHead className="text-muted-foreground">Date</TableHead>
                 <TableHead className="text-muted-foreground">Amount</TableHead>
                 <TableHead className="text-muted-foreground">Status</TableHead>
@@ -237,7 +237,7 @@ export default function WithdrawPage() {
             </TableHeader>
             <TableBody>
               {withdrawals.map((w) => (
-                <TableRow key={w.id} className="border-[#1a3a6e]">
+                <TableRow key={w.id} className="border-line">
                   <TableCell className="text-xs text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-white font-medium">
                     {w.currency === "USD" ? `$${Number(w.amount).toFixed(2)}` : `${Number(w.amount)} ${w.currency}`}

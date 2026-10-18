@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/app/components/BottomNav";
 import ShieldLogo from "@/app/components/ShieldLogo";
+import QfsCard from "@/app/components/QfsCard";
+import MarketTicker from "@/app/components/MarketTicker";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Landmark, Send, ShieldCheck, Unlock, ArrowUp, ArrowDown, FileText, MessageCircle, Timer } from "lucide-react";
 
 type BalanceData = {
@@ -30,10 +31,6 @@ function formatUsd(value: number) {
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 }
 
-function formatCrypto(value: number, decimals = 6) {
-  return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
-}
-
 function formatCountdown(msRemaining: number) {
   const totalSeconds = Math.floor(msRemaining / 1000);
   const days = Math.floor(totalSeconds / 86400);
@@ -46,9 +43,9 @@ function formatCountdown(msRemaining: number) {
 }
 
 const actions = [
-  { href: "/wallet/deposit", label: "Deposit", icon: Landmark, variant: "gold" as const },
-  { href: "/wallet/withdraw", label: "Withdraw", icon: Send, variant: "gold" as const },
-  { href: "/wallet/authorized", label: "Authorized Persons", icon: ShieldCheck, variant: "gold" as const },
+  { href: "/wallet/deposit", label: "Deposit", icon: Landmark, variant: "brand" as const },
+  { href: "/wallet/withdraw", label: "Withdraw", icon: Send, variant: "brand" as const },
+  { href: "/wallet/authorized", label: "Authorized Persons", icon: ShieldCheck, variant: "brand" as const },
   { href: "/wallet/release", label: "Release Funds", icon: Unlock, variant: "red" as const },
   { href: "/wallet/documents", label: "Documents", icon: FileText, variant: "outline" as const },
 ];
@@ -104,9 +101,9 @@ export default function WalletPage() {
   if (error && !data) {
     return (
       <div className="min-h-screen bg-navy flex items-center justify-center px-6">
-        <Card className="bg-card-navy border-[#1a3a6e] border-l-4 border-l-patriot-red p-5 max-w-sm text-center">
+        <Card className="bg-card-navy border-line border-l-4 border-l-patriot-red p-5 max-w-sm text-center">
           <p className="text-white mb-3">{error}</p>
-          <button onClick={load} className="text-gold text-sm font-bold uppercase tracking-wide">
+          <button onClick={load} className="text-brand text-sm font-bold uppercase tracking-wide">
             Retry
           </button>
         </Card>
@@ -146,143 +143,130 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy relative pb-24">
-      <div className="absolute inset-0 star-bg pointer-events-none" />
+    <div className="min-h-screen bg-navy relative overflow-hidden pb-[calc(6rem+env(safe-area-inset-bottom))]">
+      <div className="absolute inset-0 ambient-bg pointer-events-none" />
 
-      <header className="relative px-5 pt-6 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <ShieldLogo size={32} />
-          <h1 className="text-xl font-bold uppercase tracking-widest text-white">Q F S Wallet</h1>
-          <div className="flex items-center gap-2">
-            <Avatar className="w-9 h-9 border border-[#1a3a6e]">
+      <div className="relative max-w-md mx-auto">
+        <header className="px-5 pt-5 pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <ShieldLogo size={30} />
+              <div>
+                <h1 className="text-lg leading-none font-bold tracking-[0.28em] text-premium-gradient">QFS</h1>
+                <p className="mt-1 text-[9px] leading-none tracking-[0.2em] uppercase text-muted-foreground">
+                  Secure · Private · Trusted
+                </p>
+              </div>
+            </div>
+            <Avatar className="w-9 h-9 border border-line">
               <AvatarImage src={user.avatarUrl || undefined} alt={displayName} />
-              <AvatarFallback className="bg-gold/20 text-gold font-semibold">
+              <AvatarFallback className="bg-brand/20 text-brand-bright font-semibold">
                 {displayName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </div>
-        </div>
-        <p className="text-center text-xs text-gold-gradient tracking-widest uppercase">Secure • Private • Trusted</p>
-      </header>
+        </header>
 
-      <section className="relative px-5 flex items-center justify-center gap-6 mb-4 text-sm">
-        <div className="flex items-center gap-1.5">
-          <span className="text-muted-foreground uppercase text-xs tracking-wide">BTC</span>
-          <span className="text-gold font-semibold">{formatUsd(prices.btc)}</span>
-          {prices.btcChange24h >= 0 ? (
-            <ArrowUp className="w-3.5 h-3.5 text-green-500" />
-          ) : (
-            <ArrowDown className="w-3.5 h-3.5 text-patriot-red" />
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-muted-foreground uppercase text-xs tracking-wide">ETH</span>
-          <span className="text-gold font-semibold">{formatUsd(prices.eth)}</span>
-          {prices.ethChange24h >= 0 ? (
-            <ArrowUp className="w-3.5 h-3.5 text-green-500" />
-          ) : (
-            <ArrowDown className="w-3.5 h-3.5 text-patriot-red" />
-          )}
-        </div>
-      </section>
+        <section className="px-5 mb-4 flex items-center divide-x divide-line/80 text-xs" aria-label="Market prices">
+          {[
+            { code: "BTC", price: prices.btc, up: prices.btcChange24h >= 0 },
+            { code: "ETH", price: prices.eth, up: prices.ethChange24h >= 0 },
+          ].map((p) => (
+            <div key={p.code} className="flex-1 flex items-center justify-center gap-2 first:pr-3 last:pl-3">
+              <span className="text-muted-foreground tracking-wider">{p.code}</span>
+              <span className="flex items-center gap-1 font-semibold tabular-nums text-foreground">
+                {formatUsd(p.price)}
+                {p.up ? (
+                  <ArrowUp className="w-3.5 h-3.5 text-verified-bright" aria-label="up in 24 hours" />
+                ) : (
+                  <ArrowDown className="w-3.5 h-3.5 text-patriot-red" aria-label="down in 24 hours" />
+                )}
+              </span>
+            </div>
+          ))}
+        </section>
 
-      {user.releaseDeadline && !user.releasePaid && (
-        <section className="relative px-5 mb-4">
-          <Link href="/wallet/release">
-            <Card
-              className={`relative overflow-hidden rounded-2xl p-5 text-center border-[#1a3a6e] ${
-                isExpired ? "bg-card-gradient-red border-l-4 border-l-patriot-red" : "bg-card-gradient-gold border-l-4 border-l-gold"
-              }`}
+        <section className="px-5 mb-5">
+          <QfsCard holderName={displayName} />
+        </section>
+
+        {user.releaseDeadline && !user.releasePaid && (
+          <section className="px-5 mb-5">
+            <Link
+              href="/wallet/release"
+              className={`block rounded-xl px-4 py-3 text-center ${isExpired ? "bg-patriot-red/10" : "bg-brand/10"}`}
             >
-              <div
-                className={`absolute -inset-x-6 -inset-y-10 rounded-full blur-2xl anim-pulse-glow ${
-                  isExpired ? "bg-patriot-red/20" : "bg-gold/20"
-                }`}
-              />
-              <div className="relative flex items-center justify-center gap-2 mb-2">
-                <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-gold"}`} />
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-brand-bright"}`} />
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
                   {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
                 </p>
               </div>
               <p
-                className={`relative text-2xl font-mono font-semibold tabular-nums ${
-                  isExpired ? "text-red-gradient" : "text-gold-gradient"
+                className={`text-2xl font-mono font-semibold tabular-nums ${
+                  isExpired ? "text-red-gradient" : "text-brand-gradient"
                 }`}
               >
                 {isExpired ? "00h 00m 00s" : formatCountdown(msRemaining!)}
               </p>
-            </Card>
-          </Link>
-        </section>
-      )}
+            </Link>
+          </section>
+        )}
 
-      <section className="relative px-5 mb-6">
-        <Card className="card-sheen bg-card-gradient-gold border-[#1a3a6e] border-l-4 border-l-gold rounded-2xl p-6">
-          <p className="relative text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Portfolio Value</p>
-          <p className="relative font-display text-4xl font-semibold tracking-tight text-gold-gradient-glow mb-4">
+        <section className="px-5 mb-6">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Total Portfolio Value</p>
+          <p className="mt-1 mb-3 font-display text-[36px] leading-tight font-semibold tabular-nums text-premium-gradient-glow break-words">
             {formatUsd(balance.totalValue)}
           </p>
-
-          <Separator className="bg-[#1a3a6e] mb-4" />
-
-          <div className="relative space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">₿ Bitcoin</span>
-              <span className="text-white">
-                {formatCrypto(balance.btc, 8)} <span className="text-muted-foreground">({formatUsd(balance.btcValue)})</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Ξ Ethereum</span>
-              <span className="text-white">
-                {formatCrypto(balance.eth, 6)} <span className="text-muted-foreground">({formatUsd(balance.ethValue)})</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">◆ Gold</span>
-              <span className="text-white">
-                {formatCrypto(balance.gold, 4)} oz <span className="text-muted-foreground">({formatUsd(balance.goldValue)})</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">$ Cash</span>
-              <span className="text-white">{formatUsd(balance.usdCash)}</span>
-            </div>
+          <div className="-mx-5">
+            <MarketTicker balance={balance} prices={prices} />
           </div>
-        </Card>
-      </section>
+        </section>
 
-      <section className="relative px-5 grid grid-cols-2 gap-3 mb-6">
-        {actions.map(({ href, label, icon: Icon, variant }, i) => (
-          <Link
-            key={href}
-            href={href}
-            style={{ animationDelay: `${i * 0.06}s` }}
-            className={`anim-rise flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 ${
-              variant === "gold"
-                ? "bg-gold-gradient text-navy shadow-gold-glow hover:brightness-105"
-                : variant === "red"
-                ? "bg-red-gradient text-white shadow-red-glow hover:brightness-105"
-                : "border-2 border-gold/60 text-gold bg-gold/5 hover:bg-gold/10"
-            }`}
-          >
-            <Icon className="w-5 h-5" />
-            {label}
-          </Link>
-        ))}
-      </section>
+        <section className="px-5 mb-7 flex flex-col gap-5">
+          {[actions.slice(0, 3), actions.slice(3)].map((row, r) => (
+            <div key={r} className={`grid gap-2 ${r === 0 ? "grid-cols-3" : "grid-cols-2 w-2/3 mx-auto"}`}>
+              {row.map(({ href, label, icon: Icon, variant }, j) => {
+                const i = r === 0 ? j : 3 + j;
+                                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    style={{ animationDelay: `${i * 0.06}s` }}
+                    className="anim-rise group flex flex-col items-center gap-2 text-center active:scale-95 transition-transform"
+                  >
+                    <span
+                      className={`flex items-center justify-center w-16 h-16 rounded-full transition-all duration-200 group-hover:brightness-110 ${
+                        variant === "red"
+                          ? "bg-patriot-red/15 ring-1 ring-patriot-red/40"
+                          : "bg-brand-gradient shadow-brand-glow"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-6 h-6 ${variant === "red" ? "text-patriot-red-bright" : "text-navy"}`}
+                        strokeWidth={2}
+                      />
+                    </span>
+                    <span className="text-xs font-medium leading-tight text-foreground">{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </section>
 
-      <section className="relative px-5 mb-6">
-        <button
+        <section className="px-5 mb-6">
+          <button
           onClick={handleContactSupport}
           disabled={!data.supportContact}
-          className="w-full flex items-center justify-center gap-2 h-14 rounded-xl font-bold text-sm uppercase tracking-wide transition-transform active:scale-95 bg-card-gradient-gold border border-gold/40 text-gold hover:bg-gold/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="w-full flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold transition-all text-brand-bright hover:bg-white/[0.06] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <MessageCircle className="w-4 h-4" />
           Contact Support
         </button>
       </section>
+
+      </div>
 
       <BottomNav />
     </div>

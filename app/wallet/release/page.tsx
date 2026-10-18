@@ -81,7 +81,7 @@ export default function ReleasePage() {
     <div className="min-h-screen bg-navy px-5 pt-6 pb-10 max-w-md mx-auto">
       <PageHeader title="Release Funds" />
 
-      <Card className="bg-card-gradient-red border-[#1a3a6e] border-l-4 border-l-patriot-red rounded-2xl p-5 mb-6">
+      <Card className="bg-card-gradient-red border-line border-l-4 border-l-patriot-red rounded-2xl p-5 mb-6">
         <div className="flex gap-3">
           <Lock className="w-5 h-5 text-patriot-red-bright shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -93,24 +93,24 @@ export default function ReleasePage() {
 
       {!loading && releaseDeadline && !releasePaid && (
         <Card
-          className={`relative overflow-hidden rounded-2xl p-5 mb-6 text-center border-[#1a3a6e] ${
-            isExpired ? "bg-card-gradient-red border-l-4 border-l-patriot-red" : "bg-card-gradient-gold border-l-4 border-l-gold"
+          className={`relative overflow-hidden rounded-2xl p-5 mb-6 text-center border-line ${
+            isExpired ? "bg-card-gradient-red border-l-4 border-l-patriot-red" : "bg-card-gradient-brand border-l-4 border-l-brand"
           }`}
         >
           <div
             className={`absolute -inset-x-6 -inset-y-10 rounded-full blur-2xl anim-pulse-glow ${
-              isExpired ? "bg-patriot-red/20" : "bg-gold/20"
+              isExpired ? "bg-patriot-red/20" : "bg-brand/20"
             }`}
           />
           <div className="relative flex items-center justify-center gap-2 mb-2">
-            <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-gold"}`} />
+            <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-brand"}`} />
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
             </p>
           </div>
           <p
             className={`relative text-2xl font-mono font-semibold tabular-nums ${
-              isExpired ? "text-red-gradient" : "text-gold-gradient"
+              isExpired ? "text-red-gradient" : "text-brand-gradient"
             }`}
           >
             {isExpired ? "00h 00m 00s" : formatCountdown(msRemaining!)}
@@ -126,14 +126,14 @@ export default function ReleasePage() {
           <Skeleton className="h-32 w-full rounded-2xl bg-card-navy" />
         </div>
       ) : !fee ? (
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6 text-center">
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6 text-center">
           <p className="text-muted-foreground text-sm">
             No release fee has been set up for your account yet. Contact your account manager below.
           </p>
         </Card>
       ) : (
         <div className="space-y-3 mb-6">
-          <Card className="bg-card-gradient border-[#1a3a6e] rounded-2xl p-5">
+          <Card className="bg-card-gradient border-line rounded-2xl p-5">
             <div className="flex justify-between items-start mb-1">
               <p className="font-display font-semibold text-white uppercase tracking-tight">{fee.title}</p>
               {releasePaid && (
@@ -173,7 +173,7 @@ export default function ReleasePage() {
       <Button
         onClick={handleContactSupport}
         disabled={!supportContact}
-        className="w-full bg-gold-gradient text-navy font-bold uppercase tracking-wide shadow-gold-glow hover:brightness-105 mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full bg-brand-gradient text-navy font-bold uppercase tracking-wide shadow-brand-glow hover:brightness-105 mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <MessageCircle className="w-4 h-4 mr-2" />
         Contact Support

@@ -188,19 +188,19 @@ export default function AdminDashboardPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-5 py-4 sm:py-6">
         {isSuperAdmin && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card className="bg-card-navy border-line rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Users</p>
-              <p className="text-xl sm:text-2xl font-bold text-gold">{stats?.totalUsers ?? 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">{stats?.totalUsers ?? 0}</p>
             </Card>
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card className="bg-card-navy border-line rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">BTC Under Management</p>
-              <p className="text-xl sm:text-2xl font-bold text-gold">{stats?.totalBtc.toFixed(4) ?? "0"}</p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">{stats?.totalBtc.toFixed(4) ?? "0"}</p>
             </Card>
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card className="bg-card-navy border-line rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">ETH Under Management</p>
-              <p className="text-xl sm:text-2xl font-bold text-gold">{stats?.totalEth.toFixed(4) ?? "0"}</p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">{stats?.totalEth.toFixed(4) ?? "0"}</p>
             </Card>
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card className="bg-card-navy border-line rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Pending Withdrawals</p>
               <p className="text-xl sm:text-2xl font-bold text-patriot-red">{stats?.pendingWithdrawals ?? 0}</p>
             </Card>
@@ -209,11 +209,11 @@ export default function AdminDashboardPage() {
 
         {!isSuperAdmin && (
           <div className="grid grid-cols-2 gap-3 mb-8">
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card className="bg-card-navy border-line rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">My Users</p>
-              <p className="text-xl sm:text-2xl font-bold text-gold">{myStats?.myUsers ?? 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">{myStats?.myUsers ?? 0}</p>
             </Card>
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card className="bg-card-navy border-line rounded-2xl p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Pending Withdrawals</p>
               <p className="text-xl sm:text-2xl font-bold text-patriot-red">{myStats?.pendingWithdrawals ?? 0}</p>
             </Card>
@@ -221,8 +221,8 @@ export default function AdminDashboardPage() {
         )}
 
         {!isSuperAdmin && (
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8">
-            <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Find & Claim a User</h2>
+          <Card className="bg-card-navy border-line rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8">
+            <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Find & Claim a User</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Enter their exact full name (as shown on Telegram) or exact phone number. Matches are only shown for
               exact hits, and you must claim a user before you can manage them.
@@ -232,18 +232,18 @@ export default function AdminDashboardPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="e.g. Johnny Hackle or +38970..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white flex-1 h-11 sm:h-9 text-base sm:text-sm"
+                className="bg-navy border-line focus-visible:border-brand text-white flex-1 h-11 sm:h-9 text-base sm:text-sm"
               />
               <Button
                 type="submit"
                 disabled={searching}
-                className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap h-11 sm:h-9"
+                className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap h-11 sm:h-9"
               >
                 {searching ? "Searching..." : "Search"}
               </Button>
             </form>
 
-            {claimMessage && <p className="text-sm text-gold mb-2">{claimMessage}</p>}
+            {claimMessage && <p className="text-sm text-brand mb-2">{claimMessage}</p>}
 
             {searchResults !== null && (
               <div className="space-y-2 mt-3">
@@ -262,13 +262,13 @@ export default function AdminDashboardPage() {
                     </div>
                     {u.claimStatus === "mine" && (
                       <Link href={`/admin/users/${u.id}`}>
-                        <Badge variant="outline" className="bg-gold/15 text-gold border-gold/30 whitespace-nowrap">
+                        <Badge variant="outline" className="bg-brand/15 text-brand border-brand/30 whitespace-nowrap">
                           Already yours →
                         </Badge>
                       </Link>
                     )}
                     {u.claimStatus === "claimed_by_other" && (
-                      <Badge variant="outline" className="bg-white/10 text-muted-foreground whitespace-nowrap">
+                      <Badge variant="outline" className="bg-white/5 text-muted-foreground border-line whitespace-nowrap">
                         Claimed by another admin
                       </Badge>
                     )}
@@ -277,7 +277,7 @@ export default function AdminDashboardPage() {
                         size="sm"
                         onClick={() => handleClaim(u.id)}
                         disabled={claimingId === u.id}
-                        className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap"
+                        className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap"
                       >
                         {claimingId === u.id ? "Claiming..." : "Claim"}
                       </Button>
@@ -297,14 +297,14 @@ export default function AdminDashboardPage() {
               placeholder="Search by name, username, phone"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-card-navy border-[#1a3a6e] focus-visible:border-gold text-white w-full sm:w-64 h-11 sm:h-9 text-base sm:text-sm"
+              className="bg-card-navy border-line focus-visible:border-brand text-white w-full sm:w-64 h-11 sm:h-9 text-base sm:text-sm"
             />
           )}
         </div>
 
         <div className="md:hidden space-y-3">
           {users.map((u) => (
-            <Card key={u.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+            <Card key={u.id} className="bg-card-navy border-line rounded-2xl p-4">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0">
                   <p className="font-medium text-white truncate">
@@ -314,7 +314,7 @@ export default function AdminDashboardPage() {
                     {u.username ? `@${u.username}` : "no username"} · {u.phone || "no phone"}
                   </p>
                 </div>
-                <Badge variant="outline" className={u.is_active ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}>
+                <Badge variant="outline" className={u.is_active ? "bg-verified/15 text-verified-bright border-verified/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}>
                   {u.is_active ? "Active" : "Inactive"}
                 </Badge>
               </div>
@@ -326,7 +326,7 @@ export default function AdminDashboardPage() {
                   value={u.assigned_admin_id ?? ""}
                   onChange={(e) => handleReassign(u.id, e.target.value)}
                   disabled={reassigningId === u.id}
-                  className="w-full mb-3 bg-navy border border-[#1a3a6e] rounded-md px-3 h-11 text-white text-base focus-visible:border-gold disabled:opacity-60"
+                  className="w-full mb-3 bg-navy border border-line rounded-md px-3 h-11 text-white text-base focus-visible:border-brand disabled:opacity-60"
                 >
                   <option value="">Unassigned</option>
                   {admins.map((a) => (
@@ -337,7 +337,7 @@ export default function AdminDashboardPage() {
                 </select>
               )}
               <Link href={`/admin/users/${u.id}`} className="block">
-                <Button variant="outline" className="w-full h-11 border-gold text-gold hover:bg-gold/10">
+                <Button variant="outline" className="w-full h-11 border-brand text-brand hover:bg-brand/10">
                   Manage
                 </Button>
               </Link>
@@ -350,11 +350,11 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        <Card className="hidden md:block bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+        <Card className="hidden md:block bg-card-navy border-line rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-[#1a3a6e] hover:bg-transparent">
+                <TableRow className="border-line hover:bg-transparent">
                   <TableHead className="text-muted-foreground">Name</TableHead>
                   <TableHead className="text-muted-foreground">Username</TableHead>
                   <TableHead className="text-muted-foreground">Phone</TableHead>
@@ -366,7 +366,7 @@ export default function AdminDashboardPage() {
               </TableHeader>
               <TableBody>
                 {users.map((u) => (
-                  <TableRow key={u.id} className="border-[#1a3a6e]">
+                  <TableRow key={u.id} className="border-line">
                     <TableCell className="text-white">
                       {[u.first_name, u.last_name].filter(Boolean).join(" ") || "—"}
                     </TableCell>
@@ -376,7 +376,7 @@ export default function AdminDashboardPage() {
                       {Number(u.btc_amount).toFixed(4)} BTC / {Number(u.eth_amount).toFixed(4)} ETH / ${Number(u.usd_cash).toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={u.is_active ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}>
+                      <Badge variant="outline" className={u.is_active ? "bg-verified/15 text-verified-bright border-verified/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}>
                         {u.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
@@ -386,7 +386,7 @@ export default function AdminDashboardPage() {
                           value={u.assigned_admin_id ?? ""}
                           onChange={(e) => handleReassign(u.id, e.target.value)}
                           disabled={reassigningId === u.id}
-                          className="bg-navy border border-[#1a3a6e] rounded-md px-2 py-1 text-white text-xs focus-visible:border-gold disabled:opacity-60"
+                          className="bg-navy border border-line rounded-md px-2 py-1 text-white text-xs focus-visible:border-brand disabled:opacity-60"
                         >
                           <option value="">Unassigned</option>
                           {admins.map((a) => (
@@ -399,7 +399,7 @@ export default function AdminDashboardPage() {
                     )}
                     <TableCell>
                       <Link href={`/admin/users/${u.id}`}>
-                        <Button size="sm" variant="outline" className="border-gold text-gold hover:bg-gold/10">
+                        <Button size="sm" variant="outline" className="border-brand text-brand hover:bg-brand/10">
                           Manage
                         </Button>
                       </Link>

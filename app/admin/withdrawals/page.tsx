@@ -86,7 +86,7 @@ export default function AdminWithdrawalsPage() {
     <div className="min-h-screen bg-navy">
       <AdminNav />
       <main className="max-w-4xl mx-auto px-5 py-6">
-        <h1 className="text-xl font-bold uppercase tracking-widest text-gold mb-5">Withdrawal Requests</h1>
+        <h1 className="text-xl font-bold uppercase tracking-widest text-brand mb-5">Withdrawal Requests</h1>
 
         <div className="flex gap-2 mb-5">
           {FILTERS.map((f) => (
@@ -95,7 +95,7 @@ export default function AdminWithdrawalsPage() {
               size="sm"
               variant={filter === f ? "default" : "outline"}
               onClick={() => setFilter(f)}
-              className={`capitalize ${filter === f ? "bg-gold text-navy hover:brightness-95" : "border-[#1a3a6e] text-muted-foreground"}`}
+              className={`capitalize ${filter === f ? "bg-brand text-navy hover:brightness-95" : "border-line text-muted-foreground"}`}
             >
               {f}
             </Button>
@@ -107,11 +107,11 @@ export default function AdminWithdrawalsPage() {
         ) : withdrawals.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-10">No withdrawal requests.</p>
         ) : (
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl overflow-hidden">
+          <Card className="bg-card-navy border-line rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#1a3a6e] hover:bg-transparent">
+                  <TableRow className="border-line hover:bg-transparent">
                     <TableHead className="text-muted-foreground">User</TableHead>
                     <TableHead className="text-muted-foreground">Amount</TableHead>
                     <TableHead className="text-muted-foreground">Date</TableHead>
@@ -121,7 +121,7 @@ export default function AdminWithdrawalsPage() {
                 </TableHeader>
                 <TableBody>
                   {withdrawals.map((w) => (
-                    <TableRow key={w.id} className="border-[#1a3a6e]">
+                    <TableRow key={w.id} className="border-line">
                       <TableCell>
                         <p className="text-white text-sm">
                           {[w.first_name, w.last_name].filter(Boolean).join(" ") || "Unnamed"}
@@ -137,9 +137,9 @@ export default function AdminWithdrawalsPage() {
                           variant="outline"
                           className={`capitalize ${
                             w.status === "pending"
-                              ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"
+                              ? "bg-premium/15 text-premium border-premium/30"
                               : w.status === "approved"
-                              ? "bg-green-500/15 text-green-400 border-green-500/30"
+                              ? "bg-verified/15 text-verified-bright border-verified/30"
                               : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"
                           }`}
                         >
@@ -152,7 +152,7 @@ export default function AdminWithdrawalsPage() {
                             <Button
                               size="sm"
                               onClick={() => setDialogState({ id: w.id, action: "approved" })}
-                              className="bg-green-600 text-white hover:bg-green-700 font-bold uppercase text-xs"
+                              className="bg-verified text-navy hover:brightness-110 font-bold uppercase text-xs"
                             >
                               Approve
                             </Button>
@@ -175,9 +175,9 @@ export default function AdminWithdrawalsPage() {
         )}
 
         <Dialog open={!!dialogState} onOpenChange={(open) => !open && setDialogState(null)}>
-          <DialogContent className="bg-card-navy border-[#1a3a6e] text-white">
+          <DialogContent className="bg-card-navy border-line text-white">
             <DialogHeader>
-              <DialogTitle className={`uppercase tracking-wide ${dialogState?.action === "approved" ? "text-green-400" : "text-patriot-red"}`}>
+              <DialogTitle className={`uppercase tracking-wide ${dialogState?.action === "approved" ? "text-verified-bright" : "text-patriot-red"}`}>
                 {dialogState?.action === "approved" ? "Approve" : "Reject"} Withdrawal
               </DialogTitle>
             </DialogHeader>
@@ -185,14 +185,14 @@ export default function AdminWithdrawalsPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Admin note (optional)"
-              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              className="bg-navy border-line focus-visible:border-brand text-white"
             />
             <DialogFooter>
               <Button
                 onClick={handleDecision}
                 disabled={processing}
                 className={`w-full font-bold uppercase tracking-wide ${
-                  dialogState?.action === "approved" ? "bg-green-600 hover:bg-green-700 text-white" : "bg-patriot-red text-white hover:brightness-95"
+                  dialogState?.action === "approved" ? "bg-verified hover:brightness-110 text-navy" : "bg-patriot-red text-white hover:brightness-95"
                 }`}
               >
                 {processing ? "Processing..." : `Confirm ${dialogState?.action === "approved" ? "Approval" : "Rejection"}`}

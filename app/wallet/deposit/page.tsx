@@ -18,7 +18,7 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
 
   useEffect(() => {
     if (!address) return;
-    QRCode.toDataURL(address, { margin: 1, width: 220, color: { dark: "#0a1628", light: "#ffffff" } }).then(setQr);
+    QRCode.toDataURL(address, { margin: 1, width: 220, color: { dark: "#071426", light: "#ffffff" } }).then(setQr);
   }, [address]);
 
   const handleCopy = async () => {
@@ -33,7 +33,7 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
   };
 
   return (
-    <Card className="bg-card-gradient border-[#1a3a6e] border-t-4 border-t-gold rounded-2xl p-5">
+    <Card className="bg-card-gradient border-line border-t-4 border-t-brand rounded-2xl p-5">
       <p className="text-red-gradient uppercase text-xs tracking-widest font-bold mb-4">{label} Address</p>
 
       {!address ? (
@@ -52,15 +52,15 @@ function AddressCard({ label, symbol, address }: { label: string; symbol: string
             )}
           </div>
 
-          <div className="bg-navy rounded-xl px-3 py-3 mb-3 break-all text-sm text-white font-mono flex items-center gap-2 border border-[#1a3a6e]">
-            <span className="text-gold-bright">{symbol}</span>
+          <div className="bg-navy rounded-xl px-3 py-3 mb-3 break-all text-sm text-white font-mono flex items-center gap-2 border border-line">
+            <span className="text-brand-bright">{symbol}</span>
             {address}
           </div>
 
           <Button
             onClick={handleCopy}
             className={`w-full font-bold transition-colors ${
-              copied ? "bg-verified text-navy hover:brightness-105" : "bg-gold-gradient text-navy shadow-gold-glow hover:brightness-105"
+              copied ? "bg-verified text-navy hover:brightness-105" : "bg-brand-gradient text-navy shadow-brand-glow hover:brightness-105"
             }`}
           >
             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
@@ -110,9 +110,9 @@ export default function DepositPage() {
         </div>
       )}
 
-      <Card className="mt-6 bg-card-gradient-gold border-gold/40 rounded-2xl p-4">
+      <Card className="mt-6 bg-card-gradient-premium border-brand/40 rounded-2xl p-4">
         <div className="flex gap-3">
-          <TriangleAlert className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+          <TriangleAlert className="w-5 h-5 text-brand shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
             After sending funds, notify your account manager. All deposits are manually verified and credited
             within 24 hours.

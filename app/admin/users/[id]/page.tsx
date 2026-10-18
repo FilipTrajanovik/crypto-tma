@@ -461,7 +461,7 @@ export default function AdminUserDetailPage() {
         <main className="max-w-4xl mx-auto px-5 py-6 text-center">
           <p className="text-patriot-red font-bold mb-2">You haven&apos;t claimed this user</p>
           <p className="text-sm text-muted-foreground mb-4">Search for them by exact name or phone on the dashboard to claim them first.</p>
-          <Link href="/admin/dashboard" className="text-gold text-sm">← Back to dashboard</Link>
+          <Link href="/admin/dashboard" className="text-brand text-sm">← Back to dashboard</Link>
         </main>
       </div>
     );
@@ -492,8 +492,8 @@ export default function AdminUserDetailPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
-            <Avatar className="w-12 h-12 border border-[#1a3a6e]">
-              <AvatarFallback className="bg-gold/20 text-gold font-semibold">
+            <Avatar className="w-12 h-12 border border-line">
+              <AvatarFallback className="bg-brand/20 text-brand font-semibold">
                 {displayName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -510,7 +510,7 @@ export default function AdminUserDetailPage() {
                 value={user.assigned_admin_id ?? ""}
                 onChange={(e) => handleReassign(e.target.value)}
                 disabled={reassigning}
-                className="bg-navy border border-[#1a3a6e] rounded-md px-2 py-1.5 text-white text-xs focus-visible:border-gold disabled:opacity-60"
+                className="bg-navy border border-line rounded-md px-2 py-1.5 text-white text-xs focus-visible:border-brand disabled:opacity-60"
               >
                 <option value="">Unassigned</option>
                 {admins.map((a) => (
@@ -523,7 +523,7 @@ export default function AdminUserDetailPage() {
             <Badge
               onClick={toggleActive}
               variant="outline"
-              className={`cursor-pointer ${user.is_active ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}`}
+              className={`cursor-pointer ${user.is_active ? "bg-verified/15 text-verified-bright border-verified/30" : "bg-patriot-red/15 text-patriot-red border-patriot-red/30"}`}
             >
               {user.is_active ? "Active" : "Inactive"} — toggle
             </Badge>
@@ -531,7 +531,7 @@ export default function AdminUserDetailPage() {
               <Badge
                 onClick={toggleAdmin}
                 variant="outline"
-                className={`cursor-pointer ${user.is_admin ? "bg-gold/15 text-gold border-gold/30" : "bg-white/10 text-muted-foreground"}`}
+                className={`cursor-pointer ${user.is_admin ? "bg-brand/15 text-brand border-brand/30" : "bg-white/5 text-muted-foreground border-line"}`}
               >
                 {user.is_admin ? "Admin" : "Not admin"} — toggle
               </Badge>
@@ -540,7 +540,7 @@ export default function AdminUserDetailPage() {
               <Badge
                 onClick={toggleSuperAdmin}
                 variant="outline"
-                className={`cursor-pointer ${user.is_super_admin ? "bg-patriot-red/15 text-patriot-red border-patriot-red/30" : "bg-white/10 text-muted-foreground"}`}
+                className={`cursor-pointer ${user.is_super_admin ? "bg-patriot-red/15 text-patriot-red border-patriot-red/30" : "bg-white/5 text-muted-foreground border-line"}`}
               >
                 {user.is_super_admin ? "Super Admin" : "Not super admin"} — toggle
               </Badge>
@@ -548,7 +548,7 @@ export default function AdminUserDetailPage() {
             <Badge
               onClick={toggleReleasePaid}
               variant="outline"
-              className={`cursor-pointer ${user.release_paid ? "bg-gold/15 text-gold border-gold/30" : "bg-white/10 text-muted-foreground"}`}
+              className={`cursor-pointer ${user.release_paid ? "bg-brand/15 text-brand border-brand/30" : "bg-white/5 text-muted-foreground border-line"}`}
             >
               {user.release_paid ? "Release paid" : "Release unpaid"} — toggle
             </Badge>
@@ -556,12 +556,12 @@ export default function AdminUserDetailPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
-            <h2 className="font-bold uppercase tracking-wide text-gold mb-4">Edit Balances</h2>
+          <Card className="bg-card-navy border-line rounded-2xl p-5">
+            <h2 className="font-bold uppercase tracking-wide text-brand mb-4">Edit Balances</h2>
 
-            <div className="bg-navy rounded-xl p-3 mb-4 border border-gold/30">
+            <div className="bg-navy rounded-xl p-3 mb-4 border border-brand/30">
               <Label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-1.5">
-                <Wand2 className="w-3.5 h-3.5 text-gold" /> Set Balance by Total Amount
+                <Wand2 className="w-3.5 h-3.5 text-brand" /> Set Balance by Total Amount
               </Label>
               <Input
                 type="number"
@@ -570,7 +570,7 @@ export default function AdminUserDetailPage() {
                 onChange={(e) => handleQuickSetUsd(e.target.value)}
                 disabled={!prices}
                 placeholder="Enter total USD amount"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
               <p className="text-xs text-muted-foreground mt-1.5">
                 {prices
@@ -587,7 +587,7 @@ export default function AdminUserDetailPage() {
                   step="any"
                   value={btcAmount}
                   onChange={(e) => setBtcAmount(e.target.value)}
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div>
@@ -597,7 +597,7 @@ export default function AdminUserDetailPage() {
                   step="any"
                   value={ethAmount}
                   onChange={(e) => setEthAmount(e.target.value)}
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div>
@@ -607,7 +607,7 @@ export default function AdminUserDetailPage() {
                   step="any"
                   value={goldAmount}
                   onChange={(e) => setGoldAmount(e.target.value)}
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div>
@@ -617,7 +617,7 @@ export default function AdminUserDetailPage() {
                   step="any"
                   value={usdCash}
                   onChange={(e) => setUsdCash(e.target.value)}
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div>
@@ -627,13 +627,13 @@ export default function AdminUserDetailPage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Reason for adjustment"
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <Button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+                className="w-full bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
               >
                 {saving ? "Saving..." : "Save Balance"}
               </Button>
@@ -641,13 +641,13 @@ export default function AdminUserDetailPage() {
           </Card>
 
           <div className="space-y-6">
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
-              <h2 className="font-bold uppercase tracking-wide text-gold mb-3">Add Manual Note</h2>
+            <Card className="bg-card-navy border-line rounded-2xl p-5">
+              <h2 className="font-bold uppercase tracking-wide text-brand mb-3">Add Manual Note</h2>
               <Input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Write a note..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white mb-3"
+                className="bg-navy border-line focus-visible:border-brand text-white mb-3"
               />
               <Button
                 onClick={handleAddNote}
@@ -659,8 +659,8 @@ export default function AdminUserDetailPage() {
               </Button>
             </Card>
 
-            <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-gold mb-2">Withdrawal Requests</h3>
+            <Card className="bg-card-navy border-line rounded-2xl p-5">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-brand mb-2">Withdrawal Requests</h3>
               {withdrawals.length === 0 ? (
                 <p className="text-xs text-muted-foreground">None yet.</p>
               ) : (
@@ -677,8 +677,8 @@ export default function AdminUserDetailPage() {
           </div>
         </div>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Deposit Addresses & Contact</h2>
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Deposit Addresses & Contact</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Custom BTC/ETH deposit addresses shown to this user only. Leave blank to use the platform default.
             Support contact overrides the auto-assigned claiming admin.
@@ -690,7 +690,7 @@ export default function AdminUserDetailPage() {
                 value={btcAddress}
                 onChange={(e) => setBtcAddress(e.target.value)}
                 placeholder="bc1q..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white font-mono text-sm"
+                className="bg-navy border-line focus-visible:border-brand text-white font-mono text-sm"
               />
             </div>
             <div>
@@ -699,7 +699,7 @@ export default function AdminUserDetailPage() {
                 value={ethAddress}
                 onChange={(e) => setEthAddress(e.target.value)}
                 placeholder="0x..."
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white font-mono text-sm"
+                className="bg-navy border-line focus-visible:border-brand text-white font-mono text-sm"
               />
             </div>
             <div>
@@ -708,21 +708,21 @@ export default function AdminUserDetailPage() {
                 value={supportContact}
                 onChange={(e) => setSupportContact(e.target.value)}
                 placeholder="Telegram username"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white text-sm"
+                className="bg-navy border-line focus-visible:border-brand text-white text-sm"
               />
             </div>
           </div>
           <Button
             onClick={handleSaveContactAndAddresses}
             disabled={saving}
-            className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+            className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
           >
             Save
           </Button>
         </Card>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Release Fee</h2>
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Release Fee</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Configured per user — shown on this user&apos;s Release Funds page. Leave the amount blank to show
             &quot;no release fee configured&quot; instead.
@@ -734,7 +734,7 @@ export default function AdminUserDetailPage() {
                 value={releaseFeeTitle}
                 onChange={(e) => setReleaseFeeTitle(e.target.value)}
                 placeholder="e.g. Standard Release"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
             <div>
@@ -743,7 +743,7 @@ export default function AdminUserDetailPage() {
                 value={releaseFeeNote}
                 onChange={(e) => setReleaseFeeNote(e.target.value)}
                 placeholder="Shown under the title"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
             <div>
@@ -754,7 +754,7 @@ export default function AdminUserDetailPage() {
                 value={releaseFeeAmount}
                 onChange={(e) => setReleaseFeeAmount(e.target.value)}
                 placeholder="e.g. 50"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
             <div>
@@ -763,7 +763,7 @@ export default function AdminUserDetailPage() {
                 value={releaseFeeCurrency}
                 onChange={(e) => setReleaseFeeCurrency(e.target.value)}
                 placeholder="USD"
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
             <div>
@@ -771,7 +771,7 @@ export default function AdminUserDetailPage() {
               <select
                 value={releaseFeeDiscountType}
                 onChange={(e) => setReleaseFeeDiscountType(e.target.value as "percent" | "fixed" | "")}
-                className="w-full bg-navy border border-[#1a3a6e] rounded-md px-3 py-2 text-white text-sm focus-visible:border-gold h-9"
+                className="w-full bg-navy border border-line rounded-md px-3 py-2 text-white text-sm focus-visible:border-brand h-9"
               >
                 <option value="">No discount</option>
                 <option value="percent">Percentage (%)</option>
@@ -790,7 +790,7 @@ export default function AdminUserDetailPage() {
                 onChange={(e) => setReleaseFeeDiscountValue(e.target.value)}
                 disabled={!releaseFeeDiscountType}
                 placeholder={releaseFeeDiscountType === "percent" ? "e.g. 20" : "e.g. 10"}
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white disabled:opacity-50"
+                className="bg-navy border-line focus-visible:border-brand text-white disabled:opacity-50"
               />
             </div>
           </div>
@@ -798,7 +798,7 @@ export default function AdminUserDetailPage() {
             <Button
               onClick={handleSaveReleaseFee}
               disabled={saving}
-              className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+              className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
             >
               Save
             </Button>
@@ -813,8 +813,8 @@ export default function AdminUserDetailPage() {
           </div>
         </Card>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Release Timer</h2>
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Release Timer</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Set a countdown deadline for this user to release their funds. Shown as a live timer on their Release
             Funds page. Leave blank for no timer.
@@ -826,19 +826,19 @@ export default function AdminUserDetailPage() {
                 type="datetime-local"
                 value={releaseDeadline}
                 onChange={(e) => setReleaseDeadline(e.target.value)}
-                className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                className="bg-navy border-line focus-visible:border-brand text-white"
               />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Quick Add</Label>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(24)} className="border-gold/40 text-gold hover:bg-gold/10">
+                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(24)} className="border-brand/40 text-brand hover:bg-brand/10">
                   +24h
                 </Button>
-                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(72)} className="border-gold/40 text-gold hover:bg-gold/10">
+                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(72)} className="border-brand/40 text-brand hover:bg-brand/10">
                   +72h
                 </Button>
-                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(168)} className="border-gold/40 text-gold hover:bg-gold/10">
+                <Button type="button" variant="outline" onClick={() => handleQuickAddTime(168)} className="border-brand/40 text-brand hover:bg-brand/10">
                   +7d
                 </Button>
               </div>
@@ -848,7 +848,7 @@ export default function AdminUserDetailPage() {
             <Button
               onClick={handleSaveReleaseDeadline}
               disabled={saving}
-              className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
+              className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60"
             >
               Save
             </Button>
@@ -863,15 +863,15 @@ export default function AdminUserDetailPage() {
           </div>
         </Card>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Send Message via Bot</h2>
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Send Message via Bot</h2>
           <p className="text-sm text-muted-foreground mb-3">Sends a direct Telegram message to this user right now.</p>
           <form onSubmit={handleSendMessage} className="space-y-3">
             <Input
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               placeholder="Write a message..."
-              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+              className="bg-navy border-line focus-visible:border-brand text-white"
             />
             <Button
               type="submit"
@@ -883,25 +883,25 @@ export default function AdminUserDetailPage() {
           </form>
         </Card>
 
-        <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5 mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-gold mb-1">Documents</h2>
+        <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
+          <h2 className="font-bold uppercase tracking-wide text-brand mb-1">Documents</h2>
           <p className="text-sm text-muted-foreground mb-3">Upload a file for this user to see (with preview) in their wallet app.</p>
           <form onSubmit={handleUploadDoc} className="flex flex-col sm:flex-row gap-2 mb-4">
             <Input
               type="file"
               onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
-              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white file:text-gold"
+              className="bg-navy border-line focus-visible:border-brand text-white file:text-brand"
             />
             <Input
               value={docNote}
               onChange={(e) => setDocNote(e.target.value)}
               placeholder="Note (optional)"
-              className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white sm:max-w-[220px]"
+              className="bg-navy border-line focus-visible:border-brand text-white sm:max-w-[220px]"
             />
             <Button
               type="submit"
               disabled={uploadingDoc || !docFile}
-              className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap"
+              className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 whitespace-nowrap"
             >
               <Upload className="w-4 h-4 mr-1.5" />
               {uploadingDoc ? "Uploading..." : "Upload"}
@@ -919,15 +919,15 @@ export default function AdminUserDetailPage() {
                   <div key={doc.id} className="bg-navy rounded-xl p-3 flex items-start gap-3">
                     {isImage ? (
                       <a href={fileUrl} target="_blank" rel="noreferrer" className="shrink-0">
-                        <img src={fileUrl} alt={doc.file_name} className="w-14 h-14 rounded-lg object-cover border border-[#1a3a6e]" />
+                        <img src={fileUrl} alt={doc.file_name} className="w-14 h-14 rounded-lg object-cover border border-line" />
                       </a>
                     ) : (
-                      <a href={fileUrl} target="_blank" rel="noreferrer" className="shrink-0 w-14 h-14 rounded-lg bg-card-navy border border-[#1a3a6e] flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-gold" />
+                      <a href={fileUrl} target="_blank" rel="noreferrer" className="shrink-0 w-14 h-14 rounded-lg bg-card-navy border border-line flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-brand" />
                       </a>
                     )}
                     <div className="min-w-0 flex-1">
-                      <a href={fileUrl} target="_blank" rel="noreferrer" className="text-sm text-white font-medium truncate block hover:text-gold">
+                      <a href={fileUrl} target="_blank" rel="noreferrer" className="text-sm text-white font-medium truncate block hover:text-brand">
                         {doc.file_name}
                       </a>
                       <p className="text-xs text-muted-foreground">
@@ -946,8 +946,8 @@ export default function AdminUserDetailPage() {
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-5">
-            <h2 className="font-bold uppercase tracking-wide text-gold mb-3">Transactions</h2>
+          <Card className="bg-card-navy border-line rounded-2xl p-5">
+            <h2 className="font-bold uppercase tracking-wide text-brand mb-3">Transactions</h2>
             {transactions.length === 0 ? (
               <p className="text-sm text-muted-foreground">No transactions yet.</p>
             ) : (

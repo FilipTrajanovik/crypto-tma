@@ -132,7 +132,7 @@ export default function AdminsPage() {
         </p>
 
         {isOwner && (
-          <Card className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4 mb-4">
+          <Card className="bg-card-navy border-line rounded-2xl p-4 mb-4">
             <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Add a super admin</p>
             <form
               onSubmit={(e) => {
@@ -145,12 +145,12 @@ export default function AdminsPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search any user by name, username or phone"
-                className="flex-1 min-w-0 rounded-xl bg-navy border border-[#1a3a6e] px-3 h-11 sm:h-9 text-sm text-white placeholder:text-muted-foreground"
+                className="flex-1 min-w-0 rounded-xl bg-navy border border-line px-3 h-11 sm:h-9 text-sm text-white placeholder:text-muted-foreground"
               />
               <Button
                 type="submit"
                 disabled={searching || !query.trim()}
-                className="bg-gold text-navy font-bold uppercase tracking-wide h-11 sm:h-9"
+                className="bg-brand text-navy font-bold uppercase tracking-wide h-11 sm:h-9"
               >
                 Search
               </Button>
@@ -178,7 +178,7 @@ export default function AdminsPage() {
                           variant="outline"
                           disabled={busyId === u.id}
                           onClick={() => promote(u.id)}
-                          className="border-gold text-gold hover:bg-gold/10 h-10 sm:h-8 shrink-0"
+                          className="border-brand text-brand hover:bg-brand/10 h-10 sm:h-8 shrink-0"
                         >
                           Make super admin
                         </Button>
@@ -200,7 +200,7 @@ export default function AdminsPage() {
               const current = drafts[a.id] ?? a.permissions;
               const dirty = drafts[a.id] !== undefined;
               return (
-                <Card key={a.id} className="bg-card-navy border-[#1a3a6e] rounded-2xl p-4">
+                <Card key={a.id} className="bg-card-navy border-line rounded-2xl p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-medium text-white truncate">{name}</p>
@@ -212,7 +212,7 @@ export default function AdminsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge
                         variant="outline"
-                        className={a.is_super_admin ? "bg-patriot-red/15 text-patriot-red border-patriot-red/30" : "bg-gold/15 text-gold border-gold/30"}
+                        className={a.is_super_admin ? "bg-patriot-red/15 text-patriot-red border-patriot-red/30" : "bg-brand/15 text-brand border-brand/30"}
                       >
                         {a.is_super_admin ? "Super Admin" : "Admin"}
                       </Badge>
@@ -222,7 +222,7 @@ export default function AdminsPage() {
                           variant="outline"
                           disabled={busyId === a.id}
                           onClick={() => patch(a.id, { isSuperAdmin: !a.is_super_admin }, a.is_super_admin ? "Demoted to admin" : "Promoted to super admin")}
-                          className="border-gold text-gold hover:bg-gold/10 h-10 sm:h-8"
+                          className="border-brand text-brand hover:bg-brand/10 h-10 sm:h-8"
                         >
                           {a.is_super_admin ? "Demote" : "Make super admin"}
                         </Button>
@@ -231,7 +231,7 @@ export default function AdminsPage() {
                   </div>
 
                   {a.is_super_admin && (
-                    <div className="mt-4 border-t border-[#1a3a6e] pt-4">
+                    <div className="mt-4 border-t border-line pt-4">
                       <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Permissions</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {PERMISSIONS.map((p) => (
@@ -244,7 +244,7 @@ export default function AdminsPage() {
                               checked={current.includes(p.key)}
                               disabled={!isOwner}
                               onChange={() => toggle(a, p.key)}
-                              className="mt-0.5 h-5 w-5 accent-[#d4af37] shrink-0"
+                              className="mt-0.5 h-5 w-5 accent-brand shrink-0"
                             />
                             <span className="min-w-0">
                               <span className="block text-sm text-white">{p.label}</span>
@@ -258,7 +258,7 @@ export default function AdminsPage() {
                           <Button
                             disabled={!dirty || busyId === a.id}
                             onClick={() => patch(a.id, { permissions: current }, "Permissions saved")}
-                            className="bg-gold text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 h-11 sm:h-9 flex-1 sm:flex-none"
+                            className="bg-brand text-navy font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-60 h-11 sm:h-9 flex-1 sm:flex-none"
                           >
                             Save permissions
                           </Button>
@@ -266,7 +266,7 @@ export default function AdminsPage() {
                             <Button
                               variant="outline"
                               onClick={() => resetDraft(a.id)}
-                              className="h-11 sm:h-9 border-[#1a3a6e] text-muted-foreground"
+                              className="h-11 sm:h-9 border-line text-muted-foreground"
                             >
                               Reset
                             </Button>

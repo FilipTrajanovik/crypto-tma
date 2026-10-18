@@ -107,17 +107,17 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-navy px-5 pt-6 pb-24 max-w-md mx-auto">
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-gold-gradient mb-6">Profile</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-tight text-brand-gradient mb-6">Profile</h1>
 
       {!data ? (
         <Skeleton className="h-40 w-full rounded-2xl bg-card-navy mb-6" />
       ) : (
-        <Card className="bg-card-gradient border-[#1a3a6e] rounded-2xl p-5 mb-6">
+        <Card className="bg-card-gradient border-line rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <Avatar className="w-14 h-14 border border-[#1a3a6e] shadow-gold-glow">
+              <Avatar className="w-14 h-14 border border-line shadow-brand-glow">
                 <AvatarImage src={data.user.avatarUrl || undefined} alt={displayName} />
-                <AvatarFallback className="bg-gold-gradient text-navy font-display font-semibold text-xl">
+                <AvatarFallback className="bg-brand-gradient text-navy font-display font-semibold text-xl">
                   {displayName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -129,14 +129,14 @@ export default function ProfilePage() {
             {!editing && (
               <button
                 onClick={() => setEditing(true)}
-                className="text-gold-bright text-xs font-bold uppercase tracking-wide flex items-center gap-1 shrink-0"
+                className="text-brand-bright text-xs font-bold uppercase tracking-wide flex items-center gap-1 shrink-0"
               >
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </button>
             )}
           </div>
 
-          <Separator className="bg-[#1a3a6e] mb-4" />
+          <Separator className="bg-line mb-4" />
 
           {editing ? (
             <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -146,7 +146,7 @@ export default function ProfilePage() {
                   <Input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                    className="bg-navy border-line focus-visible:border-brand text-white"
                   />
                 </div>
                 <div>
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                   <Input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                    className="bg-navy border-line focus-visible:border-brand text-white"
                   />
                 </div>
               </div>
@@ -165,7 +165,7 @@ export default function ProfilePage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 555 123 4567"
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div>
@@ -175,7 +175,7 @@ export default function ProfilePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div>
@@ -184,14 +184,14 @@ export default function ProfilePage() {
                   value={homeAddress}
                   onChange={(e) => setHomeAddress(e.target.value)}
                   placeholder="Street, City, Country"
-                  className="bg-navy border-[#1a3a6e] focus-visible:border-gold text-white"
+                  className="bg-navy border-line focus-visible:border-brand text-white"
                 />
               </div>
               <div className="flex gap-2">
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 bg-gold-gradient text-navy font-bold uppercase tracking-wide shadow-gold-glow hover:brightness-105 disabled:opacity-60"
+                  className="flex-1 bg-brand-gradient text-navy font-bold uppercase tracking-wide shadow-brand-glow hover:brightness-105 disabled:opacity-60"
                 >
                   {saving ? "Saving..." : "Save"}
                 </Button>
@@ -206,7 +206,7 @@ export default function ProfilePage() {
                     setEmail(data.user.email || "");
                     setHomeAddress(data.user.homeAddress || "");
                   }}
-                  className="flex-1 border-[#1a3a6e] text-muted-foreground font-bold uppercase tracking-wide"
+                  className="flex-1 border-line text-muted-foreground font-bold uppercase tracking-wide"
                 >
                   Cancel
                 </Button>
@@ -233,15 +233,15 @@ export default function ProfilePage() {
 
       {data?.user.isAdmin && (
         <Link href="/admin/dashboard" className="block mb-4">
-          <Card className="bg-card-gradient-gold border-gold/40 hover:border-gold transition-colors rounded-xl px-5 py-4 flex items-center justify-between active:scale-[0.98]">
+          <Card className="bg-card-gradient-premium border-brand/40 hover:border-brand transition-colors rounded-xl px-5 py-4 flex items-center justify-between active:scale-[0.98]">
             <div className="flex items-center gap-3">
-              <ShieldCheck className="w-5 h-5 text-gold-bright" />
+              <ShieldCheck className="w-5 h-5 text-brand-bright" />
               <div>
-                <p className="font-bold text-gold-bright uppercase text-sm tracking-wide">Admin Panel</p>
+                <p className="font-bold text-brand-bright uppercase text-sm tracking-wide">Admin Panel</p>
                 <p className="text-xs text-muted-foreground">Manage users, withdrawals & release conditions</p>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gold-bright" />
+            <ChevronRight className="w-5 h-5 text-brand-bright" />
           </Card>
         </Link>
       )}
