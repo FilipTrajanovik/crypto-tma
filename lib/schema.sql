@@ -121,3 +121,18 @@ WHERE NOT EXISTS (SELECT 1 FROM release_conditions);
 INSERT INTO settings (support_contact)
 SELECT ''
 WHERE NOT EXISTS (SELECT 1 FROM settings);
+
+-- Audit trail of admin actions (also created on demand by lib/admin-log.ts).
+CREATE TABLE IF NOT EXISTS admin_logs (
+  id SERIAL PRIMARY KEY,
+  actor_user_id INTEGER,
+  actor_name TEXT NOT NULL,
+  actor_role TEXT NOT NULL, -- owner, super_admin, admin
+  action TEXT NOT NULL,
+  target_user_id INTEGER,
+  target_name TEXT,
+  details TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_logs_created_at ON admin_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_logs_actor ON admin_logs(actor_user_id);

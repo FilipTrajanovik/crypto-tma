@@ -140,6 +140,15 @@ export function can(identity: AdminIdentity, permission: PermissionKey): boolean
 }
 
 /**
+ * Who may add, remove and set permissions for admins and super-admins: the owner,
+ * or a super-admin holding every permission. A restricted super-admin cannot, so
+ * no one can hand out more access than they hold themselves.
+ */
+export function canManageAdmins(identity: AdminIdentity): boolean {
+  return identity.isOwner || (identity.isSuperAdmin && ALL_PERMISSIONS.every((p) => identity.permissions.includes(p)));
+}
+
+/**
  * Resolves who is making an admin request: the password-based owner login
  * (full visibility, can grant roles), a Telegram-authenticated user flagged
  * is_super_admin (full visibility, same as the owner but can't grant roles),

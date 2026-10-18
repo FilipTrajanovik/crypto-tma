@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity, can } from "@/lib/auth";
+import { getAdminIdentity, can, canManageAdmins } from "@/lib/auth";
+import { logAdminAction } from "@/lib/admin-log";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { computeDiscountedFee } from "@/lib/fee";
 
@@ -97,8 +98,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Only a super-admin can grant or revoke plain admin access...
   const adminChange = can(identity, "edit_users") ? makeAdmin : undefined;
-  // ...and only the password-based owner login can grant or revoke super-admin status.
-  const superAdminChange = identity.isOwner ? makeSuperAdmin : undefined;
+  // ...and only the owner or an unrestricted super-admin can grant or revoke super-admin status (never on themselves).
+  const superAdminChange = canManageAdmins(identity) && identity.userId !== userId ? makeSuperAdmin : undefined;
 
   // Only a super-admin can directly (re)assign or unassign a user's claiming admin.
   let assignedAdminChange: number | null | undefined = undefined;
@@ -165,6 +166,32 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       WHERE id = ${userId}
     `;
 
+    const logs: [string, string?][] = [];
+    if (firstName !== undefined || lastName !== undefined || phone !== undefined) logs.push(["Edited profile details"]);
+    if (isActive !== undefined) logs.push([isActive ? "Reactivated the account" : "Deactivated the account"]);
+    if (adminChange !== undefined) logs.push([adminChange ? "Added an admin" : "Removed an admin"]);
+    if (superAdminChange !== undefined) logs.push([superAdminChange ? "Made a super admin" : "Removed super admin access"]);
+    if (releasePaid !== undefined) logs.push([releasePaid ? "Marked release fee as paid" : "Marked release fee as unpaid"]);
+    if (supportContact !== undefined || btcAddress !== undefined || ethAddress !== undefined) logs.push(["Updated deposit addresses or support contact"]);
+    if (
+      releaseFeeTitle !== undefined ||
+      releaseFeeNote !== undefined ||
+      releaseFeeAmount !== undefined ||
+      releaseFeeCurrency !== undefined ||
+      releaseFeeDiscountType !== undefined ||
+      releaseFeeDiscountValue !== undefined
+    ) {
+      logs.push([
+        releaseFeeAmount === null ? "Cleared the release fee" : "Updated the release fee",
+        releaseFeeAmount ? `${releaseFeeAmount} ${releaseFeeCurrency || "USD"}` : undefined,
+      ]);
+    }
+    if (releaseDeadline !== undefined) {
+      logs.push([releaseDeadline === null ? "Cleared the release deadline" : "Set the release deadline", releaseDeadline ? new Date(releaseDeadline).toISOString() : undefined]);
+    }
+    if (assignedAdminChange !== undefined) logs.push([assignedAdminChange === null ? "Unassigned the client" : "Reassigned the client"]);
+    for (const [action, details] of logs) await logAdminAction(identity, action, { targetUserId: userId, details });
+
     if (isActive !== undefined) {
       notifications.push(isActive ? "Your account has been reactivated." : "Your account has been deactivated.");
     }
@@ -220,6 +247,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       INSERT INTO transactions (user_id, type, amount, currency, status, note)
       VALUES (${userId}, 'adjustment', 0, 'USD', 'completed', ${note || "Balance adjusted by admin"})
     `;
+    await logAdminAction(identity, "Updated balances", {
+      targetUserId: userId,
+      details: `BTC ${Number(existing[0]?.btc_amount ?? 0)} → ${newBtc}, ETH ${Number(existing[0]?.eth_amount ?? 0)} → ${newEth}, Gold ${Number(existing[0]?.gold_amount ?? 0)} → ${newGold}, Cash ${Number(existing[0]?.usd_cash ?? 0)} → ${newUsd}`,
+    });
 
     notifications.push(
       `Your balance was updated: ${newBtc} BTC, ${newEth} ETH, ${newGold} oz gold, $${newUsd} cash.${note ? ` Note: ${note}` : ""}`
@@ -265,6 +296,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  await logAdminAction(identity, "Deleted a client", { targetUserId: userId });
   await sql`UPDATE users SET assigned_admin_id = NULL WHERE assigned_admin_id = ${userId}`;
   await sql`DELETE FROM user_documents WHERE user_id = ${userId} OR uploaded_by_admin_id = ${userId}`;
   await sql`DELETE FROM transactions WHERE user_id = ${userId}`;

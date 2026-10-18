@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { getAdminIdentity, can, type AdminIdentity } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { resolveMimeType } from "@/lib/document-response";
+import { logAdminAction } from "@/lib/admin-log";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB
 
@@ -82,6 +83,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     INSERT INTO user_documents (user_id, uploaded_by_admin_id, file_name, mime_type, file_size, data)
     VALUES (${userId}, ${identity.userId}, ${fileName}, ${mimeType}, ${file.size}, ${base64})
   `;
+
+  await logAdminAction(identity, "Uploaded a document", { targetUserId: userId, details: fileName });
 
   const telegramId = check.target.telegram_id;
   if (telegramId && notify) {

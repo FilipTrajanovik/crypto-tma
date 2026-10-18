@@ -6,6 +6,7 @@ export const PERMISSIONS = [
   { key: "message_users", label: "Message users", hint: "Send Telegram messages to users" },
   { key: "manage_withdrawals", label: "Manage withdrawals", hint: "See and approve/reject all withdrawals" },
   { key: "manage_settings", label: "Manage settings", hint: "Support contact and deposit addresses" },
+  { key: "view_logs", label: "View activity log", hint: "See who did what across all admins" },
 ] as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[number]["key"];

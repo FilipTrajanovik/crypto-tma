@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminIdentity, can } from "@/lib/auth";
+import { logAdminAction } from "@/lib/admin-log";
 
 export async function GET() {
   const identity = await getAdminIdentity();
@@ -39,6 +40,8 @@ export async function PATCH(req: NextRequest) {
       WHERE id = ${existing[0].id}
     `;
   }
+
+  await logAdminAction(identity, "Updated platform settings");
 
   return NextResponse.json({ success: true });
 }

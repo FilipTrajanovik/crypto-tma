@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getAdminIdentity } from "@/lib/auth";
+import { getAdminIdentity, canManageAdmins } from "@/lib/auth";
+import { logAdminAction } from "@/lib/admin-log";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { ALL_PERMISSIONS, resolvePermissions } from "@/lib/permissions";
 
@@ -41,17 +42,17 @@ export async function GET() {
     permissions: a.is_super_admin ? resolvePermissions(a.permissions) : [],
   }));
 
-  return NextResponse.json({ admins, isOwner: identity.isOwner });
+  return NextResponse.json({ admins, isOwner: identity.isOwner, canManage: canManageAdmins(identity), selfId: identity.userId });
 }
 
 /**
- * Owner-only: promote/demote an admin to super-admin and set which
- * permissions a super-admin holds. Body: { userId, isSuperAdmin?, permissions? }.
+ * Owner or unrestricted super-admin: add or remove admins and super-admins and set which
+ * permissions a super-admin holds. Body: { userId, isAdmin?, isSuperAdmin?, permissions? }.
  */
 export async function PATCH(req: NextRequest) {
   const identity = await getAdminIdentity();
-  if (!identity.isOwner) {
-    return NextResponse.json({ error: "Only the owner can manage super-admins" }, { status: 403 });
+  if (!canManageAdmins(identity)) {
+    return NextResponse.json({ error: "Only the owner or an unrestricted super-admin can manage admins" }, { status: 403 });
   }
 
   const body = await req.json();
@@ -60,14 +61,31 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
   }
 
+  // Nobody changes their own role or permissions, so access can't be self-escalated or accidentally removed.
+  if (identity.userId !== null && userId === identity.userId) {
+    return NextResponse.json({ error: "You cannot change your own role or permissions" }, { status: 400 });
+  }
+
   const existing = await sql`SELECT id, telegram_id, is_admin, is_super_admin FROM users WHERE id = ${userId}`;
   if (existing.length === 0) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  // Promoting a regular user straight to super-admin is allowed; every other change needs an existing admin.
+  // Promoting a regular user straight to admin or super-admin is allowed; every other change needs an existing admin.
   const promoting = body.isSuperAdmin === true && !existing[0].is_super_admin;
-  if (!promoting && !(existing[0].is_admin || existing[0].is_super_admin)) {
+  const addingAdmin = body.isAdmin === true && !existing[0].is_admin && !existing[0].is_super_admin;
+  if (!promoting && !addingAdmin && !(existing[0].is_admin || existing[0].is_super_admin)) {
     return NextResponse.json({ error: "Not an admin" }, { status: 400 });
+  }
+
+  if (addingAdmin) {
+    await sql`UPDATE users SET is_admin = true WHERE id = ${userId}`;
+    if (existing[0].telegram_id) {
+      await sendTelegramMessage(existing[0].telegram_id, "You have been granted admin access to the wallet.");
+    }
+    await logAdminAction(identity, "Added an admin", { targetUserId: userId });
+  } else if (body.isAdmin === false && existing[0].is_admin && !existing[0].is_super_admin) {
+    await sql`UPDATE users SET is_admin = false WHERE id = ${userId}`;
+    await logAdminAction(identity, "Removed an admin", { targetUserId: userId });
   }
 
   if (promoting) {
@@ -91,9 +109,17 @@ export async function PATCH(req: NextRequest) {
     `;
   }
 
+  if (typeof body.isSuperAdmin === "boolean" && (promoting || (!body.isSuperAdmin && existing[0].is_super_admin))) {
+    await logAdminAction(identity, body.isSuperAdmin ? "Made a super admin" : "Removed super admin access", { targetUserId: userId });
+  }
+
   if (Array.isArray(body.permissions)) {
     const permissions = ALL_PERMISSIONS.filter((k) => body.permissions.includes(k));
     await sql`UPDATE users SET permissions = ${JSON.stringify(permissions)}::jsonb WHERE id = ${userId} AND is_super_admin = true`;
+    await logAdminAction(identity, "Changed super admin permissions", {
+      targetUserId: userId,
+      details: permissions.length ? permissions.join(", ") : "No extra permissions",
+    });
   }
 
   return NextResponse.json({ success: true });

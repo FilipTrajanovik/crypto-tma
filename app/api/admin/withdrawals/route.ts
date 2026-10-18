@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getAdminIdentity, can } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { logAdminAction } from "@/lib/admin-log";
 
 export async function GET(req: NextRequest) {
   const identity = await getAdminIdentity();
@@ -84,6 +85,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   await sql`UPDATE withdrawal_requests SET status = ${status}, admin_note = ${adminNote} WHERE id = ${id}`;
+  await logAdminAction(identity, status === "approved" ? "Approved a withdrawal" : "Rejected a withdrawal", {
+    targetUserId: withdrawal.user_id,
+    details: `${withdrawal.amount} ${withdrawal.currency}`,
+  });
 
   if (status === "approved") {
     const column =

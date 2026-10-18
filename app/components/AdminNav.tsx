@@ -12,16 +12,21 @@ const links = [
   { href: "/admin/settings", label: "Settings" },
 ];
 const adminsLink = { href: "/admin/admins", label: "Admins" };
+const logsLink = { href: "/admin/logs", label: "Activity" };
 
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [canViewLogs, setCanViewLogs] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/whoami")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setIsSuperAdmin(d?.isSuperAdmin === true))
+      .then((d) => {
+        setIsSuperAdmin(d?.isSuperAdmin === true);
+        setCanViewLogs(d?.isSuperAdmin === true && Array.isArray(d?.permissions) && d.permissions.includes("view_logs"));
+      })
       .catch(() => {});
   }, []);
 
@@ -51,7 +56,7 @@ export default function AdminNav() {
           </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto no-scrollbar -mx-1 px-1">
-          {(isSuperAdmin ? [...links, adminsLink] : links).map((link) => (
+          {[...links, ...(isSuperAdmin ? [adminsLink] : []), ...(canViewLogs ? [logsLink] : [])].map((link) => (
             <Link
               key={link.href}
               href={link.href}

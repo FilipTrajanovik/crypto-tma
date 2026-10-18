@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
 import { Check, Download, Eye, FileText, Image as ImageIcon, Loader2, Search, Trash2, Upload, X } from "lucide-react";
 
@@ -124,9 +123,9 @@ export default function AdminDocuments({ userId }: { userId: string }) {
   }, [docs, query]);
 
   return (
-    <Card className="bg-card-navy border-line rounded-2xl p-5 mb-6">
+    <div>
       <div className="flex items-start justify-between gap-3 mb-1">
-        <h2 className="font-bold uppercase tracking-wide text-brand">Documents</h2>
+        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">Documents</p>
         {docs && docs.length > 0 && (
           <p className="text-xs text-muted-foreground tabular-nums pt-1">
             {docs.length} {docs.length === 1 ? "file" : "files"} · {formatSize(totalSize)}
@@ -311,6 +310,6 @@ export default function AdminDocuments({ userId }: { userId: string }) {
           </ul>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
