@@ -208,14 +208,14 @@ export default function AuthPage() {
         <GlobeBackdrop className="absolute -top-4 left-1/2 -translate-x-1/2 w-[115%] max-w-[26rem] opacity-90" />
         <ShieldLogo size={64} />
         <div className="relative">
-          <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Q F S Wallet</h1>
-          <p className="text-xs text-brand tracking-widest uppercase">Secure • Private • Trusted</p>
+          <h1 className="text-3xl font-bold tracking-[0.2em] text-white mb-2">QFS Wallet</h1>
+          <p className="text-[13px] text-brand tracking-[0.12em]">Secure · Private · Trusted</p>
         </div>
         <Separator className="bg-brand/30 w-24 relative" />
         <div className="relative">
           <Bell className="w-8 h-8 text-brand mx-auto mb-3" />
-          <h2 className="text-lg font-bold uppercase tracking-wide text-white mb-1">Turn On Notifications</h2>
-          <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+          <h2 className="text-lg font-semibold text-white mb-2">Turn On Notifications</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
             You must allow the bot to message you before you can use the wallet — this is how we send you
             balance updates, withdrawal status, and important account alerts.
           </p>
@@ -225,11 +225,11 @@ export default function AuthPage() {
         <Button
           onClick={handleRequestNotifications}
           disabled={requestingNotifications}
-          className="relative w-full max-w-xs h-16 rounded-2xl bg-brand text-navy font-bold uppercase tracking-wide text-base shadow-[0_0_0_4px_rgba(22,139,255,0.25)] hover:brightness-95 hover:shadow-[0_0_0_6px_rgba(22,139,255,0.35)] active:scale-95 disabled:opacity-60 animate-pulse transition-all"
+          className="relative w-full max-w-xs h-14 rounded-2xl bg-brand text-navy font-semibold text-base shadow-[0_0_0_3px_rgba(22,139,255,0.2)] hover:brightness-95 active:scale-95 disabled:opacity-60 transition-all"
         >
           {requestingNotifications ? "Waiting for confirmation..." : "Allow Notifications"}
         </Button>
-        <p className="text-xs text-muted-foreground max-w-xs relative">Tap the button above and choose &quot;Allow&quot;.</p>
+        <p className="text-[13px] text-muted-foreground max-w-xs relative">Tap the button above and choose &quot;Allow&quot;.</p>
         {notificationsDeclinedOnce && (
           <div className="relative max-w-xs bg-card-navy border border-line rounded-xl p-4 mt-2">
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -257,14 +257,14 @@ export default function AuthPage() {
         <GlobeBackdrop className="absolute -top-4 left-1/2 -translate-x-1/2 w-[115%] max-w-[26rem] opacity-90" />
       <ShieldLogo size={64} />
       <div className="relative">
-        <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-1">Q F S Wallet</h1>
-        <p className="text-xs text-brand tracking-widest uppercase">Secure • Private • Trusted</p>
+        <h1 className="text-3xl font-bold tracking-[0.2em] text-white mb-2">QFS Wallet</h1>
+        <p className="text-[13px] text-brand tracking-[0.12em]">Secure · Private · Trusted</p>
       </div>
       <Separator className="bg-brand/30 w-24 relative" />
       <div className="relative">
         <ShieldCheck className="w-8 h-8 text-brand mx-auto mb-3" />
-        <h2 className="text-lg font-bold uppercase tracking-wide text-white mb-1">Connect Your Phone</h2>
-        <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+        <h2 className="text-lg font-semibold text-white mb-2">Connect Your Phone</h2>
+        <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
           We need your phone number to secure your account and enable withdrawals.
         </p>
       </div>
@@ -273,12 +273,12 @@ export default function AuthPage() {
       <Button
         onClick={handleRequestContact}
         disabled={requestingPhone}
-        className="relative w-full max-w-xs h-16 rounded-2xl bg-brand text-navy font-bold uppercase tracking-wide text-base shadow-[0_0_0_4px_rgba(22,139,255,0.25)] hover:brightness-95 hover:shadow-[0_0_0_6px_rgba(22,139,255,0.35)] active:scale-95 disabled:opacity-60 animate-pulse transition-all"
+        className="relative w-full max-w-xs h-14 rounded-2xl bg-brand text-navy font-semibold text-base shadow-[0_0_0_3px_rgba(22,139,255,0.2)] hover:brightness-95 active:scale-95 disabled:opacity-60 transition-all"
       >
         <Smartphone className="w-5 h-5 mr-2" />
         {requestingPhone ? "Waiting for confirmation..." : "Tap to Share Phone Number"}
       </Button>
-      <p className="text-xs text-muted-foreground max-w-xs relative">Tap the button above and choose &quot;Share my phone number&quot;.</p>
+      <p className="text-[13px] text-muted-foreground max-w-xs relative">Tap the button above and choose &quot;Share my phone number&quot;.</p>
     </div>
   );
 }

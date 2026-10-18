@@ -75,8 +75,8 @@ const toVec = (lon: number, lat: number): V3 => [
 
 function buildLand(): V3[] {
   const dots: V3[] = [];
-  for (let lat = -80; lat <= 84; lat += 2.6) {
-    const step = 2.6 / Math.max(Math.cos(lat * RAD), 0.2);
+  for (let lat = -80; lat <= 84; lat += 2.0) {
+    const step = 2.0 / Math.max(Math.cos(lat * RAD), 0.2);
     for (let lon = -180; lon < 180; lon += step) {
       if (LAND.some((p) => inPoly(lon, lat, p))) dots.push(toVec(lon, lat));
     }
@@ -142,7 +142,7 @@ export default function GlobeBackdrop({ className = "" }: { className?: string }
 
     const draw = (time: number) => {
       const t = time / 1000;
-      const theta = -0.3 - t * 0.055;
+      const theta = -0.3 - t * 0.09;
       ctx.clearRect(0, 0, SIZE, SIZE);
 
       // atmosphere
@@ -208,10 +208,12 @@ export default function GlobeBackdrop({ className = "" }: { className?: string }
         const p = view(v, theta);
         if (p[2] <= 0.02) continue;
         const [x, y] = px(p);
-        const a = 0.25 + 0.65 * p[2];
-        ctx.fillStyle = `rgba(120,200,255,${a})`;
+        // light from the upper left: lit side bright, far limb falls into shadow
+        const lit = Math.max(0, (-p[0] * 0.45 + p[1] * 0.4 + p[2] * 0.8) / 1.1);
+        const a = 0.18 + 0.82 * Math.pow(lit, 0.8);
+        ctx.fillStyle = `rgba(${130 + lit * 90},${200 + lit * 40},255,${a})`;
         ctx.beginPath();
-        ctx.arc(x, y, 0.9 + p[2] * 0.7, 0, Math.PI * 2);
+        ctx.arc(x, y, 0.8 + p[2] * 0.55, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -226,6 +228,15 @@ export default function GlobeBackdrop({ className = "" }: { className?: string }
       ctx.strokeStyle = "rgba(92,179,255,0.55)";
       ctx.lineWidth = 1;
       ctx.stroke();
+
+      // soft specular highlight
+      const spec = ctx.createRadialGradient(CX - R * 0.42, CY - R * 0.46, 0, CX - R * 0.42, CY - R * 0.46, R * 0.7);
+      spec.addColorStop(0, "rgba(160,215,255,0.16)");
+      spec.addColorStop(1, "rgba(160,215,255,0)");
+      ctx.beginPath();
+      ctx.arc(CX, CY, R, 0, Math.PI * 2);
+      ctx.fillStyle = spec;
+      ctx.fill();
 
       // light trails between fixed city markers
       LINKS.forEach(([ai, bi], i) => {

@@ -35,7 +35,7 @@ export default function BottomNav() {
                 strokeWidth={2}
               />
               <span
-                className={`text-[11px] font-medium uppercase tracking-wider transition-colors duration-200 ${
+                className={`text-xs font-medium tracking-wide transition-colors duration-200 ${
                   active ? "text-brand-bright" : "text-muted-foreground"
                 }`}
               >

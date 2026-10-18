@@ -19,8 +19,8 @@ const usd = (v: number) => v.toLocaleString("en-US", { style: "currency", curren
 const qty = (v: number, d: number) => v.toLocaleString("en-US", { maximumFractionDigits: d });
 
 function Sparkline({ points, up }: { points: [number, number][]; up: boolean }) {
-  const W = 84;
-  const H = 28;
+  const W = 96;
+  const H = 34;
   const pad = 2;
   const ys = points.map((p) => p[1]);
   const min = Math.min(...ys);
@@ -73,27 +73,27 @@ function TickerItem({ item }: { item: Item }) {
   const up = (item.changePct ?? 0) >= 0;
   const gold = item.key === "gold";
   return (
-    <div className="flex items-center gap-3 px-4 shrink-0 border-r border-line/60 h-[58px]">
+    <div className="flex items-center gap-3 px-5 shrink-0 border-r border-line/60 h-[76px]">
       <span
-        className={`graphite-chip flex items-center justify-center w-8 h-8 rounded-full shrink-0 text-sm font-semibold ${
+        className={`graphite-chip flex items-center justify-center w-9 h-9 rounded-full shrink-0 text-base font-semibold ${
           gold ? "!text-premium" : ""
         }`}
       >
         {item.symbol}
       </span>
-      <div className="min-w-[96px]">
+      <div className="min-w-[120px]">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-xs font-semibold tracking-wider text-foreground">{item.ticker}</span>
-          <span className="text-[10px] text-muted-foreground">{item.name}</span>
+          <span className="text-[13px] font-semibold text-foreground">{item.ticker}</span>
+          <span className="text-xs text-muted-foreground">{item.name}</span>
         </div>
-        <p className="text-sm font-semibold tabular-nums text-foreground leading-tight">{item.value}</p>
-        <p className="text-[10px] text-muted-foreground tabular-nums leading-tight">{item.holding}</p>
+        <p className="text-[15px] font-semibold tabular-nums text-foreground leading-snug">{item.value}</p>
+        <p className="text-xs text-muted-foreground tabular-nums leading-tight">{item.holding}</p>
       </div>
       {item.isBalance ? null : (
-        <div className="flex flex-col items-end gap-0.5">
-          {item.history ? <Sparkline points={item.history.points} up={up} /> : <span className="h-7 w-[84px]" aria-hidden="true" />}
+        <div className="flex flex-col items-end gap-1">
+          {item.history ? <Sparkline points={item.history.points} up={up} /> : <span className="h-[34px] w-[96px]" aria-hidden="true" />}
           <span
-            className={`inline-flex items-center gap-0.5 text-[10px] font-semibold tabular-nums ${
+            className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${
               item.changePct === null ? "text-muted-foreground" : up ? "text-verified-bright" : "text-patriot-red-bright"
             }`}
           >
@@ -101,7 +101,7 @@ function TickerItem({ item }: { item: Item }) {
               "24h —"
             ) : (
               <>
-                {up ? <ArrowUp className="w-2.5 h-2.5" aria-hidden="true" /> : <ArrowDown className="w-2.5 h-2.5" aria-hidden="true" />}
+                {up ? <ArrowUp className="w-3 h-3" aria-hidden="true" /> : <ArrowDown className="w-3 h-3" aria-hidden="true" />}
                 {Math.abs(item.changePct).toFixed(2)}% <span className="text-muted-foreground font-normal">24h</span>
               </>
             )}
@@ -280,7 +280,7 @@ export default function MarketTicker({ balance, prices }: { balance: Balance; pr
             </div>
           ))}
       </div>
-      <p className="px-5 pt-1.5 text-[10px] text-muted-foreground text-center">
+      <p className="px-5 pt-2 text-xs text-muted-foreground text-center">
         {updated
           ? `24h charts · CoinGecko · updated ${updated}`
           : history && !history.available

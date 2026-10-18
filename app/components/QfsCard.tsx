@@ -9,7 +9,7 @@ export default function QfsCard({ holderName }: { holderName: string }) {
       className="graphite-surface group relative w-full aspect-[1.586/1] rounded-[20px] overflow-hidden transition-transform duration-300 hover:-translate-y-0.5 active:scale-[0.99] select-none"
     >
       {/* low-opacity globe, reused from the app's decorative globe */}
-      <GlobeBackdrop className="absolute -right-[22%] -bottom-[48%] w-[88%] opacity-30" />
+      <GlobeBackdrop className="absolute -right-[22%] -bottom-[48%] w-[88%] opacity-45" />
 
       {/* soft reflection */}
       <div
@@ -34,27 +34,36 @@ export default function QfsCard({ holderName }: { holderName: string }) {
           </svg>
         </div>
 
-        <svg width="38" height="30" viewBox="0 0 38 30" aria-hidden="true" className="opacity-85">
+        <svg width="42" height="32" viewBox="0 0 42 32" aria-hidden="true">
           <defs>
             <linearGradient id="chip-g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#fbe2a6" />
-              <stop offset="0.55" stopColor="#f5c76b" />
+              <stop offset="0" stopColor="#fdeab8" />
+              <stop offset="0.5" stopColor="#f5c76b" />
               <stop offset="1" stopColor="#b8893a" />
             </linearGradient>
+            <linearGradient id="chip-shine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#fff" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#fff" stopOpacity="0.35" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
           </defs>
-          <rect x="0.5" y="0.5" width="37" height="29" rx="6" fill="url(#chip-g)" />
-          <g stroke="#7a5a1f" strokeOpacity="0.55" strokeWidth="0.8" fill="none">
-            <path d="M0.5 10h37M0.5 20h37M13 0.5v29M25 0.5v29" />
-            <rect x="13" y="10" width="12" height="10" rx="2" />
+          <rect x="0.5" y="0.5" width="41" height="31" rx="7" fill="url(#chip-g)" />
+          <g stroke="#6b4c16" strokeOpacity="0.6" strokeWidth="0.9" fill="none" strokeLinecap="round">
+            <path d="M0.5 11h9.5q4 0 4 5t-4 5H0.5" />
+            <path d="M41.5 11H32q-4 0-4 5t4 5h9.5" />
+            <path d="M14 0.5v8M28 0.5v8M14 23.5v8M28 23.5v8" />
+            <path d="M14 8.5h14M14 23.5h14" />
+            <rect x="14" y="8.5" width="14" height="15" rx="3" fill="#f9dc94" fillOpacity="0.55" />
           </g>
+          <rect x="0.5" y="0.5" width="41" height="31" rx="7" fill="url(#chip-shine)" />
         </svg>
 
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mb-0.5">Account holder</p>
-            <p className="text-sm font-medium tracking-wide text-foreground truncate">{holderName}</p>
+            <p className="text-xs text-muted-foreground mb-0.5">Account holder</p>
+            <p className="text-[15px] font-medium tracking-wide text-foreground truncate">{holderName}</p>
           </div>
-          <p className="shrink-0 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#b8cbe6]">Virtual Wallet</p>
+          <p className="shrink-0 text-xs font-medium tracking-[0.08em] text-[#b8cbe6]">Virtual Wallet</p>
         </div>
       </div>
     </div>

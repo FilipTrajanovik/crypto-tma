@@ -10,7 +10,8 @@ import MarketTicker from "@/app/components/MarketTicker";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Landmark, Send, ShieldCheck, Unlock, ArrowUp, ArrowDown, FileText, MessageCircle, Timer } from "lucide-react";
+import { ArrowUp, ArrowDown, MessageCircle, Timer } from "lucide-react";
+import { DepositIcon, WithdrawIcon, AuthorizedIcon, ReleaseIcon, DocumentsIcon } from "@/app/components/ActionIcons";
 
 type BalanceData = {
   user: {
@@ -43,11 +44,11 @@ function formatCountdown(msRemaining: number) {
 }
 
 const actions = [
-  { href: "/wallet/deposit", label: "Deposit", icon: Landmark, variant: "brand" as const },
-  { href: "/wallet/withdraw", label: "Withdraw", icon: Send, variant: "brand" as const },
-  { href: "/wallet/authorized", label: "Authorized Persons", icon: ShieldCheck, variant: "brand" as const },
-  { href: "/wallet/release", label: "Release Funds", icon: Unlock, variant: "red" as const },
-  { href: "/wallet/documents", label: "Documents", icon: FileText, variant: "outline" as const },
+  { href: "/wallet/deposit", label: "Deposit", icon: DepositIcon, variant: "brand" as const },
+  { href: "/wallet/withdraw", label: "Withdraw", icon: WithdrawIcon, variant: "brand" as const },
+  { href: "/wallet/authorized", label: "Authorized Persons", icon: AuthorizedIcon, variant: "brand" as const },
+  { href: "/wallet/release", label: "Release Funds", icon: ReleaseIcon, variant: "red" as const },
+  { href: "/wallet/documents", label: "Documents", icon: DocumentsIcon, variant: "outline" as const },
 ];
 
 export default function WalletPage() {
@@ -153,7 +154,7 @@ export default function WalletPage() {
               <ShieldLogo size={30} />
               <div>
                 <h1 className="text-lg leading-none font-bold tracking-[0.28em] text-premium-gradient">QFS</h1>
-                <p className="mt-1 text-[9px] leading-none tracking-[0.2em] uppercase text-muted-foreground">
+                <p className="mt-1 text-[11px] leading-none tracking-[0.12em] text-muted-foreground">
                   Secure · Private · Trusted
                 </p>
               </div>
@@ -167,13 +168,13 @@ export default function WalletPage() {
           </div>
         </header>
 
-        <section className="px-5 mb-4 flex items-center divide-x divide-line/80 text-xs" aria-label="Market prices">
+        <section className="px-5 mb-5 flex items-center divide-x divide-line/80 text-[13px]" aria-label="Market prices">
           {[
             { code: "BTC", price: prices.btc, up: prices.btcChange24h >= 0 },
             { code: "ETH", price: prices.eth, up: prices.ethChange24h >= 0 },
           ].map((p) => (
             <div key={p.code} className="flex-1 flex items-center justify-center gap-2 first:pr-3 last:pl-3">
-              <span className="text-muted-foreground tracking-wider">{p.code}</span>
+              <span className="text-muted-foreground font-medium">{p.code}</span>
               <span className="flex items-center gap-1 font-semibold tabular-nums text-foreground">
                 {formatUsd(p.price)}
                 {p.up ? (
@@ -186,24 +187,24 @@ export default function WalletPage() {
           ))}
         </section>
 
-        <section className="px-5 mb-5">
+        <section className="px-5 mb-4">
           <QfsCard holderName={displayName} />
         </section>
 
         {user.releaseDeadline && !user.releasePaid && (
-          <section className="px-5 mb-5">
+          <section className="px-5 mb-6">
             <Link
               href="/wallet/release"
-              className={`block rounded-xl px-4 py-3 text-center ${isExpired ? "bg-patriot-red/10" : "bg-brand/10"}`}
+              className={`flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 ${isExpired ? "bg-patriot-red/10" : "bg-brand/10"}`}
             >
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Timer className={`w-4 h-4 ${isExpired ? "text-patriot-red-bright" : "text-brand-bright"}`} />
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                  {isExpired ? "Time Expired" : "Time Remaining To Release Funds"}
+              <div className="flex items-center gap-2 min-w-0">
+                <Timer className={`w-4 h-4 shrink-0 ${isExpired ? "text-patriot-red-bright" : "text-brand-bright"}`} />
+                <p className="text-[13px] leading-tight text-muted-foreground">
+                  {isExpired ? "Release window expired" : "Release funds within"}
                 </p>
               </div>
               <p
-                className={`text-2xl font-mono font-semibold tabular-nums ${
+                className={`text-base font-mono font-semibold tabular-nums shrink-0 ${
                   isExpired ? "text-red-gradient" : "text-brand-gradient"
                 }`}
               >
@@ -213,9 +214,9 @@ export default function WalletPage() {
           </section>
         )}
 
-        <section className="px-5 mb-6">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Total Portfolio Value</p>
-          <p className="mt-1 mb-3 font-display text-[36px] leading-tight font-semibold tabular-nums text-premium-gradient-glow break-words">
+        <section className="px-5 mb-7">
+          <p className="text-[13px] text-muted-foreground font-medium">Total portfolio value</p>
+          <p className="mt-1.5 mb-5 font-display text-[40px] leading-none font-semibold tabular-nums text-premium-gradient-glow break-words">
             {formatUsd(balance.totalValue)}
           </p>
           <div className="-mx-5">
@@ -223,7 +224,7 @@ export default function WalletPage() {
           </div>
         </section>
 
-        <section className="px-5 mb-7 flex flex-col gap-5">
+        <section className="px-5 mb-8 flex flex-col gap-5">
           {[actions.slice(0, 3), actions.slice(3)].map((row, r) => (
             <div key={r} className={`grid gap-2 ${r === 0 ? "grid-cols-3" : "grid-cols-2 w-2/3 mx-auto"}`}>
               {row.map(({ href, label, icon: Icon, variant }, j) => {
@@ -236,18 +237,17 @@ export default function WalletPage() {
                     className="anim-rise group flex flex-col items-center gap-2 text-center active:scale-95 transition-transform"
                   >
                     <span
-                      className={`flex items-center justify-center w-16 h-16 rounded-full transition-all duration-200 group-hover:brightness-110 ${
+                      className={`flex items-center justify-center w-[52px] h-[52px] rounded-full transition-all duration-200 group-hover:brightness-110 ${
                         variant === "red"
                           ? "bg-patriot-red/15 ring-1 ring-patriot-red/40"
                           : "bg-brand-gradient shadow-brand-glow"
                       }`}
                     >
                       <Icon
-                        className={`w-6 h-6 ${variant === "red" ? "text-patriot-red-bright" : "text-navy"}`}
-                        strokeWidth={2}
+                        className={`w-[26px] h-[26px] ${variant === "red" ? "text-patriot-red-bright" : "text-navy"}`}
                       />
                     </span>
-                    <span className="text-xs font-medium leading-tight text-foreground">{label}</span>
+                    <span className="text-[13px] font-medium leading-tight text-foreground">{label}</span>
                   </Link>
                 );
               })}

@@ -136,7 +136,7 @@ export default function WithdrawPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Currency</Label>
+              <Label className="text-[13px] text-muted-foreground mb-1.5 block">Currency</Label>
               <div className="grid grid-cols-4 gap-2">
                 {CURRENCIES.map((c) => (
                   <button
@@ -144,7 +144,7 @@ export default function WithdrawPage() {
                     type="button"
                     disabled={!releasePaid}
                     onClick={() => handleCurrencyChange(c.value)}
-                    className={`h-9 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                    className={`h-10 rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-50 ${
                       currency === c.value ? "bg-brand text-navy" : "bg-navy border border-line text-muted-foreground"
                     }`}
                   >
@@ -156,8 +156,8 @@ export default function WithdrawPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <Label className="text-xs text-muted-foreground block">Amount ({currency})</Label>
-                <span className="text-xs text-muted-foreground">
+                <Label className="text-[13px] text-muted-foreground block">Amount ({currency})</Label>
+                <span className="text-[13px] text-muted-foreground tabular-nums">
                   Available: {available.toLocaleString(undefined, { maximumFractionDigits: meta.decimals })} {currency}
                 </span>
               </div>
@@ -195,7 +195,7 @@ export default function WithdrawPage() {
                     type="button"
                     disabled={!releasePaid || available <= 0}
                     onClick={() => applyPercent(p)}
-                    className={`h-8 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                    className={`h-9 rounded-lg text-[13px] font-semibold tabular-nums transition-colors disabled:opacity-50 ${
                       percent === p ? "bg-brand text-navy" : "bg-navy border border-line text-muted-foreground"
                     }`}
                   >
@@ -208,7 +208,7 @@ export default function WithdrawPage() {
             <Button
               type="submit"
               disabled={submitting || !releasePaid}
-              className="w-full bg-patriot-red text-white font-bold uppercase tracking-wide hover:brightness-95 disabled:opacity-50"
+              className="w-full h-12 text-base bg-patriot-red text-white font-semibold hover:brightness-95 disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Submit Request"}
             </Button>
@@ -216,7 +216,7 @@ export default function WithdrawPage() {
         </Card>
       )}
 
-      <h2 className="text-sm font-bold uppercase tracking-widest text-brand border-b border-brand/30 pb-2 mb-4">
+      <h2 className="text-sm font-semibold text-brand border-b border-brand/30 pb-2 mb-4">
         Your Requests
       </h2>
 
@@ -239,7 +239,7 @@ export default function WithdrawPage() {
               {withdrawals.map((w) => (
                 <TableRow key={w.id} className="border-line">
                   <TableCell className="text-xs text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-white font-medium">
+                  <TableCell className="text-white font-medium tabular-nums">
                     {w.currency === "USD" ? `$${Number(w.amount).toFixed(2)}` : `${Number(w.amount)} ${w.currency}`}
                   </TableCell>
                   <TableCell>
