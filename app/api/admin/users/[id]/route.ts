@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     SELECT id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, release_paid,
            assigned_admin_id, support_contact, btc_address, eth_address,
            release_fee_title, release_fee_note, release_fee_amount, release_fee_currency,
-           release_fee_discount_type, release_fee_discount_value, release_deadline, created_at
+           release_fee_discount_type, release_fee_discount_value, release_payment_link, release_deadline, created_at
     FROM users WHERE id = ${userId}
   `;
   if (userRows.length === 0) {
@@ -88,6 +88,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeCurrency,
     releaseFeeDiscountType,
     releaseFeeDiscountValue,
+    releasePaymentLink,
     releaseDeadline,
     btcAmount,
     ethAmount,
@@ -115,6 +116,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
+  if (releasePaymentLink !== undefined && releasePaymentLink !== null) {
+    let valid = false;
+    try {
+      const u = new URL(String(releasePaymentLink));
+      valid = u.protocol === "https:" || u.protocol === "http:";
+    } catch {}
+    if (!valid) {
+      return NextResponse.json({ error: "Payment link must be a valid http(s) URL" }, { status: 400 });
+    }
+  }
+
   const notifications: string[] = [];
 
   if (
@@ -134,6 +146,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     releaseFeeCurrency !== undefined ||
     releaseFeeDiscountType !== undefined ||
     releaseFeeDiscountValue !== undefined ||
+    releasePaymentLink !== undefined ||
     releaseDeadline !== undefined ||
     assignedAdminChange !== undefined
   ) {
@@ -161,6 +174,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         release_fee_currency = CASE WHEN ${releaseFeeCurrency !== undefined} THEN ${releaseFeeCurrency ?? null} ELSE release_fee_currency END,
         release_fee_discount_type = CASE WHEN ${releaseFeeDiscountType !== undefined} THEN ${releaseFeeDiscountType ?? null} ELSE release_fee_discount_type END,
         release_fee_discount_value = CASE WHEN ${releaseFeeDiscountValue !== undefined} THEN ${releaseFeeDiscountValue ?? null} ELSE release_fee_discount_value END,
+        release_payment_link = CASE WHEN ${releasePaymentLink !== undefined} THEN ${releasePaymentLink ?? null} ELSE release_payment_link END,
         release_deadline = CASE WHEN ${releaseDeadline !== undefined} THEN ${releaseDeadline ?? null} ELSE release_deadline END,
         assigned_admin_id = CASE WHEN ${assignedAdminChange !== undefined} THEN ${assignedAdminChange ?? null} ELSE assigned_admin_id END
       WHERE id = ${userId}
@@ -185,6 +199,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         releaseFeeAmount === null ? "Cleared the release fee" : "Updated the release fee",
         releaseFeeAmount ? `${releaseFeeAmount} ${releaseFeeCurrency || "USD"}` : undefined,
       ]);
+    }
+    if (releasePaymentLink !== undefined) {
+      logs.push([releasePaymentLink === null ? "Removed the release payment link" : "Set the release payment link", releasePaymentLink ?? undefined]);
     }
     if (releaseDeadline !== undefined) {
       logs.push([releaseDeadline === null ? "Cleared the release deadline" : "Set the release deadline", releaseDeadline ? new Date(releaseDeadline).toISOString() : undefined]);

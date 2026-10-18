@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lock, MessageCircle, CheckCircle2, Timer, Tag } from "lucide-react";
+import { Lock, MessageCircle, CheckCircle2, Timer, Tag, CreditCard } from "lucide-react";
 
 type Fee = {
   title: string;
@@ -35,6 +35,7 @@ export default function ReleasePage() {
   const [releasePaid, setReleasePaid] = useState(false);
   const [releaseDeadline, setReleaseDeadline] = useState<string | null>(null);
   const [supportContact, setSupportContact] = useState<string | null>(null);
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
 
@@ -47,6 +48,7 @@ export default function ReleasePage() {
           setReleasePaid(data.releasePaid === true);
           setReleaseDeadline(data.releaseDeadline || null);
           setSupportContact(data.supportContact || null);
+          setPaymentLink(data.paymentLink || null);
         })
         .finally(() => {
           if (!silent) setLoading(false);
@@ -65,6 +67,16 @@ export default function ReleasePage() {
 
   const msRemaining = releaseDeadline ? new Date(releaseDeadline).getTime() - now : null;
   const isExpired = msRemaining !== null && msRemaining <= 0;
+
+  const handlePayFee = () => {
+    if (!paymentLink) return;
+    const tg = (window as unknown as { Telegram?: { WebApp?: { openLink?: (url: string) => void } } }).Telegram;
+    if (tg?.WebApp?.openLink) {
+      tg.WebApp.openLink(paymentLink);
+    } else {
+      window.open(paymentLink, "_blank");
+    }
+  };
 
   const handleContactSupport = () => {
     if (!supportContact) return;
@@ -168,6 +180,16 @@ export default function ReleasePage() {
             )}
           </Card>
         </div>
+      )}
+
+      {paymentLink && !releasePaid && (
+        <Button
+          onClick={handlePayFee}
+          className="w-full bg-brand-gradient text-navy font-bold uppercase tracking-wide shadow-brand-glow hover:brightness-105 mb-3"
+        >
+          <CreditCard className="w-4 h-4 mr-2" />
+          Pay Fee
+        </Button>
       )}
 
       <Button

@@ -13,7 +13,7 @@ export async function GET() {
   const [userRows, supportContact] = await Promise.all([
     sql`
       SELECT release_fee_title, release_fee_note, release_fee_amount, release_fee_currency,
-             release_fee_discount_type, release_fee_discount_value, release_paid, release_deadline
+             release_fee_discount_type, release_fee_discount_value, release_paid, release_deadline, release_payment_link
       FROM users WHERE id = ${session.userId}
     `,
     getSupportContactForUser(session.userId),
@@ -45,6 +45,7 @@ export async function GET() {
     fee,
     releasePaid: user?.release_paid === true,
     releaseDeadline: user?.release_deadline ?? null,
+    paymentLink: user?.release_payment_link || null,
     supportContact,
   });
 }

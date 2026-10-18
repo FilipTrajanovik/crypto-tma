@@ -35,6 +35,7 @@ type UserDetail = {
     release_fee_currency: string | null;
     release_fee_discount_type: "percent" | "fixed" | null;
     release_fee_discount_value: string | null;
+    release_payment_link: string | null;
     release_deadline: string | null;
     created_at: string;
   };
@@ -106,6 +107,7 @@ export default function AdminUserDetailPage() {
   const [releaseFeeCurrency, setReleaseFeeCurrency] = useState("USD");
   const [releaseFeeDiscountType, setReleaseFeeDiscountType] = useState<"percent" | "fixed" | "">("");
   const [releaseFeeDiscountValue, setReleaseFeeDiscountValue] = useState("");
+  const [releasePaymentLink, setReleasePaymentLink] = useState("");
   const [releaseDeadline, setReleaseDeadline] = useState("");
   const [messageText, setMessageText] = useState("");
   const [usdQuickSet, setUsdQuickSet] = useState("");
@@ -162,6 +164,7 @@ export default function AdminUserDetailPage() {
       setReleaseFeeCurrency(json.user.release_fee_currency || "USD");
       setReleaseFeeDiscountType(json.user.release_fee_discount_type || "");
       setReleaseFeeDiscountValue(json.user.release_fee_discount_value ?? "");
+      setReleasePaymentLink(json.user.release_payment_link || "");
       setReleaseDeadline(json.user.release_deadline ? toDatetimeLocal(json.user.release_deadline) : "");
     }
   }, [id, router]);
@@ -277,7 +280,7 @@ export default function AdminUserDetailPage() {
   const handleSaveReleaseFee = async () => {
     setSaving(true);
     try {
-      await fetch(`/api/admin/users/${id}`, {
+      const res = await fetch(`/api/admin/users/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -287,8 +290,14 @@ export default function AdminUserDetailPage() {
           releaseFeeCurrency: releaseFeeCurrency || null,
           releaseFeeDiscountType: releaseFeeDiscountType || null,
           releaseFeeDiscountValue: releaseFeeDiscountValue === "" ? null : Number(releaseFeeDiscountValue),
+          releasePaymentLink: releasePaymentLink.trim() || null,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.add({ title: err.error || "Could not save", type: "error" });
+        return;
+      }
       toast.add({ title: "Release fee saved", type: "success" });
       load();
     } finally {
@@ -309,6 +318,7 @@ export default function AdminUserDetailPage() {
           releaseFeeCurrency: null,
           releaseFeeDiscountType: null,
           releaseFeeDiscountValue: null,
+          releasePaymentLink: null,
         }),
       });
       setReleaseFeeTitle("");
@@ -317,6 +327,7 @@ export default function AdminUserDetailPage() {
       setReleaseFeeCurrency("USD");
       setReleaseFeeDiscountType("");
       setReleaseFeeDiscountValue("");
+      setReleasePaymentLink("");
       toast.add({ title: "Release fee cleared", type: "success" });
       load();
     } finally {
@@ -663,6 +674,10 @@ export default function AdminUserDetailPage() {
                     placeholder={releaseFeeDiscountType === "percent" ? "e.g. 20" : "e.g. 10"}
                     className={fieldClass}
                   />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="r-link" className={labelClass}>Payment link (optional)</Label>
+                  <Input id="r-link" type="url" value={releasePaymentLink} onChange={(e) => setReleasePaymentLink(e.target.value)} placeholder="https://… — a Pay Fee button shows only when set" className={fieldClass} />
                 </div>
               </div>
               <div className="flex items-center gap-5 mt-6">
