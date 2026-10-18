@@ -63,7 +63,6 @@ export default function QfsCard({ holderName }: { holderName: string }) {
             <p className="text-xs text-muted-foreground mb-0.5">Account holder</p>
             <p className="text-[15px] font-medium tracking-wide text-foreground truncate">{holderName}</p>
           </div>
-          <p className="shrink-0 text-xs font-medium tracking-[0.08em] text-[#b8cbe6]">Virtual Wallet</p>
         </div>
       </div>
     </div>
