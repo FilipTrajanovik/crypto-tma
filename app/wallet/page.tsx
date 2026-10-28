@@ -27,6 +27,7 @@ type BalanceData = {
   balance: { btc: number; eth: number; gold: number; usdCash: number; btcValue: number; ethValue: number; goldValue: number; totalValue: number };
   prices: { btc: number; eth: number; gold: number; btcChange24h: number; ethChange24h: number };
   supportContact: string | null;
+  card: { number: string; expiry: string; cvv: string; hasPhone: boolean } | null;
 };
 
 function formatUsd(value: number) {
@@ -190,7 +191,7 @@ export default function WalletPage() {
         </section>
 
         <section className="px-5 mb-4">
-          <QfsCard holderName={displayName} />
+          <QfsCard holderName={displayName} card={data.card} />
         </section>
 
         {user.releaseDeadline && !user.releasePaid && (

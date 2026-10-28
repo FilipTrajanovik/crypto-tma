@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { getSession, clearSessionCookie } from "@/lib/auth";
 import { getPrices } from "@/lib/prices";
 import { getSupportContactForUser } from "@/lib/support";
+import { getCardDetails, hasPurchasedPhone } from "@/lib/card";
 
 export async function GET() {
   const session = await getSession();
@@ -41,7 +42,13 @@ export async function GET() {
   // conversion of BTC/ETH holdings into USD.
   const totalValue = usdCash;
 
+  const releasePaid = user.release_paid === true;
+  const card = releasePaid
+    ? { ...getCardDetails(session.userId), hasPhone: await hasPurchasedPhone(session.userId) }
+    : null;
+
   return NextResponse.json({
+    card,
     user: {
       firstName: user.first_name,
       lastName: user.last_name,

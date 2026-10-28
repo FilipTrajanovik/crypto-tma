@@ -1,12 +1,28 @@
+"use client";
+
+import { useState } from "react";
+import { toast } from "@/components/ui/toast";
 import ShieldLogo from "@/app/components/ShieldLogo";
 import GlobeBackdrop from "@/app/components/GlobeBackdrop";
 
-// Branded virtual wallet card (decorative). It carries no card number and no
-// payment-network branding because the wallet has no real payment card.
-export default function QfsCard({ holderName }: { holderName: string }) {
-  return (
+export type QfsCardDetails = { number: string; expiry: string; cvv: string; hasPhone: boolean };
+
+// Branded virtual wallet card. Customers whose release is paid get card
+// details; tapping the card flips it to show them.
+export default function QfsCard({ holderName, card }: { holderName: string; card?: QfsCardDetails | null }) {
+  const [flipped, setFlipped] = useState(false);
+
+  const addToWallet = () => {
+    if (!card?.hasPhone) {
+      toast.add({ title: "You need to buy a phone from the Shop to add this card to your wallet.", type: "error" });
+      return;
+    }
+    toast.add({ title: "Card added to your wallet.", type: "success" });
+  };
+
+  const front = (
     <div
-      className="graphite-surface group relative w-full aspect-[1.586/1] rounded-[20px] overflow-hidden transition-transform duration-300 hover:-translate-y-0.5 active:scale-[0.99] select-none"
+      className="graphite-surface group absolute inset-0 rounded-[20px] overflow-hidden [backface-visibility:hidden] select-none"
     >
       {/* low-opacity globe, reused from the app's decorative globe */}
       <GlobeBackdrop className="absolute -right-[22%] -bottom-[48%] w-[88%] opacity-45" />
@@ -65,6 +81,66 @@ export default function QfsCard({ holderName }: { holderName: string }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  if (!card) {
+    return <div className="relative w-full aspect-[1.586/1] transition-transform duration-300 hover:-translate-y-0.5 active:scale-[0.99]">{front}</div>;
+  }
+
+  const back = (
+    <div className="graphite-surface absolute inset-0 rounded-[20px] overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)] select-none">
+      <div className="relative h-full flex flex-col justify-between p-4 min-[380px]:p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold tracking-[0.32em] text-premium-gradient">QFS</span>
+          <ShieldLogo size={22} />
+        </div>
+        <p className="font-mono text-[19px] min-[380px]:text-[21px] tracking-[0.12em] text-foreground tabular-nums">{card.number}</p>
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Card holder</p>
+            <p className="text-sm font-medium text-foreground truncate">{holderName}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Expires</p>
+            <p className="text-sm font-mono text-foreground">{card.expiry}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">CSV</p>
+            <p className="text-sm font-mono text-foreground">{card.cvv}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={flipped ? "Hide card details" : "Show card details"}
+        onClick={() => setFlipped((f) => !f)}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setFlipped((f) => !f)}
+        className="relative w-full aspect-[1.586/1] cursor-pointer [perspective:1000px]"
+      >
+        <div
+          className="absolute inset-0 transition-transform duration-700 [transform-style:preserve-3d]"
+          style={{ transform: flipped ? "rotateY(180deg)" : "none" }}
+        >
+          {front}
+          {back}
+        </div>
+      </div>
+      {flipped && (
+        <button
+          type="button"
+          onClick={addToWallet}
+          className="mt-3 w-full h-11 rounded-xl bg-brand-gradient text-navy text-sm font-bold shadow-brand-glow active:scale-[0.98] transition-transform"
+        >
+          Add to Wallet
+        </button>
+      )}
     </div>
   );
 }
