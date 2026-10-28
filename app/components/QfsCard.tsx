@@ -23,6 +23,7 @@ export default function QfsCard({ holderName, card }: { holderName: string; card
   const front = (
     <div
       className="graphite-surface group absolute inset-0 rounded-[20px] overflow-hidden [backface-visibility:hidden] select-none"
+      style={{ WebkitBackfaceVisibility: "hidden" }}
     >
       {/* low-opacity globe, reused from the app's decorative globe */}
       <GlobeBackdrop className="absolute -right-[22%] -bottom-[48%] w-[88%] opacity-45" />
@@ -89,7 +90,7 @@ export default function QfsCard({ holderName, card }: { holderName: string; card
   }
 
   const back = (
-    <div className="graphite-surface absolute inset-0 rounded-[20px] overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)] select-none">
+    <div className="graphite-surface absolute inset-0 rounded-[20px] overflow-hidden [backface-visibility:hidden] select-none" style={{ WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
       <div className="relative h-full flex flex-col justify-between p-4 min-[380px]:p-5">
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-bold tracking-[0.32em] text-premium-gradient">QFS</span>
@@ -122,11 +123,12 @@ export default function QfsCard({ holderName, card }: { holderName: string; card
         aria-label={flipped ? "Hide card details" : "Show card details"}
         onClick={() => setFlipped((f) => !f)}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setFlipped((f) => !f)}
-        className="relative w-full aspect-[1.586/1] cursor-pointer [perspective:1000px]"
+        className="relative w-full aspect-[1.586/1] cursor-pointer"
+        style={{ perspective: 1000, WebkitPerspective: 1000 }}
       >
         <div
-          className="absolute inset-0 transition-transform duration-700 [transform-style:preserve-3d]"
-          style={{ transform: flipped ? "rotateY(180deg)" : "none" }}
+          className="absolute inset-0 transition-transform duration-700"
+          style={{ transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "none" }}
         >
           {front}
           {back}
