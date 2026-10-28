@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
       INSERT INTO users (telegram_id, first_name, last_name, username, avatar_url)
       VALUES (${user.id}, ${user.first_name ?? null}, ${user.last_name ?? null}, ${user.username ?? null}, ${user.photo_url ?? null})
       ON CONFLICT (telegram_id) DO UPDATE SET
-        first_name = EXCLUDED.first_name,
-        last_name = EXCLUDED.last_name,
+        first_name = COALESCE(users.first_name, EXCLUDED.first_name),
+        last_name = COALESCE(users.last_name, EXCLUDED.last_name),
         username = EXCLUDED.username,
         avatar_url = EXCLUDED.avatar_url
       RETURNING id, telegram_id, first_name, last_name, username, phone, avatar_url, is_active, is_admin, is_super_admin, notifications_allowed, created_at
