@@ -72,3 +72,12 @@ export function DocumentsIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ShopIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M5.2 8.5h13.6l1 11a1.5 1.5 0 0 1-1.5 1.6H5.7a1.5 1.5 0 0 1-1.5-1.6l1-11Z" fill="currentColor" fillOpacity="0.16" />
+      <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" />
+    </svg>
+  );
+}

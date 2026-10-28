@@ -11,7 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUp, ArrowDown, MessageCircle, Timer } from "lucide-react";
-import { DepositIcon, WithdrawIcon, AuthorizedIcon, ReleaseIcon, DocumentsIcon } from "@/app/components/ActionIcons";
+import { toast } from "@/components/ui/toast";
+import { DepositIcon, WithdrawIcon, AuthorizedIcon, ReleaseIcon, DocumentsIcon, ShopIcon } from "@/app/components/ActionIcons";
 
 type BalanceData = {
   user: {
@@ -49,6 +50,7 @@ const actions = [
   { href: "/wallet/authorized", label: "Authorized Persons", icon: AuthorizedIcon, variant: "brand" as const },
   { href: "/wallet/release", label: "Release Funds", icon: ReleaseIcon, variant: "red" as const },
   { href: "/wallet/documents", label: "Documents", icon: DocumentsIcon, variant: "outline" as const },
+  { href: "/wallet/shop", label: "Shop", icon: ShopIcon, variant: "brand" as const, requiresRelease: true },
 ];
 
 export default function WalletPage() {
@@ -226,28 +228,46 @@ export default function WalletPage() {
 
         <section className="px-5 mb-8 flex flex-col gap-5">
           {[actions.slice(0, 3), actions.slice(3)].map((row, r) => (
-            <div key={r} className={`grid gap-2 ${r === 0 ? "grid-cols-3" : "grid-cols-2 w-2/3 mx-auto"}`}>
-              {row.map(({ href, label, icon: Icon, variant }, j) => {
+            <div key={r} className="grid gap-2 grid-cols-3">
+              {row.map(({ href, label, icon: Icon, variant, ...rest }, j) => {
                 const i = r === 0 ? j : 3 + j;
-                                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    style={{ animationDelay: `${i * 0.06}s` }}
-                    className="anim-rise group flex flex-col items-center gap-2 text-center active:scale-95 transition-transform"
-                  >
+                const locked = "requiresRelease" in rest && !user.releasePaid;
+                const content = (
+                  <>
                     <span
                       className={`flex items-center justify-center w-[52px] h-[52px] rounded-full transition-all duration-200 group-hover:brightness-110 ${
-                        variant === "red"
-                          ? "bg-patriot-red/15 ring-1 ring-patriot-red/40"
-                          : "bg-brand-gradient shadow-brand-glow"
+                        locked
+                          ? "bg-white/5 ring-1 ring-line"
+                          : variant === "red"
+                            ? "bg-patriot-red/15 ring-1 ring-patriot-red/40"
+                            : "bg-brand-gradient shadow-brand-glow"
                       }`}
                     >
                       <Icon
-                        className={`w-[26px] h-[26px] ${variant === "red" ? "text-patriot-red-bright" : "text-navy"}`}
+                        className={`w-[26px] h-[26px] ${
+                          locked ? "text-muted-foreground" : variant === "red" ? "text-patriot-red-bright" : "text-navy"
+                        }`}
                       />
                     </span>
-                    <span className="text-[13px] font-medium leading-tight text-foreground">{label}</span>
+                    <span className={`text-[13px] font-medium leading-tight ${locked ? "text-muted-foreground" : "text-foreground"}`}>
+                      {label}
+                    </span>
+                  </>
+                );
+                const className = "anim-rise group flex flex-col items-center gap-2 text-center active:scale-95 transition-transform";
+                return locked ? (
+                  <button
+                    key={href}
+                    type="button"
+                    style={{ animationDelay: `${i * 0.06}s` }}
+                    className={className}
+                    onClick={() => toast.add({ title: "You need to settle your release fee first to use the Shop.", type: "error" })}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <Link key={href} href={href} style={{ animationDelay: `${i * 0.06}s` }} className={className}>
+                    {content}
                   </Link>
                 );
               })}

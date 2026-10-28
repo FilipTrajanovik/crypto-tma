@@ -146,3 +146,31 @@ CREATE TABLE IF NOT EXISTS admin_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_admin_logs_created_at ON admin_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_admin_logs_actor ON admin_logs(actor_user_id);
+
+-- Shop (also created on demand by lib/shop.ts). Prices are USD; there is no stock.
+CREATE TABLE IF NOT EXISTS shop_products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  price DECIMAL(18,2) NOT NULL,
+  image_mime TEXT,
+  image_data TEXT, -- base64-encoded photo
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS shop_orders (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) NOT NULL,
+  product_id INTEGER,
+  product_name TEXT NOT NULL,
+  list_price DECIMAL(18,2) NOT NULL, -- product price when ordered
+  price DECIMAL(18,2) NOT NULL, -- what this customer pays, admin can change it
+  status TEXT NOT NULL DEFAULT 'pending', -- pending, awaiting_payment, paid, cancelled
+  pay_currency TEXT, -- BTC or ETH, set when the admin requests payment
+  pay_address TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  paid_at TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_shop_orders_user_id ON shop_orders(user_id);
