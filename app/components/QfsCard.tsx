@@ -9,7 +9,7 @@ export type QfsCardDetails = { number: string; expiry: string; cvv: string; hasP
 
 // Branded virtual wallet card. Customers whose release is paid get card
 // details; tapping the card flips it to show them.
-export default function QfsCard({ holderName, card }: { holderName: string; card?: QfsCardDetails | null }) {
+export default function QfsCard({ holderName, card, balance }: { holderName: string; card?: QfsCardDetails | null; balance?: number }) {
   const [flipped, setFlipped] = useState(false);
 
   const addToWallet = () => {
@@ -96,7 +96,17 @@ export default function QfsCard({ holderName, card }: { holderName: string; card
           <span className="text-[13px] font-bold tracking-[0.32em] text-premium-gradient">QFS</span>
           <ShieldLogo size={22} />
         </div>
-        <p className="font-mono text-[19px] min-[380px]:text-[21px] tracking-[0.12em] text-foreground tabular-nums">{card.number}</p>
+        <div>
+          <p className="font-mono text-[19px] min-[380px]:text-[21px] tracking-[0.12em] text-foreground tabular-nums">{card.number}</p>
+          {balance !== undefined && (
+            <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              Balance{" "}
+              <span className="text-sm font-semibold normal-case tracking-normal text-foreground tabular-nums">
+                {balance.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+              </span>
+            </p>
+          )}
+        </div>
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Card holder</p>

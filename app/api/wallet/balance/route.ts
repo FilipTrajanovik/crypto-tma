@@ -11,11 +11,12 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [userRows, balanceRows, prices, supportContact] = await Promise.all([
+  const [userRows, balanceRows, prices, supportContact, withdrawnRows] = await Promise.all([
     sql`SELECT id, first_name, last_name, username, avatar_url, phone, email, home_address, is_admin, release_paid, release_deadline, notifications_allowed FROM users WHERE id = ${session.userId}`,
     sql`SELECT btc_amount, eth_amount, usd_cash, gold_amount, updated_at FROM balances WHERE user_id = ${session.userId}`,
     getPrices(),
     getSupportContactForUser(session.userId),
+    sql`SELECT currency, SUM(amount) AS total FROM withdrawal_requests WHERE user_id = ${session.userId} AND status = 'approved' GROUP BY currency`,
   ]);
 
   if (userRows.length === 0) {
@@ -41,6 +42,10 @@ export async function GET() {
   // "Total Portfolio Value" is the USD cash balance only, not a blended
   // conversion of BTC/ETH holdings into USD.
   const totalValue = usdCash;
+
+  // Sum of all approved withdrawals, converted to USD, shown on the card.
+  const usdPerUnit: Record<string, number> = { USD: 1, BTC: prices.btc, ETH: prices.eth, GOLD: prices.gold };
+  const withdrawnTotal = withdrawnRows.reduce((sum, r) => sum + Number(r.total) * (usdPerUnit[r.currency] ?? 0), 0);
 
   const releasePaid = user.release_paid === true;
   const card = releasePaid
@@ -70,6 +75,7 @@ export async function GET() {
       ethValue,
       goldValue,
       totalValue,
+      withdrawnTotal,
       updatedAt: balance.updated_at,
     },
     prices,
