@@ -17,6 +17,8 @@ type Order = {
   id: number;
   product_id: number | null;
   product_name: string;
+  description: string | null;
+  paid_at: string | null;
   list_price: string;
   price: string;
   status: "pending" | "awaiting_payment" | "paid" | "cancelled";
@@ -38,7 +40,7 @@ const STATUS_STYLE: Record<Order["status"], { label: string; className: string }
 
 export default function ShopPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"products" | "orders">("products");
+  const [tab, setTab] = useState<"products" | "orders" | "items">("products");
   const [products, setProducts] = useState<Product[] | null>(null);
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [supportContact, setSupportContact] = useState<string | null>(null);
@@ -142,13 +144,15 @@ export default function ShopPage() {
   }
 
   const openOrders = orders?.filter((o) => o.status === "awaiting_payment").length ?? 0;
+  const myItems = orders?.filter((o) => o.status === "paid") ?? null;
+  const otherOrders = orders?.filter((o) => o.status !== "paid") ?? null;
 
   return (
     <div className="min-h-screen bg-navy px-5 pt-6 pb-10 max-w-md mx-auto">
       <PageHeader title="Shop" subtitle="Tap Buy now and your account manager will take care of the rest." />
 
-      <div className="grid grid-cols-2 gap-2 mb-5">
-        {(["products", "orders"] as const).map((t) => (
+      <div className="grid grid-cols-3 gap-2 mb-5">
+        {(["products", "orders", "items"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -157,7 +161,7 @@ export default function ShopPage() {
               tab === t ? "bg-brand text-navy" : "bg-card-navy border border-line text-muted-foreground"
             }`}
           >
-            {t === "products" ? "Products" : "My Orders"}
+            {t === "products" ? "Products" : t === "orders" ? "Orders" : "My Items"}
             {t === "orders" && openOrders > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-patriot-red text-white text-[11px]">
                 {openOrders}
@@ -209,18 +213,52 @@ export default function ShopPage() {
           </div>
         ))}
 
-      {tab === "orders" &&
-        (orders === null ? (
+      {tab === "items" &&
+        (myItems === null ? (
           <div className="space-y-4">
             {[0, 1].map((n) => (
               <Skeleton key={n} className="h-28 w-full rounded-2xl bg-card-navy" />
             ))}
           </div>
-        ) : orders.length === 0 ? (
+        ) : myItems.length === 0 ? (
+          <EmptyState title="No items yet" text="Items you have bought and paid for will appear here." />
+        ) : (
+          <div className="space-y-4">
+            {myItems.map((o) => (
+              <Card key={o.id} className="bg-card-gradient border-line rounded-2xl overflow-hidden p-0 gap-0">
+                {o.has_image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/api/shop/products/${o.product_id}/image`} alt={o.product_name} className="w-full aspect-[4/3] object-cover" />
+                )}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-display font-semibold text-white">{o.product_name}</p>
+                    <Badge variant="outline" className={`whitespace-nowrap ${STATUS_STYLE.paid.className}`}>
+                      Owned
+                    </Badge>
+                  </div>
+                  {o.description && <p className="text-sm text-muted-foreground mt-1 leading-relaxed whitespace-pre-line">{o.description}</p>}
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Paid {usd(o.price)} · {new Date(o.paid_at || o.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ))}
+
+      {tab === "orders" &&
+        (otherOrders === null ? (
+          <div className="space-y-4">
+            {[0, 1].map((n) => (
+              <Skeleton key={n} className="h-28 w-full rounded-2xl bg-card-navy" />
+            ))}
+          </div>
+        ) : otherOrders.length === 0 ? (
           <EmptyState title="No orders yet" text="Orders you place will appear here." />
         ) : (
           <div className="space-y-4">
-            {orders.map((o) => {
+            {otherOrders.map((o) => {
               const style = STATUS_STYLE[o.status];
               const changed = Number(o.price) !== Number(o.list_price);
               return (

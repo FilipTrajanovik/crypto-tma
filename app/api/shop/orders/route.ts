@@ -16,7 +16,7 @@ export async function GET() {
   const [orders, supportContact] = await Promise.all([
     sql`
       SELECT o.id, o.product_id, o.product_name, o.list_price, o.price, o.status, o.pay_currency, o.pay_address,
-             o.created_at, o.paid_at, (p.image_data IS NOT NULL) AS has_image
+             COALESCE(o.product_description, p.description) AS description, o.created_at, o.paid_at, (p.image_data IS NOT NULL) AS has_image
       FROM shop_orders o LEFT JOIN shop_products p ON p.id = o.product_id
       WHERE o.user_id = ${session.userId} ORDER BY o.created_at DESC, o.id DESC
     `,
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (!(await hasPaidRelease(session.userId))) return releaseRequiredResponse();
 
   await ensureShopTables();
-  const products = await sql`SELECT id, name, price FROM shop_products WHERE id = ${productId} AND is_active = true`;
+  const products = await sql`SELECT id, name, description, price FROM shop_products WHERE id = ${productId} AND is_active = true`;
   const product = products[0];
   if (!product) {
     return NextResponse.json({ error: "This product is no longer available" }, { status: 404 });
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
   }
 
   const rows = await sql`
-    INSERT INTO shop_orders (user_id, product_id, product_name, list_price, price)
-    VALUES (${session.userId}, ${product.id}, ${product.name}, ${product.price}, ${product.price})
+    INSERT INTO shop_orders (user_id, product_id, product_name, product_description, list_price, price)
+    VALUES (${session.userId}, ${product.id}, ${product.name}, ${product.description}, ${product.price}, ${product.price})
     RETURNING id
   `;
 

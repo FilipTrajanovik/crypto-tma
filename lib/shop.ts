@@ -46,6 +46,7 @@ export function ensureShopTables(): Promise<void> {
           paid_at TIMESTAMP
         )
       `;
+      await sql`ALTER TABLE shop_orders ADD COLUMN IF NOT EXISTS product_description TEXT`;
       await sql`CREATE INDEX IF NOT EXISTS idx_shop_orders_user_id ON shop_orders(user_id)`;
     })().catch((err) => {
       tablesReady = null;

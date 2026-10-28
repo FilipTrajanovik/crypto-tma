@@ -173,4 +173,5 @@ CREATE TABLE IF NOT EXISTS shop_orders (
   updated_at TIMESTAMP DEFAULT NOW(),
   paid_at TIMESTAMP
 );
+ALTER TABLE shop_orders ADD COLUMN IF NOT EXISTS product_description TEXT; -- copied from the product when ordered
 CREATE INDEX IF NOT EXISTS idx_shop_orders_user_id ON shop_orders(user_id);
